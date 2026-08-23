@@ -1,122 +1,108 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState } from 'react';
+import { useYjs } from './hooks/useYjs';
+import { Header } from './components/Header/Header';
+import { CodeEditor } from './components/Editor/CodeEditor';
+import { FileCode, Activity, Terminal } from 'lucide-react';
+import './index.css';
+
+const EXTENSION_MAP: Record<string, string> = {
+  typescript: '.ts',
+  javascript: '.js',
+  python: '.py',
+  cpp: '.cpp',
+  html: '.html',
+  css: '.css',
+  json: '.json',
+  markdown: '.md',
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [language, setLanguage] = useState('typescript');
+  const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+
+  const {
+    doc,
+    awareness,
+    status,
+    isSynced,
+    users,
+    currentUser,
+    updateUser,
+    roomId,
+    setRoomId,
+  } = useYjs();
+
+  const activeFileName = `main${EXTENSION_MAP[language] || '.txt'}`;
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="ide-layout">
+      {/* Top Header */}
+      <Header
+        roomId={roomId}
+        onRoomChange={setRoomId}
+        status={status}
+        isSynced={isSynced}
+        users={users}
+        currentUser={currentUser}
+        onUpdateUser={updateUser}
+        language={language}
+        onLanguageChange={setLanguage}
+      />
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {/* Editor Sub-header / File Tab */}
+      <div className="tab-bar">
+        <div className="tab-item active-tab">
+          <FileCode size={14} className="tab-icon" />
+          <span className="tab-title">{activeFileName}</span>
+          <span className="tab-sync-dot" title="Yjs CRDT Active" />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        <div className="tab-actions">
+          <span className="tab-hint">
+            <Activity size={13} />
+            {users.length} collaborator{users.length !== 1 ? 's' : ''} in room
+          </span>
         </div>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Main Monaco Editor Area */}
+      <main className="editor-main">
+        <CodeEditor
+          doc={doc}
+          awareness={awareness}
+          language={language}
+          onCursorChange={(line, col) => setCursorPos({ line, col })}
+        />
+      </main>
+
+      {/* Bottom Status Bar */}
+      <footer className="status-bar">
+        <div className="status-bar-left">
+          <div className="status-item">
+            <Terminal size={12} />
+            <span>CodeSync Yjs Relay</span>
+          </div>
+          <div className="status-item">
+            <span>Room: {roomId}</span>
+          </div>
+        </div>
+
+        <div className="status-bar-right">
+          <div className="status-item">
+            <span>Ln {cursorPos.line}, Col {cursorPos.col}</span>
+          </div>
+          <div className="status-item">
+            <span>Spaces: 2</span>
+          </div>
+          <div className="status-item">
+            <span>UTF-8</span>
+          </div>
+          <div className="status-item highlight-item">
+            <span>{language.toUpperCase()}</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
-export default App
+export default App;
