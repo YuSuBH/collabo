@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useYjs } from './hooks/useYjs';
 import { Header } from './components/Header/Header';
 import { CodeEditor } from './components/Editor/CodeEditor';
+import { LobbyPage } from './components/Lobby/LobbyPage';
 import { FileCode, Activity, Terminal } from 'lucide-react';
 import './index.css';
 
@@ -16,7 +17,14 @@ const EXTENSION_MAP: Record<string, string> = {
   markdown: '.md',
 };
 
-function App() {
+interface JoinInfo {
+  roomId: string;
+  username: string;
+  color: string;
+}
+
+// ─── IDE View ────────────────────────────────────────────────────────────────
+function IDEView({ joinInfo }: { joinInfo: JoinInfo }) {
   const [language, setLanguage] = useState('typescript');
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
 
@@ -30,13 +38,16 @@ function App() {
     updateUser,
     roomId,
     setRoomId,
-  } = useYjs();
+  } = useYjs({
+    initialRoomId: joinInfo.roomId,
+    initialName: joinInfo.username,
+    initialColor: joinInfo.color,
+  });
 
   const activeFileName = `main${EXTENSION_MAP[language] || '.txt'}`;
 
   return (
     <div className="ide-layout">
-      {/* Top Header */}
       <Header
         roomId={roomId}
         onRoomChange={setRoomId}
@@ -49,7 +60,6 @@ function App() {
         onLanguageChange={setLanguage}
       />
 
-      {/* Editor Sub-header / File Tab */}
       <div className="tab-bar">
         <div className="tab-item active-tab">
           <FileCode size={14} className="tab-icon" />
@@ -64,7 +74,6 @@ function App() {
         </div>
       </div>
 
-      {/* Main Monaco Editor Area */}
       <main className="editor-main">
         <CodeEditor
           doc={doc}
@@ -74,7 +83,6 @@ function App() {
         />
       </main>
 
-      {/* Bottom Status Bar */}
       <footer className="status-bar">
         <div className="status-bar-left">
           <div className="status-item">
@@ -103,6 +111,25 @@ function App() {
       </footer>
     </div>
   );
+}
+
+// ─── Root App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [joinInfo, setJoinInfo] = useState<JoinInfo | null>(null);
+
+  const handleJoin = (roomId: string, username: string, color: string) => {
+    // Reflect the room in the URL so the link is shareable
+    const url = new URL(window.location.href);
+    url.searchParams.set('room', roomId);
+    window.history.pushState({}, '', url.toString());
+    setJoinInfo({ roomId, username, color });
+  };
+
+  if (!joinInfo) {
+    return <LobbyPage onJoin={handleJoin} />;
+  }
+
+  return <IDEView joinInfo={joinInfo} />;
 }
 
 export default App;

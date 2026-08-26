@@ -32,6 +32,8 @@ const getInitialUser = (): UserPresence => {
 interface UseYjsOptions {
   initialRoomId?: string;
   serverUrl?: string;
+  initialName?: string;
+  initialColor?: string;
 }
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
@@ -39,11 +41,10 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 export const useYjs = ({
   initialRoomId = 'demo-room',
   serverUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000',
+  initialName,
+  initialColor,
 }: UseYjsOptions = {}) => {
-  const [roomId, setRoomIdState] = useState<string>(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get('room') || initialRoomId;
-  });
+  const [roomId, setRoomIdState] = useState<string>(initialRoomId);
 
   const [doc, setDoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
@@ -52,7 +53,15 @@ export const useYjs = ({
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [isSynced, setIsSynced] = useState<boolean>(false);
   const [users, setUsers] = useState<Collaborator[]>([]);
-  const [currentUser, setCurrentUserState] = useState<UserPresence>(getInitialUser);
+  const [currentUser, setCurrentUserState] = useState<UserPresence>(() => {
+    // If the lobby provided explicit credentials, use them (and persist).
+    if (initialName && initialColor) {
+      const user: UserPresence = { name: initialName, color: initialColor };
+      try { localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user)); } catch { /* ignore */ }
+      return user;
+    }
+    return getInitialUser();
+  });
 
   // Synchronize URL search params with roomId
   const setRoomId = useCallback((newRoomId: string) => {
