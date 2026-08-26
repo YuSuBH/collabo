@@ -1,6 +1,9 @@
-﻿import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Code2, Users, Shuffle, ArrowRight, Radio } from 'lucide-react';
 import { CURSOR_COLORS } from '../../utils/collaborators';
+
+const getRandomColor = (): string =>
+  CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
 
 interface LobbyPageProps {
   onJoin: (roomId: string, username: string, color: string) => void;
@@ -8,51 +11,29 @@ interface LobbyPageProps {
 
 const generateRoomId = (): string => {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  const segments = [4, 4, 4];
-  return segments
-    .map((len) =>
-      Array.from({ length: len }, () =>
-        chars.charAt(Math.floor(Math.random() * chars.length))
-      ).join('')
-    )
-    .join('-');
+  return Array.from({ length: 6 }, () =>
+    chars.charAt(Math.floor(Math.random() * chars.length))
+  ).join('');
 };
 
-const ADJECTIVES = [
-  'Cyber', 'Neon', 'Quantum', 'Hyper', 'Cosmic', 'Solar',
-  'Lunar', 'Pixel', 'Turbo', 'Vortex', 'Shadow', 'Atomic',
-];
-const ANIMALS = [
-  'Fox', 'Falcon', 'Panther', 'Lynx', 'Wolf', 'Hawk',
-  'Eagle', 'Viper', 'Otter', 'Panda', 'Cheetah', 'Dragon',
-];
 
-const generateUsername = (): string => {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-  const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  return `${adj} ${animal}`;
-};
+
 
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
   const [roomId, setRoomId] = useState<string>(() => {
+    // Pre-fill room ID only when arriving via a shared ?room= link
     const params = new URLSearchParams(window.location.search);
-    return params.get('room') || generateRoomId();
+    return params.get('room') || '';
   });
-  const [username, setUsername] = useState<string>(generateUsername);
-  const [selectedColor, setSelectedColor] = useState<string>(
-    CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!
-  );
+  const [username, setUsername] = useState('');
+  // Color is assigned randomly and never exposed to the user
+  const colorRef = useRef<string>(getRandomColor());
   const [roomError, setRoomError] = useState('');
   const [nameError, setNameError] = useState('');
 
   const handleGenerateRoom = () => {
     setRoomId(generateRoomId());
     setRoomError('');
-  };
-
-  const handleGenerateUsername = () => {
-    setUsername(generateUsername());
-    setNameError('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,7 +43,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     else setRoomError('');
     if (!username.trim()) { setNameError('Username cannot be empty.'); valid = false; }
     else setNameError('');
-    if (valid) onJoin(roomId.trim(), username.trim(), selectedColor);
+    if (valid) onJoin(roomId.trim(), username.trim(), colorRef.current);
   };
 
   return (
@@ -115,40 +96,19 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
               <Users size={13} />
               Your Name
             </label>
-            <div className="lobby-input-row">
-              <input
-                id="username-input"
-                type="text"
-                className={`lobby-input ${nameError ? 'lobby-input-error' : ''}`}
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); if (nameError) setNameError(''); }}
-                placeholder="Enter your display name"
-                maxLength={32}
-                autoComplete="off"
-              />
-              <button type="button" className="lobby-btn-generate" onClick={handleGenerateUsername} title="Generate random name">
-                <Shuffle size={15} />
-                Random
-              </button>
-            </div>
+            <input
+              id="username-input"
+              type="text"
+              className={`lobby-input ${nameError ? 'lobby-input-error' : ''}`}
+              value={username}
+              onChange={(e) => { setUsername(e.target.value); if (nameError) setNameError(''); }}
+              placeholder="Enter your display name"
+              maxLength={32}
+              autoComplete="off"
+            />
             {nameError && <span className="lobby-error">{nameError}</span>}
           </div>
 
-          <div className="lobby-field">
-            <label className="lobby-label">Cursor Color</label>
-            <div className="lobby-color-grid">
-              {CURSOR_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  className={`lobby-color-swatch ${selectedColor === c ? 'lobby-color-active' : ''}`}
-                  style={{ backgroundColor: c }}
-                  onClick={() => setSelectedColor(c)}
-                  title={c}
-                />
-              ))}
-            </div>
-          </div>
 
           <button type="submit" className="lobby-btn-join" id="lobby-join-btn">
             <span>Join Room</span>
