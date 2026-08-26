@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import type { Awareness } from 'y-protocols/awareness';
@@ -40,61 +40,63 @@ export const useYjs = ({
   initialRoomId = 'demo-room',
   serverUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000',
 }: UseYjsOptions = {}) => {
-  const [roomId, setRoomId] = useState<string>(() => {
+  const [roomId, setRoomIdState] = useState<string>(() => {
     const searchParams = new URLSearchParams(window.location.search);
     return searchParams.get('room') || initialRoomId;
   });
+
+  const [doc, setDoc] = useState<Y.Doc | null>(null);
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+  const [awareness, setAwareness] = useState<Awareness | null>(null);
 
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [isSynced, setIsSynced] = useState<boolean>(false);
   const [users, setUsers] = useState<Collaborator[]>([]);
   const [currentUser, setCurrentUserState] = useState<UserPresence>(getInitialUser);
 
-  const docRef = useRef<Y.Doc | null>(null);
-  const providerRef = useRef<WebsocketProvider | null>(null);
-  const awarenessRef = useRef<Awareness | null>(null);
-
   // Synchronize URL search params with roomId
-  const changeRoom = useCallback((newRoomId: string) => {
+  const setRoomId = useCallback((newRoomId: string) => {
     const trimmed = newRoomId.trim();
     if (!trimmed) return;
-    setRoomId(trimmed);
+    setRoomIdState(trimmed);
     const url = new URL(window.location.href);
     url.searchParams.set('room', trimmed);
     window.history.pushState({}, '', url.toString());
   }, []);
 
   // Update user profile in awareness and localStorage
-  const updateUser = useCallback((updated: Partial<UserPresence>) => {
-    setCurrentUserState((prev) => {
-      const newUser = { ...prev, ...updated };
-      try {
-        localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newUser));
-      } catch {
-        // Ignore
-      }
-      if (awarenessRef.current) {
-        awarenessRef.current.setLocalStateField('user', newUser);
-      }
-      return newUser;
-    });
-  }, []);
+  const updateUser = useCallback(
+    (updated: Partial<UserPresence>) => {
+      setCurrentUserState((prev) => {
+        const newUser = { ...prev, ...updated };
+        try {
+          localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newUser));
+        } catch {
+          // Ignore
+        }
+        if (awareness) {
+          awareness.setLocalStateField('user', newUser);
+        }
+        return newUser;
+      });
+    },
+    [awareness]
+  );
 
   useEffect(() => {
     const ydoc = new Y.Doc();
-    docRef.current = ydoc;
-
-    const provider = new WebsocketProvider(serverUrl, roomId, ydoc, {
+    const wsProvider = new WebsocketProvider(serverUrl, roomId, ydoc, {
       connect: true,
       params: { room: roomId },
     });
-    providerRef.current = provider;
+    const wsAwareness = wsProvider.awareness;
 
-    const awareness = provider.awareness;
-    awarenessRef.current = awareness;
+    setDoc(ydoc);
+    setProvider(wsProvider);
+    setAwareness(wsAwareness);
 
-    // Set initial local state for presence
-    awareness.setLocalStateField('user', currentUser);
+    // Register initial user awareness state
+    wsAwareness.setLocalStateField('user', currentUser);
 
     const handleStatus = (event: { status: ConnectionStatus }) => {
       setStatus(event.status);
@@ -105,7 +107,7 @@ export const useYjs = ({
     };
 
     const handleAwarenessChange = () => {
-      const states = awareness.getStates();
+      const states = wsAwareness.getStates();
       const collaborators: Collaborator[] = [];
 
       states.forEach((state, clientId) => {
@@ -114,7 +116,7 @@ export const useYjs = ({
             clientId,
             name: state.user.name,
             color: state.user.color,
-            isCurrentUser: clientId === docRef.current?.clientID,
+            isCurrentUser: clientId === ydoc.clientID,
           });
         }
       });
@@ -122,35 +124,34 @@ export const useYjs = ({
       setUsers(collaborators);
     };
 
-    provider.on('status', handleStatus);
-    provider.on('sync', handleSync);
-    awareness.on('change', handleAwarenessChange);
+    wsProvider.on('status', handleStatus);
+    wsProvider.on('sync', handleSync);
+    wsAwareness.on('change', handleAwarenessChange);
 
-    // Initial trigger
     handleAwarenessChange();
 
     return () => {
-      provider.off('status', handleStatus);
-      provider.off('sync', handleSync);
-      awareness.off('change', handleAwarenessChange);
-      provider.destroy();
+      wsProvider.off('status', handleStatus);
+      wsProvider.off('sync', handleSync);
+      wsAwareness.off('change', handleAwarenessChange);
+      wsProvider.destroy();
       ydoc.destroy();
-      docRef.current = null;
-      providerRef.current = null;
-      awarenessRef.current = null;
+      setDoc(null);
+      setProvider(null);
+      setAwareness(null);
     };
   }, [roomId, serverUrl]);
 
   return {
-    doc: docRef.current,
-    provider: providerRef.current,
-    awareness: awarenessRef.current,
+    doc,
+    provider,
+    awareness,
     status,
     isSynced,
     users,
     currentUser,
     updateUser,
     roomId,
-    setRoomId: changeRoom,
+    setRoomId,
   };
 };

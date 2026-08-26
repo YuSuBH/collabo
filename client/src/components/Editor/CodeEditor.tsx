@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
@@ -12,87 +12,44 @@ interface CodeEditorProps {
   onCursorChange?: (line: number, col: number) => void;
 }
 
-const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
-// Open this same URL in another browser tab to experience real-time sync & remote cursors.
-
-interface User {
-  id: string;
-  name: string;
-  role: 'admin' | 'editor' | 'viewer';
-}
-
-function greetCollaborator(user: User): string {
-  return \`👋 Hello \${user.name}, you are currently editing with live CRDT sync!\`;
-}
-
-console.log(greetCollaborator({ id: '1', name: 'Collaborator', role: 'editor' }));
-`;
-
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   doc,
   awareness,
   language,
   onCursorChange,
 }) => {
-  const editorRef = useRef<any>(null);
-  const bindingRef = useRef<MonacoBinding | null>(null);
+  const [editor, setEditor] = useState<any>(null);
 
-  const handleEditorMount: OnMount = (editor, _monaco) => {
-    editorRef.current = editor;
+  const handleEditorMount: OnMount = (editorInstance) => {
+    setEditor(editorInstance);
     injectCursorStyles();
 
-    if (doc && awareness) {
-      const yText = doc.getText('monaco');
-
-      // Populate starter template if text is completely empty
-      if (yText.length === 0 && doc.getMap('meta').get('initialized') !== true) {
-        doc.getMap('meta').set('initialized', true);
-        yText.insert(0, DEFAULT_STARTER_CODE);
-      }
-
-      const model = editor.getModel();
-      if (model) {
-        bindingRef.current = new MonacoBinding(
-          yText,
-          model,
-          new Set([editor]),
-          awareness
-        );
-      }
-    }
-
-    editor.onDidChangeCursorPosition((e) => {
+    editorInstance.onDidChangeCursorPosition((e) => {
       onCursorChange?.(e.position.lineNumber, e.position.column);
     });
   };
 
   useEffect(() => {
-    if (!editorRef.current || !doc || !awareness) return;
+    if (!editor || !doc || !awareness) return;
 
-    // Destroy existing binding if any
-    if (bindingRef.current) {
-      bindingRef.current.destroy();
-      bindingRef.current = null;
-    }
-
+    injectCursorStyles();
     const yText = doc.getText('monaco');
-    const model = editorRef.current.getModel();
-    if (model) {
-      bindingRef.current = new MonacoBinding(
-        yText,
-        model,
-        new Set([editorRef.current]),
-        awareness
-      );
-    }
+    const model = editor.getModel();
+
+    if (!model) return;
+
+    // Initialize MonacoBinding between Y.Text, Monaco Model, and Awareness
+    const binding = new MonacoBinding(
+      yText,
+      model,
+      new Set([editor]),
+      awareness
+    );
 
     return () => {
-      if (bindingRef.current) {
-        bindingRef.current.destroy();
-        bindingRef.current = null;
-      }
+      binding.destroy();
     };
-  }, [doc, awareness]);
+  }, [editor, doc, awareness]);
 
   return (
     <div className="editor-container">

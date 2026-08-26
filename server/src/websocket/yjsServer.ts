@@ -11,6 +11,22 @@ const MESSAGE_AWARENESS = 1;
 const MESSAGE_AUTH = 2;
 const MESSAGE_QUERY_AWARENESS = 3;
 
+const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
+// Open this same URL in another browser tab to experience real-time sync & remote cursors.
+
+interface User {
+  id: string;
+  name: string;
+  role: 'admin' | 'editor' | 'viewer';
+}
+
+function greetCollaborator(user: User): string {
+  return \`👋 Hello \${user.name}, you are currently editing with live CRDT sync!\`;
+}
+
+console.log(greetCollaborator({ id: '1', name: 'Collaborator', role: 'editor' }));
+`;
+
 interface Room {
   name: string;
   doc: Y.Doc;
@@ -20,59 +36,78 @@ interface Room {
 
 const rooms = new Map<string, Room>();
 
+const send = (ws: WebSocket, message: Uint8Array) => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(message, (err) => {
+      if (err) {
+        console.error('[Yjs WS] Error sending message to client:', err);
+      }
+    });
+  }
+};
+
 const getOrCreateRoom = (roomName: string): Room => {
   let room = rooms.get(roomName);
   if (!room) {
     const doc = new Y.Doc();
     const awareness = new awarenessProtocol.Awareness(doc);
+    const clients = new Set<WebSocket>();
 
-    // When the doc is updated, broadcast the update to all connected clients
+    // Pre-populate with default starter code if new room
+    const ytext = doc.getText('monaco');
+    if (ytext.length === 0) {
+      ytext.insert(0, DEFAULT_STARTER_CODE);
+    }
+
+    const newRoom: Room = {
+      name: roomName,
+      doc,
+      awareness,
+      clients,
+    };
+    rooms.set(roomName, newRoom);
+
+    // Broadcast doc updates to all clients in the room except the origin
     doc.on('update', (update: Uint8Array, origin: any) => {
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
       syncProtocol.writeUpdate(encoder, update);
       const message = encoding.toUint8Array(encoder);
 
-      room?.clients.forEach((client) => {
+      newRoom.clients.forEach((client) => {
         if (client !== origin && client.readyState === WebSocket.OPEN) {
-          client.send(message);
+          send(client, message);
         }
       });
     });
 
-    // When awareness changes, broadcast awareness update to all connected clients
-    awareness.on('update', ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any) => {
-      const changedClients = added.concat(updated, removed);
-      const encoder = encoding.createEncoder();
-      encoding.writeVarUint(encoder, MESSAGE_AWARENESS);
-      encoding.writeVarUint8Array(
-        encoder,
-        awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients)
-      );
-      const message = encoding.toUint8Array(encoder);
+    // Broadcast awareness updates (remote cursors, presence)
+    awareness.on(
+      'update',
+      (
+        { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+        origin: any
+      ) => {
+        const changedClients = added.concat(updated, removed);
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, MESSAGE_AWARENESS);
+        encoding.writeVarUint8Array(
+          encoder,
+          awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients)
+        );
+        const message = encoding.toUint8Array(encoder);
 
-      room?.clients.forEach((client) => {
-        if (client !== origin && client.readyState === WebSocket.OPEN) {
-          client.send(message);
-        }
-      });
-    });
+        newRoom.clients.forEach((client) => {
+          if (client !== origin && client.readyState === WebSocket.OPEN) {
+            send(client, message);
+          }
+        });
+      }
+    );
 
-    room = {
-      name: roomName,
-      doc,
-      awareness,
-      clients: new Set<WebSocket>(),
-    };
-    rooms.set(roomName, room);
+    return newRoom;
   }
   return room;
-};
-
-const send = (ws: WebSocket, message: Uint8Array) => {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(message);
-  }
 };
 
 export const setupYjsWebSocketServer = (server: Server) => {
@@ -85,22 +120,17 @@ export const setupYjsWebSocketServer = (server: Server) => {
   });
 
   wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
-    // Extract room name from query string (e.g. ?room=xyz) or path (e.g. /xyz)
+    // Extract room name from query params or path
     const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
     const roomParam = url.searchParams.get('room');
     const pathName = url.pathname.replace(/^\/+/, '').split('/')[0];
-    const roomName = roomParam || pathName || 'default-room';
+    const roomName = roomParam || pathName || 'demo-room';
 
-    console.log(`[Yjs WS] Client connected to room: ${roomName}`);
+    console.log(`[Yjs WS] Client connected -> Room: "${roomName}" (Total in room: ${getOrCreateRoom(roomName).clients.size + 1})`);
     const room = getOrCreateRoom(roomName);
     room.clients.add(ws);
 
-    let isAlive = true;
-    ws.on('pong', () => {
-      isAlive = true;
-    });
-
-    // 1. Initial Sync Step 1: Send Sync Step 1 from server to client
+    // 1. Initial Sync: Send SyncStep1 to client
     {
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
@@ -108,7 +138,7 @@ export const setupYjsWebSocketServer = (server: Server) => {
       send(ws, encoding.toUint8Array(encoder));
     }
 
-    // 2. Send current awareness states to new client
+    // 2. Send current awareness states to newly connected client
     {
       const awarenessStates = room.awareness.getStates();
       if (awarenessStates.size > 0) {
@@ -125,7 +155,7 @@ export const setupYjsWebSocketServer = (server: Server) => {
       }
     }
 
-    // 3. Handle incoming binary messages from client
+    // 3. Handle messages from client
     ws.on('message', (data: Buffer | ArrayBuffer | Buffer[]) => {
       try {
         let uint8Array: Uint8Array;
@@ -133,8 +163,10 @@ export const setupYjsWebSocketServer = (server: Server) => {
           uint8Array = new Uint8Array(data);
         } else if (Array.isArray(data)) {
           uint8Array = new Uint8Array(Buffer.concat(data));
-        } else {
+        } else if (Buffer.isBuffer(data)) {
           uint8Array = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        } else {
+          uint8Array = new Uint8Array(data as any);
         }
 
         const decoder = decoding.createDecoder(uint8Array);
@@ -172,32 +204,32 @@ export const setupYjsWebSocketServer = (server: Server) => {
             break;
           }
           default:
-            console.warn(`[Yjs WS] Unknown message type: ${messageType}`);
+            console.warn(`[Yjs WS] Unhandled message type: ${messageType}`);
         }
       } catch (err) {
-        console.error('[Yjs WS] Error processing message:', err);
+        console.error('[Yjs WS] Error processing client message:', err);
       }
     });
 
     // 4. Handle client disconnection
     ws.on('close', () => {
-      console.log(`[Yjs WS] Client disconnected from room: ${roomName}`);
       room.clients.delete(ws);
+      console.log(`[Yjs WS] Client disconnected <- Room: "${roomName}" (Remaining: ${room.clients.size})`);
     });
 
     ws.on('error', (err) => {
-      console.error(`[Yjs WS] WebSocket error on room ${roomName}:`, err);
+      console.error(`[Yjs WS] Client socket error on room "${roomName}":`, err);
     });
   });
 
-  // Heartbeat interval to ping clients every 30 seconds
+  // Keep-alive heartbeat
   const pingInterval = setInterval(() => {
     wss.clients.forEach((ws) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
       }
     });
-  }, 30000);
+  }, 25000);
 
   wss.on('close', () => {
     clearInterval(pingInterval);
