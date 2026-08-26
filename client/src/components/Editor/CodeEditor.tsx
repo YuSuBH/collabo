@@ -3,7 +3,7 @@ import Editor, { type OnMount } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
 import type { Awareness } from 'y-protocols/awareness';
-import { injectCursorStyles } from '../../utils/cursorStyles';
+import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
@@ -46,7 +46,15 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       awareness
     );
 
+    // Apply profile colours to remote cursors via MutationObserver + inline styles
+    const editorDom = editor.getDomNode();
+    let stopObserver: (() => void) | undefined;
+    if (editorDom) {
+      stopObserver = startCursorColorObserver(editorDom, awareness);
+    }
+
     return () => {
+      stopObserver?.();
       binding.destroy();
     };
   }, [editor, doc, awareness]);
@@ -86,3 +94,5 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     </div>
   );
 };
+
+

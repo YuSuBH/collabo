@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
-import {
-  Code2,
-  Users,
-  Copy,
-  Check,
-  Circle,
-  Globe,
-  Radio,
-} from 'lucide-react';
-import type { ConnectionStatus } from '../../hooks/useYjs';
+import React, { useState } from "react";
+import { Code2, Users, Copy, Check, Circle, Globe, Radio } from "lucide-react";
+import type { ConnectionStatus } from "../../hooks/useYjs";
 import {
   type Collaborator,
   type UserPresence,
-} from '../../utils/collaborators';
+} from "../../utils/collaborators";
 
 interface HeaderProps {
   roomId: string;
@@ -26,18 +18,7 @@ interface HeaderProps {
   onLanguageChange: (lang: string) => void;
 }
 
-
-
-const LANGUAGES = [
-  { id: 'typescript', name: 'TypeScript', ext: '.ts' },
-  { id: 'javascript', name: 'JavaScript', ext: '.js' },
-  { id: 'python', name: 'Python', ext: '.py' },
-  { id: 'cpp', name: 'C++', ext: '.cpp' },
-  { id: 'html', name: 'HTML', ext: '.html' },
-  { id: 'css', name: 'CSS', ext: '.css' },
-  { id: 'json', name: 'JSON', ext: '.json' },
-  { id: 'markdown', name: 'Markdown', ext: '.md' },
-];
+const LANGUAGES = [{ id: "javascript", name: "JavaScript", ext: ".js" }];
 
 export const Header: React.FC<HeaderProps> = ({
   roomId,
@@ -61,25 +42,25 @@ export const Header: React.FC<HeaderProps> = ({
 
   const getStatusColor = () => {
     switch (status) {
-      case 'connected':
-        return '#10b981'; // Green
-      case 'connecting':
-        return '#f59e0b'; // Amber
-      case 'disconnected':
+      case "connected":
+        return "#10b981"; // Green
+      case "connecting":
+        return "#f59e0b"; // Amber
+      case "disconnected":
       default:
-        return '#ef4444'; // Red
+        return "#ef4444"; // Red
     }
   };
 
   const getStatusText = () => {
     switch (status) {
-      case 'connected':
-        return isSynced ? 'Connected' : 'Syncing...';
-      case 'connecting':
-        return 'Connecting...';
-      case 'disconnected':
+      case "connected":
+        return isSynced ? "Connected" : "Syncing...";
+      case "connecting":
+        return "Connecting...";
+      case "disconnected":
       default:
-        return 'Disconnected';
+        return "Disconnected";
     }
   };
 
@@ -97,7 +78,11 @@ export const Header: React.FC<HeaderProps> = ({
 
         <div className="room-section">
           {/* Static room display — not editable after joining */}
-          <div className="room-badge" title={`Room: ${roomId}`} style={{ cursor: 'default' }}>
+          <div
+            className="room-badge"
+            title={`Room: ${roomId}`}
+            style={{ cursor: "default" }}
+          >
             <Radio size={14} className="room-icon" />
             <span className="room-label">Room:</span>
             <span className="room-name">{roomId}</span>
@@ -105,11 +90,11 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={handleCopyRoomId}
-            className={`btn-icon ${copied ? 'btn-copied' : ''}`}
+            className={`btn-icon ${copied ? "btn-copied" : ""}`}
             title="Copy room ID"
           >
             {copied ? <Check size={15} /> : <Copy size={15} />}
-            <span className="btn-text">{copied ? 'Copied!' : 'Copy ID'}</span>
+            <span className="btn-text">{copied ? "Copied!" : "Copy ID"}</span>
           </button>
         </div>
       </div>
@@ -135,14 +120,17 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Right: Presence, Profile & Connection */}
       <div className="header-right">
         {/* Active Collaborators */}
-        <div className="collaborators-group" title={`${users.length} active user(s)`}>
+        <div
+          className="collaborators-group"
+          title={`${users.length} active user(s)`}
+        >
           <div className="avatar-stack">
             {users.map((u) => (
               <div
                 key={u.clientId}
-                className={`avatar-badge ${u.isCurrentUser ? 'avatar-current' : ''}`}
+                className={`avatar-badge ${u.isCurrentUser ? "avatar-current" : ""}`}
                 style={{ backgroundColor: u.color }}
-                title={`${u.name}${u.isCurrentUser ? ' (You)' : ''}`}
+                title={`${u.name}${u.isCurrentUser ? " (You)" : ""}`}
               >
                 {u.name.charAt(0).toUpperCase()}
               </div>
@@ -157,7 +145,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="divider"></div>
 
         {/* Static user badge — name & color are locked after joining */}
-        <div className="profile-btn" style={{ cursor: 'default' }} title={`Signed in as ${currentUser.name}`}>
+        <div
+          className="profile-btn"
+          style={{ cursor: "default" }}
+          title={`Signed in as ${currentUser.name}`}
+        >
           <div
             className="user-color-dot"
             style={{ backgroundColor: currentUser.color }}
@@ -173,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
             size={9}
             fill={getStatusColor()}
             stroke="none"
-            className={status === 'connecting' ? 'pulse-anim' : ''}
+            className={status === "connecting" ? "pulse-anim" : ""}
           />
           <span className="status-text">{getStatusText()}</span>
         </div>
