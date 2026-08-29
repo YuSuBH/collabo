@@ -22,7 +22,6 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   const handleEditorMount: OnMount = (editorInstance) => {
     setEditor(editorInstance);
-    injectCursorStyles();
 
     editorInstance.onDidChangeCursorPosition((e) => {
       onCursorChange?.(e.position.lineNumber, e.position.column);
