@@ -36,19 +36,21 @@ export const injectCursorStyles = () => {
     /* Name badge */
     [class*="yRemoteSelectionHead"] .yRemoteNameBadge {
       position: absolute;
-      top: -18px;
+      top: -22px;
       left: -2px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: #fff;
-      padding: 1px 6px;
-      border-radius: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
       white-space: nowrap;
       pointer-events: none;
       user-select: none;
       line-height: 14px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
+      opacity: 0.95;
     }
   `;
   document.head.appendChild(style);
@@ -76,14 +78,36 @@ const applyInlineColors = (container: HTMLElement, awareness: Awareness) => {
       const match = el.className.match(/yRemoteSelectionHead-(\d+)/);
       if (!match) return;
       const clientId = parseInt(match[1], 10);
-      const color = states.get(clientId)?.user?.color as string | undefined;
+      const state = states.get(clientId);
+      const color = state?.user?.color as string | undefined;
+      const name = state?.user?.name as string | undefined;
       if (!color) return;
 
-      el.style.setProperty('color', color, 'important');
+      // Guard: only write if value changed (prevents observer re-trigger loop)
+      if (el.dataset.yjsColor !== color) {
+        el.style.setProperty('color', color, 'important');
+        el.dataset.yjsColor = color;
+      }
 
-      // Name badge background
-      const badge = el.querySelector<HTMLElement>('.yRemoteNameBadge');
-      if (badge) badge.style.setProperty('background-color', color, 'important');
+      // ── Name badge ──────────────────────────────────────────────────────
+      let badge = el.querySelector<HTMLElement>('.yRemoteNameBadge');
+      if (!badge && name) {
+        badge = document.createElement('span');
+        badge.className = 'yRemoteNameBadge';
+        badge.dataset.yjsBadge = '1';
+        el.appendChild(badge);
+      }
+      if (badge) {
+        // Guard: only write text/color if they changed
+        if (badge.dataset.yjsName !== name) {
+          badge.textContent = name ?? '';
+          badge.dataset.yjsName = name ?? '';
+        }
+        if (badge.dataset.yjsBg !== color) {
+          badge.style.setProperty('background-color', color, 'important');
+          badge.dataset.yjsBg = color;
+        }
+      }
     });
 
   // ── Selection highlights ───────────────────────────────────────────────────
@@ -97,7 +121,12 @@ const applyInlineColors = (container: HTMLElement, awareness: Awareness) => {
       const clientId = parseInt(match[1], 10);
       const color = states.get(clientId)?.user?.color as string | undefined;
       if (!color) return;
-      el.style.setProperty('background-color', hexToRgba(color, 0.3), 'important');
+      const bg = hexToRgba(color, 0.3);
+      // Guard: only write if value changed
+      if (el.dataset.yjsBg !== bg) {
+        el.style.setProperty('background-color', bg, 'important');
+        el.dataset.yjsBg = bg;
+      }
     });
 };
 
