@@ -24,6 +24,18 @@ function greetCollaborator(user: User): string {
 console.log(greetCollaborator({ id: '1', name: 'Collaborator', role: 'editor' }));
 `;
 const rooms = new Map();
+export const getRoomActiveColors = (roomName) => {
+    const room = rooms.get(roomName);
+    if (!room)
+        return [];
+    const colors = [];
+    room.awareness.getStates().forEach((state) => {
+        if (state.user && typeof state.user.color === 'string') {
+            colors.push(state.user.color);
+        }
+    });
+    return colors;
+};
 const send = (ws, message) => {
     if (ws.readyState === WebSocket.OPEN) {
         ws.send(message, (err) => {
@@ -96,6 +108,8 @@ export const setupYjsWebSocketServer = (server) => {
         console.log(`[Yjs WS] Client connected -> Room: "${roomName}" (Total in room: ${getOrCreateRoom(roomName).clients.size + 1})`);
         const room = getOrCreateRoom(roomName);
         room.clients.add(ws);
+        // Track awareness client IDs owned by this WebSocket connection
+        const controlledUserIds = new Set();
         // 1. Initial Sync: Send SyncStep1 to client
         {
             const encoder = encoding.createEncoder();
@@ -142,7 +156,27 @@ export const setupYjsWebSocketServer = (server) => {
                         break;
                     }
                     case MESSAGE_AWARENESS: {
-                        awarenessProtocol.applyAwarenessUpdate(room.awareness, decoding.readVarUint8Array(decoder), ws);
+                        const awarenessUpdate = decoding.readVarUint8Array(decoder);
+                        try {
+                            const tempDecoder = decoding.createDecoder(awarenessUpdate);
+                            const len = decoding.readVarUint(tempDecoder);
+                            for (let i = 0; i < len; i++) {
+                                const clientID = decoding.readVarUint(tempDecoder);
+                                decoding.readVarUint(tempDecoder); // clock
+                                const stateStr = decoding.readVarString(tempDecoder);
+                                const state = JSON.parse(stateStr);
+                                if (state === null) {
+                                    controlledUserIds.delete(clientID);
+                                }
+                                else {
+                                    controlledUserIds.add(clientID);
+                                }
+                            }
+                        }
+                        catch (err) {
+                            console.error('[Yjs WS] Error decoding awareness update client IDs:', err);
+                        }
+                        awarenessProtocol.applyAwarenessUpdate(room.awareness, awarenessUpdate, ws);
                         break;
                     }
                     case MESSAGE_QUERY_AWARENESS: {
@@ -160,9 +194,12 @@ export const setupYjsWebSocketServer = (server) => {
                 console.error('[Yjs WS] Error processing client message:', err);
             }
         });
-        // 4. Handle client disconnection
+        // 4. Handle client disconnection: immediately remove awareness presence
         ws.on('close', () => {
             room.clients.delete(ws);
+            if (controlledUserIds.size > 0) {
+                awarenessProtocol.removeAwarenessStates(room.awareness, Array.from(controlledUserIds), null);
+            }
             console.log(`[Yjs WS] Client disconnected <- Room: "${roomName}" (Remaining: ${room.clients.size})`);
         });
         ws.on('error', (err) => {

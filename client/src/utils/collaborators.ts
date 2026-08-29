@@ -57,10 +57,36 @@ export const CURSOR_COLORS = [
   '#76FF03', // Lime
 ];
 
-export const getRandomCollaborator = (): UserPresence => {
+export const getAvailableColor = (usedColors: string[] = []): string => {
+  const usedSet = new Set(usedColors.map((c) => c.toLowerCase()));
+  const available = CURSOR_COLORS.filter(
+    (c) => !usedSet.has(c.toLowerCase())
+  );
+
+  if (available.length > 0) {
+    return available[Math.floor(Math.random() * available.length)]!;
+  }
+
+  // If all colors are taken, pick the color with fewest occurrences
+  const countMap: Record<string, number> = {};
+  CURSOR_COLORS.forEach((c) => {
+    countMap[c.toLowerCase()] = 0;
+  });
+  usedColors.forEach((c) => {
+    const lower = c.toLowerCase();
+    countMap[lower] = (countMap[lower] || 0) + 1;
+  });
+
+  const sorted = [...CURSOR_COLORS].sort(
+    (a, b) => (countMap[a.toLowerCase()] || 0) - (countMap[b.toLowerCase()] || 0)
+  );
+  return sorted[0]!;
+};
+
+export const getRandomCollaborator = (usedColors: string[] = []): UserPresence => {
   const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
   const animal = ANIMALS[Math.floor(Math.random() * ANIMALS.length)];
-  const color = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
+  const color = getAvailableColor(usedColors);
 
   return {
     name: `${adj} ${animal}`,

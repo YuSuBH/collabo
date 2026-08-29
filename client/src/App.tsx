@@ -24,7 +24,7 @@ interface JoinInfo {
 }
 
 // ─── IDE View ────────────────────────────────────────────────────────────────
-function IDEView({ joinInfo }: { joinInfo: JoinInfo }) {
+function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => void }) {
   const [language, setLanguage] = useState('typescript');
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
 
@@ -58,6 +58,7 @@ function IDEView({ joinInfo }: { joinInfo: JoinInfo }) {
         onUpdateUser={updateUser}
         language={language}
         onLanguageChange={setLanguage}
+        onLeaveRoom={onLeave}
       />
 
       <div className="tab-bar">
@@ -125,11 +126,18 @@ function App() {
     setJoinInfo({ roomId, username, color });
   };
 
+  const handleLeave = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('room');
+    window.history.pushState({}, '', url.toString());
+    setJoinInfo(null);
+  };
+
   if (!joinInfo) {
     return <LobbyPage onJoin={handleJoin} />;
   }
 
-  return <IDEView joinInfo={joinInfo} />;
+  return <IDEView joinInfo={joinInfo} onLeave={handleLeave} />;
 }
 
 export default App;

@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Code2, Users, Shuffle, ArrowRight, Radio } from 'lucide-react';
-import { CURSOR_COLORS } from '../../utils/collaborators';
+import { CURSOR_COLORS, getAvailableColor } from '../../utils/collaborators';
 
 const getRandomColor = (): string =>
   CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
@@ -16,9 +16,6 @@ const generateRoomId = (): string => {
   ).join('');
 };
 
-
-
-
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
   const [roomId, setRoomId] = useState<string>(() => {
     // Pre-fill room ID only when arriving via a shared ?room= link
@@ -26,8 +23,6 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     return params.get('room') || '';
   });
   const [username, setUsername] = useState('');
-  // Color is assigned randomly and never exposed to the user
-  const colorRef = useRef<string>(getRandomColor());
   const [roomError, setRoomError] = useState('');
   const [nameError, setNameError] = useState('');
 
@@ -36,14 +31,39 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     setRoomError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanRoom = roomId.trim();
+    const cleanName = username.trim();
+
     let valid = true;
-    if (!roomId.trim()) { setRoomError('Room ID cannot be empty.'); valid = false; }
+    if (!cleanRoom) { setRoomError('Room ID cannot be empty.'); valid = false; }
     else setRoomError('');
-    if (!username.trim()) { setNameError('Username cannot be empty.'); valid = false; }
+    if (!cleanName) { setNameError('Username cannot be empty.'); valid = false; }
     else setNameError('');
-    if (valid) onJoin(roomId.trim(), username.trim(), colorRef.current);
+
+    if (!valid) return;
+
+    // Determine an unused color in this room
+    let assignedColor = getRandomColor();
+    try {
+      const serverUrl = import.meta.env.VITE_WS_URL
+        ? import.meta.env.VITE_WS_URL.replace(/^ws/, 'http')
+        : 'http://localhost:5000';
+      const res = await fetch(`${serverUrl}/api/rooms/${encodeURIComponent(cleanRoom)}/colors`, {
+        signal: AbortSignal.timeout(1200),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.colors)) {
+          assignedColor = getAvailableColor(data.colors);
+        }
+      }
+    } catch {
+      // Fall back to random if server query fails or times out
+    }
+
+    onJoin(cleanRoom, cleanName, assignedColor);
   };
 
   return (

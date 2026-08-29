@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
-import { setupYjsWebSocketServer } from './websocket/yjsServer.js';
+import { setupYjsWebSocketServer, getRoomActiveColors } from './websocket/yjsServer.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,6 +15,12 @@ app.get('/api/health', (_req, res) => {
         timestamp: new Date().toISOString(),
         service: 'collaborative-coding-backend',
     });
+});
+// Room Active Colors API
+app.get('/api/rooms/:roomId/colors', (req, res) => {
+    const { roomId } = req.params;
+    const colors = getRoomActiveColors(roomId);
+    res.json({ roomId, colors });
 });
 const server = http.createServer(app);
 // Mount Yjs WebSocket relay

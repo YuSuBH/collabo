@@ -4,6 +4,7 @@ import { WebsocketProvider } from 'y-websocket';
 import type { Awareness } from 'y-protocols/awareness';
 import {
   getRandomCollaborator,
+  getAvailableColor,
   type UserPresence,
   type Collaborator,
 } from '../utils/collaborators';
@@ -92,6 +93,35 @@ export const useYjs = ({
     [awareness]
   );
 
+  // Alert user before closing tab / reloading and immediately remove awareness state if leaving
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Standard browser confirmation prompt when attempting to close tab or navigate away
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    const handlePageHide = () => {
+      // Immediately clear presence and disconnect WebSocket when leaving
+      if (awareness) {
+        awareness.setLocalState(null);
+      }
+      if (provider) {
+        provider.disconnect();
+        provider.destroy();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handlePageHide);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handlePageHide);
+    };
+  }, [awareness, provider]);
+
   useEffect(() => {
     const ydoc = new Y.Doc();
     const wsProvider = new WebsocketProvider(serverUrl, roomId, ydoc, {
@@ -118,19 +148,49 @@ export const useYjs = ({
     const handleAwarenessChange = () => {
       const states = wsAwareness.getStates();
       const collaborators: Collaborator[] = [];
+      const otherColors: string[] = [];
 
       states.forEach((state, clientId) => {
         if (state.user && state.user.name && state.user.color) {
+          const isMe = clientId === ydoc.clientID;
           collaborators.push({
             clientId,
             name: state.user.name,
             color: state.user.color,
-            isCurrentUser: clientId === ydoc.clientID,
+            isCurrentUser: isMe,
           });
+          if (!isMe) {
+            otherColors.push(state.user.color);
+          }
         }
       });
 
       setUsers(collaborators);
+
+      // Prevent duplicate colors: if another user in the room has our color, pick an unused one
+      const myState = wsAwareness.getLocalState();
+      const myColor = myState?.user?.color;
+      if (myColor) {
+        const duplicatePeer = collaborators.find(
+          (c) => !c.isCurrentUser && c.color.toLowerCase() === myColor.toLowerCase()
+        );
+
+        // Deterministic collision resolution (tie-breaker by clientID)
+        if (duplicatePeer && ydoc.clientID > duplicatePeer.clientId) {
+          const newColor = getAvailableColor(otherColors);
+          const updatedUser = {
+            ...(myState.user || currentUser),
+            color: newColor,
+          };
+          wsAwareness.setLocalStateField('user', updatedUser);
+          setCurrentUserState(updatedUser);
+          try {
+            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updatedUser));
+          } catch {
+            // Ignore
+          }
+        }
+      }
     };
 
     wsProvider.on('status', handleStatus);
@@ -143,6 +203,8 @@ export const useYjs = ({
       wsProvider.off('status', handleStatus);
       wsProvider.off('sync', handleSync);
       wsAwareness.off('change', handleAwarenessChange);
+      // Immediately clear local awareness state before destroying
+      wsAwareness.setLocalState(null);
       wsProvider.destroy();
       ydoc.destroy();
       setDoc(null);

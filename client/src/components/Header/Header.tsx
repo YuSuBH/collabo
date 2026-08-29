@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Code2, Users, Copy, Check, Circle, Globe, Radio } from "lucide-react";
+import { Code2, Users, Copy, Check, Circle, Globe, Radio, LogOut } from "lucide-react";
 import type { ConnectionStatus } from "../../hooks/useYjs";
 import {
   type Collaborator,
@@ -16,6 +16,7 @@ interface HeaderProps {
   onUpdateUser: (user: Partial<UserPresence>) => void;
   language: string;
   onLanguageChange: (lang: string) => void;
+  onLeaveRoom?: () => void;
 }
 
 const LANGUAGES = [{ id: "javascript", name: "JavaScript", ext: ".js" }];
@@ -30,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
   onUpdateUser: _onUpdateUser,
   language,
   onLanguageChange,
+  onLeaveRoom,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -38,6 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
     navigator.clipboard.writeText(roomId);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLeave = () => {
+    if (window.confirm("Are you sure you want to leave the room?")) {
+      onLeaveRoom?.();
+    }
   };
 
   const getStatusColor = () => {
@@ -169,6 +177,21 @@ export const Header: React.FC<HeaderProps> = ({
           />
           <span className="status-text">{getStatusText()}</span>
         </div>
+
+        {/* Leave Room Button */}
+        {onLeaveRoom && (
+          <>
+            <div className="divider"></div>
+            <button
+              onClick={handleLeave}
+              className="btn-leave"
+              title="Leave room and return to lobby"
+            >
+              <LogOut size={14} />
+              <span>Leave</span>
+            </button>
+          </>
+        )}
       </div>
     </header>
   );
