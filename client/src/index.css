@@ -501,6 +501,15 @@ body,
   position: relative;
   overflow: hidden;
   background-color: var(--bg-editor);
+  display: flex;
+  flex-direction: row;
+}
+
+.editor-panel {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
 }
 
 .editor-container {
@@ -564,6 +573,299 @@ body,
 .highlight-item {
   color: var(--text-main);
   font-weight: 600;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   FILE EXPLORER SIDEBAR
+─────────────────────────────────────────────────────────────────────────── */
+.file-explorer {
+  width: 220px;
+  min-width: 220px;
+  background-color: var(--bg-dark);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  overflow: hidden;
+}
+
+.fe-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fe-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.fe-btn-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.fe-btn-new:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+/* File list */
+.fe-file-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 4px 0;
+}
+
+.fe-file-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fe-file-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.fe-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 14px 5px 12px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+  gap: 4px;
+}
+
+.fe-file-item:hover {
+  background: var(--bg-surface);
+}
+
+.fe-file-item:hover .fe-btn-delete {
+  opacity: 1;
+}
+
+.fe-file-active {
+  background: rgba(59, 130, 246, 0.08);
+  border-left-color: var(--accent-primary);
+}
+
+.fe-file-active:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.fe-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fe-file-icon {
+  flex-shrink: 0;
+}
+
+.fe-file-name {
+  font-size: 13px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fe-file-active .fe-file-name {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Peer activity dots */
+.fe-peer-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.fe-peer-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid var(--bg-dark);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s;
+}
+
+.fe-peer-dot:hover {
+  transform: scale(1.3);
+}
+
+.fe-peer-overflow {
+  font-size: 9px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+/* Delete button */
+.fe-btn-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, color 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+
+.fe-btn-delete:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Delete confirmation */
+.fe-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.fe-btn-confirm-yes,
+.fe-btn-confirm-no {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.fe-btn-confirm-yes {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.fe-btn-confirm-yes:hover {
+  background: rgba(239, 68, 68, 0.35);
+  color: #ffffff;
+}
+
+.fe-btn-confirm-no {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.fe-btn-confirm-no:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+/* New file input area */
+.fe-new-file {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-color);
+}
+
+.fe-new-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fe-new-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.fe-new-input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-main);
+  font-size: 12px;
+  padding: 4px 8px;
+  outline: none;
+  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.fe-new-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.fe-new-input-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+}
+
+.fe-btn-create,
+.fe-btn-cancel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  flex-shrink: 0;
+}
+
+.fe-btn-create {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.fe-btn-create:hover {
+  background: rgba(34, 197, 94, 0.3);
+  color: #ffffff;
+}
+
+.fe-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.fe-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+.fe-create-error {
+  display: block;
+  font-size: 10px;
+  color: #f87171;
+  margin-top: 4px;
+  padding-left: 20px;
 }
 
 /* ───────────────────────────────────────────────────────────────────────────

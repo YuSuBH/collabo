@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Code2, Users, Copy, Check, Circle, Globe, Radio, LogOut } from "lucide-react";
+import { Code2, Users, Copy, Check, Circle, Radio, LogOut } from "lucide-react";
 import type { ConnectionStatus } from "../../hooks/useYjs";
 import {
   type Collaborator,
@@ -14,12 +14,8 @@ interface HeaderProps {
   users: Collaborator[];
   currentUser: UserPresence;
   onUpdateUser: (user: Partial<UserPresence>) => void;
-  language: string;
-  onLanguageChange: (lang: string) => void;
   onLeaveRoom?: () => void;
 }
-
-const LANGUAGES = [{ id: "javascript", name: "JavaScript", ext: ".js" }];
 
 export const Header: React.FC<HeaderProps> = ({
   roomId,
@@ -29,8 +25,6 @@ export const Header: React.FC<HeaderProps> = ({
   users,
   currentUser,
   onUpdateUser: _onUpdateUser,
-  language,
-  onLanguageChange,
   onLeaveRoom,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -79,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="brand">
           <Code2 size={22} className="brand-icon" />
           <span className="brand-title">CodeSync</span>
-          <span className="brand-tag">v0.2</span>
+          <span className="brand-tag">v0.3</span>
         </div>
 
         <div className="divider"></div>
@@ -104,24 +98,6 @@ export const Header: React.FC<HeaderProps> = ({
             {copied ? <Check size={15} /> : <Copy size={15} />}
             <span className="btn-text">{copied ? "Copied!" : "Copy ID"}</span>
           </button>
-        </div>
-      </div>
-
-      {/* Center: Language selector */}
-      <div className="header-center">
-        <div className="lang-select-wrapper">
-          <Globe size={15} className="lang-icon" />
-          <select
-            value={language}
-            onChange={(e) => onLanguageChange(e.target.value)}
-            className="lang-select"
-          >
-            {LANGUAGES.map((lang) => (
-              <option key={lang.id} value={lang.id}>
-                {lang.name} ({lang.ext})
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 

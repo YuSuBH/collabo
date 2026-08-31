@@ -51,10 +51,12 @@ const getOrCreateRoom = (roomName) => {
         const doc = new Y.Doc();
         const awareness = new awarenessProtocol.Awareness(doc);
         const clients = new Set();
-        // Pre-populate with default starter code if new room
-        const ytext = doc.getText('monaco');
-        if (ytext.length === 0) {
-            ytext.insert(0, DEFAULT_STARTER_CODE);
+        // Pre-populate with default starter file if new room
+        const filesMap = doc.getMap('files');
+        if (filesMap.size === 0) {
+            const mainFile = new Y.Text();
+            mainFile.insert(0, DEFAULT_STARTER_CODE);
+            filesMap.set('main.js', mainFile);
         }
         const newRoom = {
             name: roomName,

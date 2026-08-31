@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import * as Y from 'yjs';
 import { MonacoBinding } from 'y-monaco';
 import type { Awareness } from 'y-protocols/awareness';
 import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
+import { getLanguageFromFileName } from '../../utils/languageDetection';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
   awareness: Awareness | null;
-  language: string;
+  activeFile: string;
   onCursorChange?: (line: number, col: number) => void;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   doc,
   awareness,
-  language,
+  activeFile,
   onCursorChange,
 }) => {
   const [editor, setEditor] = useState<any>(null);
+  const bindingRef = useRef<MonacoBinding | null>(null);
+  const observerCleanupRef = useRef<(() => void) | null>(null);
 
   const handleEditorMount: OnMount = (editorInstance) => {
     setEditor(editorInstance);
@@ -28,41 +31,85 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     });
   };
 
+  // Re-bind whenever activeFile, editor, doc, or awareness change
   useEffect(() => {
-    if (!editor || !doc || !awareness) return;
+    if (!editor || !doc || !awareness || !activeFile) return;
 
     injectCursorStyles();
-    const yText = doc.getText('monaco');
-    const model = editor.getModel();
 
-    if (!model) return;
+    // Get the Y.Text for the active file from the files map
+    const filesMap = doc.getMap('files');
+    let yText = filesMap.get(activeFile) as Y.Text | undefined;
 
-    // Initialize MonacoBinding between Y.Text, Monaco Model, and Awareness
+    // If the file doesn't exist in the map yet (shouldn't happen, but be safe)
+    if (!yText) {
+      doc.transact(() => {
+        yText = new Y.Text();
+        filesMap.set(activeFile, yText);
+      });
+      yText = filesMap.get(activeFile) as Y.Text;
+    }
+
+    if (!yText) return;
+
+    const language = getLanguageFromFileName(activeFile);
+
+    // Get the Monaco instance and create a fresh model for this file
+    const monaco = (window as any).monaco;
+    if (!monaco) return;
+
+    // Dispose the old model if there is one
+    const oldModel = editor.getModel();
+
+    // Create a new model with the correct language
+    // Use a unique URI so Monaco doesn't complain about duplicates
+    const uri = monaco.Uri.parse(`file:///${activeFile}`);
+    let model = monaco.editor.getModel(uri);
+    if (!model) {
+      // Create with empty string — MonacoBinding will sync the content from Y.Text
+      model = monaco.editor.createModel('', language, uri);
+    } else {
+      // Model exists, just update language
+      monaco.editor.setModelLanguage(model, language);
+    }
+
+    editor.setModel(model);
+
+    // Dispose old model if it's a different one and not used elsewhere
+    if (oldModel && oldModel !== model && oldModel.uri.toString() !== model.uri.toString()) {
+      // Don't dispose — other editors might reference it. Monaco GCs unused models.
+    }
+
+    // Create the MonacoBinding between Y.Text and the new model
     const binding = new MonacoBinding(
       yText,
       model,
       new Set([editor]),
       awareness
     );
+    bindingRef.current = binding;
 
-    // Apply profile colours to remote cursors via MutationObserver + inline styles
+    // Start the cursor color observer
     const editorDom = editor.getDomNode();
     let stopObserver: (() => void) | undefined;
     if (editorDom) {
       stopObserver = startCursorColorObserver(editorDom, awareness);
+      observerCleanupRef.current = stopObserver;
     }
 
     return () => {
       stopObserver?.();
+      observerCleanupRef.current = null;
       binding.destroy();
+      bindingRef.current = null;
     };
-  }, [editor, doc, awareness]);
+  }, [editor, doc, awareness, activeFile]);
 
   return (
     <div className="editor-container">
       <Editor
         height="100%"
-        language={language}
+        language={getLanguageFromFileName(activeFile)}
         theme="vs-dark"
         onMount={handleEditorMount}
         options={{
@@ -93,5 +140,3 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     </div>
   );
 };
-
-
