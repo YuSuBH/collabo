@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import * as Y from 'yjs';
-import { MonacoBinding } from 'y-monaco';
+import { MonacoBinding } from '../../utils/yMonacoBinding';
 import type { Awareness } from 'y-protocols/awareness';
 import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
 import { getLanguageFromFileName } from '../../utils/languageDetection';
@@ -80,12 +80,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       // Don't dispose — other editors might reference it. Monaco GCs unused models.
     }
 
-    // Create the MonacoBinding between Y.Text and the new model
+    // Create the MonacoBinding between Y.Text and the new model with activeFile passed
     const binding = new MonacoBinding(
       yText,
       model,
       new Set([editor]),
-      awareness
+      awareness,
+      activeFile
     );
     bindingRef.current = binding;
 
@@ -102,6 +103,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       observerCleanupRef.current = null;
       binding.destroy();
       bindingRef.current = null;
+      if (awareness) {
+        awareness.setLocalStateField('selection', null);
+      }
     };
   }, [editor, doc, awareness, activeFile]);
 
