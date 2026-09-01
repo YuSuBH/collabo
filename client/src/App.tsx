@@ -4,9 +4,11 @@ import { useYjs } from './hooks/useYjs';
 import { Header } from './components/Header/Header';
 import { CodeEditor } from './components/Editor/CodeEditor';
 import { FileExplorer } from './components/FileExplorer/FileExplorer';
+import { RoomInfo } from './components/Sidebar/RoomInfo';
+import { ChatPanel, type ChatTab } from './components/Chat/ChatPanel';
 import { LobbyPage } from './components/Lobby/LobbyPage';
 import { getLanguageLabel } from './utils/languageDetection';
-import { FileCode, Activity, Terminal } from 'lucide-react';
+import { FileCode, Activity, Terminal, FolderTree, Users } from 'lucide-react';
 import './index.css';
 
 const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
@@ -31,10 +33,18 @@ interface JoinInfo {
   color: string;
 }
 
+type LeftSidebarTab = 'files' | 'room';
+
 // ─── IDE View ────────────────────────────────────────────────────────────────
 function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => void }) {
   const [activeFile, setActiveFile] = useState<string>('main.js');
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+
+  // Sidebar visibility and active tabs
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
+  const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('files');
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(false);
+  const [rightSidebarTab, setRightSidebarTab] = useState<ChatTab>('group');
 
   const {
     doc,
@@ -43,9 +53,9 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     isSynced,
     users,
     currentUser,
-    updateUser,
+    updateUser: _updateUser,
     roomId,
-    setRoomId,
+    setRoomId: _setRoomId,
   } = useYjs({
     initialRoomId: joinInfo.roomId,
     initialName: joinInfo.username,
@@ -86,18 +96,50 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     setActiveFile(fileName);
   }, []);
 
+  // Left sidebar toggling
+  const handleToggleLeftSidebar = useCallback((tab: LeftSidebarTab) => {
+    if (isLeftSidebarOpen && leftSidebarTab === tab) {
+      setIsLeftSidebarOpen(false);
+    } else {
+      setIsLeftSidebarOpen(true);
+      setLeftSidebarTab(tab);
+    }
+  }, [isLeftSidebarOpen, leftSidebarTab]);
+
+  // Right sidebar toggling
+  const handleToggleRightSidebar = useCallback((tab: ChatTab) => {
+    if (isRightSidebarOpen && rightSidebarTab === tab) {
+      setIsRightSidebarOpen(false);
+    } else {
+      setIsRightSidebarOpen(true);
+      setRightSidebarTab(tab);
+    }
+  }, [isRightSidebarOpen, rightSidebarTab]);
+
+  // Handle Execute Code placeholder
+  const handleExecuteCode = useCallback(() => {
+    console.log(`[Execute] Running code for active file: ${activeFile}`);
+    // Future execution backend integration
+    alert(`⚡ Execution triggered for ${activeFile}!\nExecution runner can be connected to the backend.`);
+  }, [activeFile]);
+
   const languageLabel = getLanguageLabel(activeFile);
 
   return (
     <div className="ide-layout">
+      {/* Icon-only Clean Header */}
       <Header
         roomId={roomId}
-        onRoomChange={setRoomId}
         status={status}
         isSynced={isSynced}
         users={users}
-        currentUser={currentUser}
-        onUpdateUser={updateUser}
+        isLeftSidebarOpen={isLeftSidebarOpen}
+        leftSidebarTab={leftSidebarTab}
+        onToggleLeftSidebar={handleToggleLeftSidebar}
+        isRightSidebarOpen={isRightSidebarOpen}
+        rightSidebarTab={rightSidebarTab}
+        onToggleRightSidebar={handleToggleRightSidebar}
+        onExecute={handleExecuteCode}
         onLeaveRoom={onLeave}
       />
 
@@ -116,15 +158,51 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
       </div>
 
       <div className="editor-main">
-        {doc && awareness && (
-          <FileExplorer
-            doc={doc}
-            awareness={awareness}
-            activeFile={activeFile}
-            onFileSelect={handleFileSelect}
-            users={users}
-          />
+        {/* Left Sidebar with Switchable Views */}
+        {isLeftSidebarOpen && (
+          <div className="sidebar-container left-sidebar">
+            <div className="sidebar-tab-switcher">
+              <button
+                className={`sidebar-tab-btn ${leftSidebarTab === 'files' ? 'sidebar-tab-btn-active' : ''}`}
+                onClick={() => setLeftSidebarTab('files')}
+                title="File Explorer"
+              >
+                <FolderTree size={14} />
+                <span>Files</span>
+              </button>
+              <button
+                className={`sidebar-tab-btn ${leftSidebarTab === 'room' ? 'sidebar-tab-btn-active' : ''}`}
+                onClick={() => setLeftSidebarTab('room')}
+                title="Room & Members"
+              >
+                <Users size={14} />
+                <span>Room</span>
+              </button>
+            </div>
+
+            <div className="sidebar-content-view">
+              {leftSidebarTab === 'files' && doc && awareness && (
+                <FileExplorer
+                  doc={doc}
+                  awareness={awareness}
+                  activeFile={activeFile}
+                  onFileSelect={handleFileSelect}
+                  users={users}
+                />
+              )}
+
+              {leftSidebarTab === 'room' && (
+                <RoomInfo
+                  roomId={roomId}
+                  users={users}
+                  currentUser={currentUser}
+                />
+              )}
+            </div>
+          </div>
         )}
+
+        {/* Center Code Editor */}
         <div className="editor-panel">
           <CodeEditor
             doc={doc}
@@ -133,13 +211,25 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             onCursorChange={(line, col) => setCursorPos({ line, col })}
           />
         </div>
+
+        {/* Right Collapsible Chat Panel (Group & AI Chat) */}
+        {isRightSidebarOpen && (
+          <ChatPanel
+            activeTab={rightSidebarTab}
+            onTabChange={setRightSidebarTab}
+            onClose={() => setIsRightSidebarOpen(false)}
+            users={users}
+            currentUser={currentUser}
+            activeFile={activeFile}
+          />
+        )}
       </div>
 
       <footer className="status-bar">
         <div className="status-bar-left">
           <div className="status-item">
             <Terminal size={12} />
-            <span>CodeSync Yjs Relay</span>
+            <span>CodeSync Relay</span>
           </div>
           <div className="status-item">
             <span>Room: {roomId}</span>

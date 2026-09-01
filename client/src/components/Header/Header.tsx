@@ -1,172 +1,180 @@
-import React, { useState } from "react";
-import { Code2, Users, Copy, Check, Circle, Radio, LogOut } from "lucide-react";
-import type { ConnectionStatus } from "../../hooks/useYjs";
+import React from 'react';
 import {
-  type Collaborator,
-  type UserPresence,
-} from "../../utils/collaborators";
+  Code2,
+  FolderTree,
+  Users,
+  Play,
+  MessageSquare,
+  Sparkles,
+  LogOut,
+  Radio,
+} from 'lucide-react';
+import type { ConnectionStatus } from '../../hooks/useYjs';
+import type { Collaborator } from '../../utils/collaborators';
 
 interface HeaderProps {
   roomId: string;
-  onRoomChange: (newRoom: string) => void;
   status: ConnectionStatus;
   isSynced: boolean;
   users: Collaborator[];
-  currentUser: UserPresence;
-  onUpdateUser: (user: Partial<UserPresence>) => void;
+  // Left sidebar toggles
+  isLeftSidebarOpen: boolean;
+  leftSidebarTab: 'files' | 'room';
+  onToggleLeftSidebar: (tab: 'files' | 'room') => void;
+  // Right sidebar toggles
+  isRightSidebarOpen: boolean;
+  rightSidebarTab: 'group' | 'ai';
+  onToggleRightSidebar: (tab: 'group' | 'ai') => void;
+  // Execute
+  onExecute?: () => void;
+  // Leave
   onLeaveRoom?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   roomId,
-  onRoomChange: _onRoomChange,
   status,
   isSynced,
   users,
-  currentUser,
-  onUpdateUser: _onUpdateUser,
+  isLeftSidebarOpen,
+  leftSidebarTab,
+  onToggleLeftSidebar,
+  isRightSidebarOpen,
+  rightSidebarTab,
+  onToggleRightSidebar,
+  onExecute,
   onLeaveRoom,
 }) => {
-  const [copied, setCopied] = useState(false);
-
-  // Copy only the room ID (not the full URL)
-  const handleCopyRoomId = () => {
-    navigator.clipboard.writeText(roomId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const handleLeave = () => {
-    if (window.confirm("Are you sure you want to leave the room?")) {
+    if (window.confirm('Are you sure you want to leave the room?')) {
       onLeaveRoom?.();
     }
   };
 
   const getStatusColor = () => {
     switch (status) {
-      case "connected":
-        return "#10b981"; // Green
-      case "connecting":
-        return "#f59e0b"; // Amber
-      case "disconnected":
+      case 'connected':
+        return '#10b981'; // Green
+      case 'connecting':
+        return '#f59e0b'; // Amber
+      case 'disconnected':
       default:
-        return "#ef4444"; // Red
+        return '#ef4444'; // Red
     }
   };
 
-  const getStatusText = () => {
+  const getStatusDescription = () => {
     switch (status) {
-      case "connected":
-        return isSynced ? "Connected" : "Syncing...";
-      case "connecting":
-        return "Connecting...";
-      case "disconnected":
+      case 'connected':
+        return isSynced
+          ? `Connected to room "${roomId}" (${users.length} collaborator${users.length !== 1 ? 's' : ''})`
+          : `Connected to room "${roomId}" (Syncing data...)`;
+      case 'connecting':
+        return `Connecting to room "${roomId}"...`;
+      case 'disconnected':
       default:
-        return "Disconnected";
+        return 'Disconnected from server';
     }
   };
 
   return (
-    <header className="app-header">
-      {/* Left: Brand & Room */}
-      <div className="header-left">
-        <div className="brand">
-          <Code2 size={22} className="brand-icon" />
-          <span className="brand-title">CodeSync</span>
-          <span className="brand-tag">v0.3</span>
+    <header className="app-header-clean">
+      {/* Left: Logo & Left Sidebar Toggles */}
+      <div className="header-group-left">
+        <div className="brand-logo-only" title="CodeSync Collaborative IDE">
+          <Code2 size={20} className="brand-icon" />
         </div>
 
-        <div className="divider"></div>
+        <div className="header-divider" />
 
-        <div className="room-section">
-          {/* Static room display — not editable after joining */}
-          <div
-            className="room-badge"
-            title={`Room: ${roomId}`}
-            style={{ cursor: "default" }}
+        <div className="header-nav-buttons">
+          <button
+            className={`header-icon-btn ${isLeftSidebarOpen && leftSidebarTab === 'files' ? 'header-icon-btn-active' : ''}`}
+            onClick={() => onToggleLeftSidebar('files')}
+            title="File Explorer"
+            aria-label="File Explorer"
           >
-            <Radio size={14} className="room-icon" />
-            <span className="room-label">Room:</span>
-            <span className="room-name">{roomId}</span>
-          </div>
+            <FolderTree size={17} />
+          </button>
 
           <button
-            onClick={handleCopyRoomId}
-            className={`btn-icon ${copied ? "btn-copied" : ""}`}
-            title="Copy room ID"
+            className={`header-icon-btn ${isLeftSidebarOpen && leftSidebarTab === 'room' ? 'header-icon-btn-active' : ''}`}
+            onClick={() => onToggleLeftSidebar('room')}
+            title={`Room & Collaborators (${users.length} active)`}
+            aria-label="Room & Collaborators"
           >
-            {copied ? <Check size={15} /> : <Copy size={15} />}
-            <span className="btn-text">{copied ? "Copied!" : "Copy ID"}</span>
+            <Users size={17} />
+            {users.length > 0 && (
+              <span className="header-badge-count">{users.length}</span>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Right: Presence, Profile & Connection */}
-      <div className="header-right">
-        {/* Active Collaborators */}
-        <div
-          className="collaborators-group"
-          title={`${users.length} active user(s)`}
+      {/* Center: Execute / Run Button */}
+      <div className="header-group-center">
+        <button
+          className="header-execute-btn"
+          onClick={onExecute}
+          title="Execute Code (Run)"
+          aria-label="Execute Code"
         >
-          <div className="avatar-stack">
-            {users.map((u) => (
-              <div
-                key={u.clientId}
-                className={`avatar-badge ${u.isCurrentUser ? "avatar-current" : ""}`}
-                style={{ backgroundColor: u.color }}
-                title={`${u.name}${u.isCurrentUser ? " (You)" : ""}`}
-              >
-                {u.name.charAt(0).toUpperCase()}
-              </div>
-            ))}
-          </div>
-          <span className="collab-count">
-            <Users size={14} />
-            {users.length}
-          </span>
+          <Play size={14} fill="currentColor" />
+          <span className="execute-btn-text">Run</span>
+        </button>
+      </div>
+
+      {/* Right: Chat Toggles, Status, Leave */}
+      <div className="header-group-right">
+        <div className="header-nav-buttons">
+          <button
+            className={`header-icon-btn ${isRightSidebarOpen && rightSidebarTab === 'group' ? 'header-icon-btn-active' : ''}`}
+            onClick={() => onToggleRightSidebar('group')}
+            title="Group Chat"
+            aria-label="Group Chat"
+          >
+            <MessageSquare size={17} />
+          </button>
+
+          <button
+            className={`header-icon-btn ai-toggle-btn ${isRightSidebarOpen && rightSidebarTab === 'ai' ? 'header-icon-btn-active' : ''}`}
+            onClick={() => onToggleRightSidebar('ai')}
+            title="AI Assistant"
+            aria-label="AI Assistant"
+          >
+            <Sparkles size={17} />
+          </button>
         </div>
 
-        <div className="divider"></div>
+        <div className="header-divider" />
 
-        {/* Static user badge — name & color are locked after joining */}
+        {/* Connection Status Icon Indicator */}
         <div
-          className="profile-btn"
-          style={{ cursor: "default" }}
-          title={`Signed in as ${currentUser.name}`}
+          className="header-status-indicator"
+          title={getStatusDescription()}
+          style={{ borderColor: getStatusColor() }}
         >
-          <div
-            className="user-color-dot"
-            style={{ backgroundColor: currentUser.color }}
+          <Radio
+            size={15}
+            style={{ color: getStatusColor() }}
+            className={status === 'connecting' ? 'pulse-anim' : ''}
           />
-          <span className="user-name">{currentUser.name}</span>
-        </div>
-
-        <div className="divider"></div>
-
-        {/* Connection Status Pill */}
-        <div className="status-pill" title={`Connection status: ${status}`}>
-          <Circle
-            size={9}
-            fill={getStatusColor()}
-            stroke="none"
-            className={status === "connecting" ? "pulse-anim" : ""}
+          <span
+            className="status-dot-mini"
+            style={{ backgroundColor: getStatusColor() }}
           />
-          <span className="status-text">{getStatusText()}</span>
         </div>
 
         {/* Leave Room Button */}
         {onLeaveRoom && (
-          <>
-            <div className="divider"></div>
-            <button
-              onClick={handleLeave}
-              className="btn-leave"
-              title="Leave room and return to lobby"
-            >
-              <LogOut size={14} />
-              <span>Leave</span>
-            </button>
-          </>
+          <button
+            onClick={handleLeave}
+            className="header-icon-btn header-btn-leave"
+            title="Leave room"
+            aria-label="Leave room"
+          >
+            <LogOut size={16} />
+          </button>
         )}
       </div>
     </header>
