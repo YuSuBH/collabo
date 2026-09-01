@@ -17,6 +17,7 @@ interface HeaderProps {
   status: ConnectionStatus;
   isSynced: boolean;
   users: Collaborator[];
+  unreadChatCount?: number;
   // Left sidebar toggles
   isLeftSidebarOpen: boolean;
   leftSidebarTab: 'files' | 'room';
@@ -36,6 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
   status,
   isSynced,
   users,
+  unreadChatCount = 0,
   isLeftSidebarOpen,
   leftSidebarTab,
   onToggleLeftSidebar,
@@ -130,10 +132,15 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             className={`header-icon-btn ${isRightSidebarOpen && rightSidebarTab === 'group' ? 'header-icon-btn-active' : ''}`}
             onClick={() => onToggleRightSidebar('group')}
-            title="Group Chat"
+            title={`Group Chat${unreadChatCount > 0 ? ` (${unreadChatCount} unread)` : ''}`}
             aria-label="Group Chat"
           >
             <MessageSquare size={17} />
+            {unreadChatCount > 0 && (
+              <span className="header-badge-count chat-badge-count">
+                {unreadChatCount > 99 ? '99+' : unreadChatCount}
+              </span>
+            )}
           </button>
 
           <button

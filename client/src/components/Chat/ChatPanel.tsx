@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import * as Y from 'yjs';
 import {
   MessageSquare,
   Sparkles,
@@ -13,10 +14,18 @@ import type { Collaborator, UserPresence } from '../../utils/collaborators';
 
 export type ChatTab = 'group' | 'ai';
 
-interface ChatMessage {
+export interface YChatMessage {
   id: string;
+  senderId?: number;
   senderName: string;
   senderColor?: string;
+  text: string;
+  timestamp: string;
+}
+
+interface AIChatMessage {
+  id: string;
+  senderName: string;
   isSelf: boolean;
   isAI?: boolean;
   text: string;
@@ -24,6 +33,7 @@ interface ChatMessage {
 }
 
 interface ChatPanelProps {
+  doc: Y.Doc | null;
   activeTab: ChatTab;
   onTabChange: (tab: ChatTab) => void;
   onClose: () => void;
@@ -32,7 +42,27 @@ interface ChatPanelProps {
   activeFile: string;
 }
 
+function getContrastTextColor(hexColor?: string): string {
+  if (!hexColor) return '#ffffff';
+  const cleanHex = hexColor.replace('#', '');
+  let r = 255;
+  let g = 255;
+  let b = 255;
+  if (cleanHex.length === 3) {
+    r = parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+  } else if (cleanHex.length === 6) {
+    r = parseInt(cleanHex.substring(0, 2), 16);
+    g = parseInt(cleanHex.substring(2, 4), 16);
+    b = parseInt(cleanHex.substring(4, 6), 16);
+  }
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+  return brightness > 150 ? '#0f172a' : '#ffffff';
+}
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({
+  doc,
   activeTab,
   onTabChange,
   onClose,
@@ -40,21 +70,40 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   currentUser,
   activeFile,
 }) => {
-  // Group chat state
+  // Group chat state bound to Y.Array
   const [groupInput, setGroupInput] = useState('');
-  const [groupMessages, setGroupMessages] = useState<ChatMessage[]>([
-    {
-      id: 'system-1',
-      senderName: 'System',
-      isSelf: false,
-      text: `Welcome to the room! All collaborators in this session will see messages here.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const [groupMessages, setGroupMessages] = useState<YChatMessage[]>([]);
+  const groupEndRef = useRef<HTMLDivElement>(null);
+  const aiEndRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to Yjs 'chat-messages' Array
+  useEffect(() => {
+    if (!doc) return;
+
+    const chatArray = doc.getArray<YChatMessage>('chat-messages');
+
+    const updateMessages = () => {
+      setGroupMessages(chatArray.toArray());
+    };
+
+    updateMessages();
+    chatArray.observe(updateMessages);
+
+    return () => {
+      chatArray.unobserve(updateMessages);
+    };
+  }, [doc]);
+
+  // Scroll to bottom when group messages change
+  useEffect(() => {
+    if (activeTab === 'group') {
+      groupEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [groupMessages, activeTab]);
 
   // AI chat state
   const [aiInput, setAiInput] = useState('');
-  const [aiMessages, setAiMessages] = useState<ChatMessage[]>([
+  const [aiMessages, setAiMessages] = useState<AIChatMessage[]>([
     {
       id: 'ai-1',
       senderName: 'CodeSync AI',
@@ -65,21 +114,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     },
   ]);
 
+  // Scroll to bottom when AI messages change
+  useEffect(() => {
+    if (activeTab === 'ai') {
+      aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [aiMessages, activeTab]);
+
   const handleSendGroup = (e: React.FormEvent) => {
     e.preventDefault();
     const text = groupInput.trim();
-    if (!text) return;
+    if (!text || !doc) return;
 
-    const newMsg: ChatMessage = {
-      id: Date.now().toString(),
+    const newMsg: YChatMessage = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+      senderId: doc.clientID,
       senderName: currentUser.name,
       senderColor: currentUser.color,
-      isSelf: true,
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setGroupMessages((prev) => [...prev, newMsg]);
+    const chatArray = doc.getArray<YChatMessage>('chat-messages');
+    doc.transact(() => {
+      chatArray.push([newMsg]);
+    });
+
     setGroupInput('');
   };
 
@@ -88,7 +148,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const text = (customPrompt || aiInput).trim();
     if (!text) return;
 
-    const userMsg: ChatMessage = {
+    const userMsg: AIChatMessage = {
       id: Date.now().toString(),
       senderName: currentUser.name,
       isSelf: true,
@@ -96,7 +156,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    const aiResponse: ChatMessage = {
+    const aiResponse: AIChatMessage = {
       id: (Date.now() + 1).toString(),
       senderName: 'CodeSync AI',
       isSelf: false,
@@ -151,30 +211,60 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {activeTab === 'group' && (
         <div className="chat-body">
           <div className="chat-messages-container">
-            {groupMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`chat-message ${msg.isSelf ? 'chat-message-self' : ''}`}
-              >
-                {!msg.isSelf && (
-                  <div
-                    className="chat-avatar"
-                    style={{ backgroundColor: msg.senderColor || '#3b82f6' }}
-                  >
-                    {msg.senderName.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div className="chat-bubble-wrapper">
-                  <div className="chat-sender-info">
-                    <span className="chat-sender-name">
-                      {msg.isSelf ? 'You' : msg.senderName}
-                    </span>
-                    <span className="chat-timestamp">{msg.timestamp}</span>
-                  </div>
-                  <div className="chat-bubble">{msg.text}</div>
+            {groupMessages.length === 0 ? (
+              <div className="chat-empty-state">
+                <div className="chat-empty-icon-wrap">
+                  <MessageSquare size={28} />
                 </div>
+                <span className="chat-empty-title">Room Chat</span>
+                <span className="chat-empty-subtitle">
+                  No messages yet. Send a message to chat with all peers in this session!
+                </span>
               </div>
-            ))}
+            ) : (
+              groupMessages.map((msg) => {
+                const isSelf = msg.senderId
+                  ? msg.senderId === doc?.clientID
+                  : msg.senderName === currentUser.name;
+                const senderColor = msg.senderColor || (isSelf ? currentUser.color : '#3b82f6');
+                const textColor = getContrastTextColor(senderColor);
+
+                return (
+                  <div
+                    key={msg.id}
+                    className={`chat-message ${isSelf ? 'chat-message-self' : ''}`}
+                  >
+                    {!isSelf && (
+                      <div
+                        className="chat-avatar"
+                        style={{ backgroundColor: senderColor }}
+                      >
+                        {msg.senderName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="chat-bubble-wrapper">
+                      <div className="chat-sender-info">
+                        <span className="chat-sender-name">
+                          {isSelf ? 'You' : msg.senderName}
+                        </span>
+                        <span className="chat-timestamp">{msg.timestamp}</span>
+                      </div>
+                      <div
+                        className="chat-bubble chat-bubble-peer"
+                        style={{
+                          backgroundColor: senderColor,
+                          color: textColor,
+                          borderColor: 'transparent',
+                        }}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+            <div ref={groupEndRef} />
           </div>
 
           <form onSubmit={handleSendGroup} className="chat-input-form">
@@ -184,11 +274,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               placeholder="Send message to room..."
               value={groupInput}
               onChange={(e) => setGroupInput(e.target.value)}
+              disabled={!doc}
             />
             <button
               type="submit"
               className="chat-send-btn"
-              disabled={!groupInput.trim()}
+              disabled={!groupInput.trim() || !doc}
               title="Send message"
             >
               <Send size={14} />
@@ -240,6 +331,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 </div>
               </div>
             ))}
+            <div ref={aiEndRef} />
           </div>
 
           <form onSubmit={handleSendAI} className="chat-input-form">

@@ -5,7 +5,7 @@ import { Header } from './components/Header/Header';
 import { CodeEditor } from './components/Editor/CodeEditor';
 import { FileExplorer } from './components/FileExplorer/FileExplorer';
 import { RoomInfo } from './components/Sidebar/RoomInfo';
-import { ChatPanel, type ChatTab } from './components/Chat/ChatPanel';
+import { ChatPanel, type ChatTab, type YChatMessage } from './components/Chat/ChatPanel';
 import { LobbyPage } from './components/Lobby/LobbyPage';
 import { getLanguageLabel } from './utils/languageDetection';
 import { FileCode, Activity, Terminal, FolderTree, Users } from 'lucide-react';
@@ -45,6 +45,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
   const [leftSidebarTab, setLeftSidebarTab] = useState<LeftSidebarTab>('files');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState<boolean>(false);
   const [rightSidebarTab, setRightSidebarTab] = useState<ChatTab>('group');
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
 
   const {
     doc,
@@ -61,6 +62,48 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     initialName: joinInfo.username,
     initialColor: joinInfo.color,
   });
+
+  // Clear unread count when group chat drawer is opened
+  useEffect(() => {
+    if (isRightSidebarOpen && rightSidebarTab === 'group') {
+      setUnreadChatCount(0);
+    }
+  }, [isRightSidebarOpen, rightSidebarTab]);
+
+  // Track unread messages from Y.Array 'chat-messages'
+  useEffect(() => {
+    if (!doc) return;
+
+    const chatArray = doc.getArray<YChatMessage>('chat-messages');
+
+    const handleChatChange = (event: Y.YArrayEvent<YChatMessage>) => {
+      const isGroupChatActive = isRightSidebarOpen && rightSidebarTab === 'group';
+      if (isGroupChatActive) {
+        setUnreadChatCount(0);
+        return;
+      }
+
+      // Count new messages inserted that were not sent by current client
+      let newIncomingCount = 0;
+      event.changes.added.forEach((item) => {
+        item.content.getContent().forEach((msg: YChatMessage) => {
+          if (msg && msg.senderId !== doc.clientID && msg.senderName !== currentUser.name) {
+            newIncomingCount += 1;
+          }
+        });
+      });
+
+      if (newIncomingCount > 0) {
+        setUnreadChatCount((prev) => prev + newIncomingCount);
+      }
+    };
+
+    chatArray.observe(handleChatChange);
+
+    return () => {
+      chatArray.unobserve(handleChatChange);
+    };
+  }, [doc, isRightSidebarOpen, rightSidebarTab, currentUser.name]);
 
   // Seed the files map if empty (client-side fallback in case server didn't seed)
   useEffect(() => {
@@ -133,6 +176,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         status={status}
         isSynced={isSynced}
         users={users}
+        unreadChatCount={unreadChatCount}
         isLeftSidebarOpen={isLeftSidebarOpen}
         leftSidebarTab={leftSidebarTab}
         onToggleLeftSidebar={handleToggleLeftSidebar}
@@ -215,6 +259,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         {/* Right Collapsible Chat Panel (Group & AI Chat) */}
         {isRightSidebarOpen && (
           <ChatPanel
+            doc={doc}
             activeTab={rightSidebarTab}
             onTabChange={setRightSidebarTab}
             onClose={() => setIsRightSidebarOpen(false)}
