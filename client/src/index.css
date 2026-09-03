@@ -1441,9 +1441,9 @@ body,
    RIGHT CHAT PANEL (GROUP & AI ASSISTANT)
 ─────────────────────────────────────────────────────────────────────────── */
 .chat-panel {
-  width: 320px;
-  min-width: 300px;
-  max-width: 420px;
+  position: relative;
+  min-width: 260px;
+  max-width: 80vw;
   background-color: var(--bg-dark);
   border-left: 1px solid var(--border-color);
   display: flex;
@@ -1451,6 +1451,46 @@ body,
   user-select: none;
   overflow: hidden;
   z-index: 10;
+  flex-shrink: 0;
+}
+
+.chat-panel.is-resizing {
+  user-select: none;
+}
+
+/* Resizer Handle (Left Border of Chat Panel) */
+.chat-resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 30;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.chat-resize-handle:hover,
+.chat-resize-handle.active {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.chat-resize-line {
+  width: 2px;
+  height: 100%;
+  background-color: transparent;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chat-resize-handle:hover .chat-resize-line,
+.chat-resize-handle.active .chat-resize-line {
+  background-color: var(--accent-primary, #3b82f6);
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
 }
 
 .chat-panel-header {

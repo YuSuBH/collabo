@@ -134,6 +134,10 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, code, activeFile, onApp
   );
 };
 
+const DEFAULT_CHAT_WIDTH = 340;
+const MIN_CHAT_WIDTH = 260;
+const MAX_CHAT_WIDTH = 800;
+
 export const ChatPanel: React.FC<ChatPanelProps> = ({
   doc,
   activeTab,
@@ -143,6 +147,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   currentUser,
   activeFile,
 }) => {
+  // Resizable width state with localStorage persistence
+  const [panelWidth, setPanelWidth] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('codesync_chat_width');
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= MIN_CHAT_WIDTH && parsed <= MAX_CHAT_WIDTH) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignore localStorage read errors
+    }
+    return DEFAULT_CHAT_WIDTH;
+  });
+
+  const [isResizing, setIsResizing] = useState(false);
+  const panelWidthRef = useRef(panelWidth);
+  panelWidthRef.current = panelWidth;
+
   // Group chat state bound to Y.Array
   const [groupInput, setGroupInput] = useState('');
   const [groupMessages, setGroupMessages] = useState<YChatMessage[]>([]);
@@ -166,6 +190,59 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
+
+  // Handle panel resizing via dragging left edge
+  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+
+    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const startWidth = panelWidthRef.current;
+
+    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
+      const currentX =
+        'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
+      // Moving mouse left expands the right-side panel
+      const deltaX = startX - currentX;
+      const maxAvailableWidth = Math.min(MAX_CHAT_WIDTH, window.innerWidth - 220);
+      const newWidth = Math.max(
+        MIN_CHAT_WIDTH,
+        Math.min(maxAvailableWidth, startWidth + deltaX)
+      );
+
+      setPanelWidth(newWidth);
+    };
+
+    const handlePointerUp = () => {
+      setIsResizing(false);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+
+      try {
+        localStorage.setItem('codesync_chat_width', panelWidthRef.current.toString());
+      } catch {
+        // Ignore localStorage write errors
+      }
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  const handleResetWidth = () => {
+    setPanelWidth(DEFAULT_CHAT_WIDTH);
+    try {
+      localStorage.setItem('codesync_chat_width', DEFAULT_CHAT_WIDTH.toString());
+    } catch {}
+  };
 
   // Subscribe to Yjs 'chat-messages' Array
   useEffect(() => {
@@ -502,7 +579,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   ];
 
   return (
-    <aside className="chat-panel">
+    <aside
+      className={`chat-panel ${isResizing ? 'is-resizing' : ''}`}
+      style={{ width: `${panelWidth}px` }}
+    >
+      {/* Resizer Handle */}
+      <div
+        className={`chat-resize-handle ${isResizing ? 'active' : ''}`}
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleResizeStart}
+        onDoubleClick={handleResetWidth}
+        title="Drag to resize chat panel (Double-click to reset)"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize Chat Panel"
+      >
+        <div className="chat-resize-line" />
+      </div>
+
       {/* Tab Switcher Header */}
       <div className="chat-panel-header">
         <div className="chat-tabs">
