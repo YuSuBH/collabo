@@ -1,4 +1,5 @@
 import * as Y from 'yjs';
+import * as monaco from 'monaco-editor';
 import { createMutex } from 'lib0/mutex';
 import type { Awareness } from 'y-protocols/awareness';
 
@@ -59,8 +60,6 @@ const createMonacoSelectionFromRelativeSelection = (
     if (!model) return null;
     const startPos = model.getPositionAt(start.index);
     const endPos = model.getPositionAt(end.index);
-    const monaco = (window as any).monaco;
-    if (!monaco?.Selection) return null;
     return monaco.Selection.createWithDirection(
       startPos.lineNumber,
       startPos.column,
@@ -131,7 +130,6 @@ export class MonacoBinding {
         if (this.awareness && editor.getModel() === monacoModel) {
           const currentDecorations = this._decorations.get(editor) || [];
           const newDecorations: any[] = [];
-          const monaco = (window as any).monaco;
           if (!monaco?.Range) return;
 
           this.awareness.getStates().forEach((state: any, clientID: number) => {
@@ -213,7 +211,6 @@ export class MonacoBinding {
             index += op.retain;
           } else if (op.insert !== undefined) {
             const pos = monacoModel.getPositionAt(index);
-            const monaco = (window as any).monaco;
             const range = new monaco.Selection(
               pos.lineNumber,
               pos.column,
@@ -226,7 +223,6 @@ export class MonacoBinding {
           } else if (op.delete !== undefined) {
             const pos = monacoModel.getPositionAt(index);
             const endPos = monacoModel.getPositionAt(index + op.delete);
-            const monaco = (window as any).monaco;
             const range = new monaco.Selection(
               pos.lineNumber,
               pos.column,

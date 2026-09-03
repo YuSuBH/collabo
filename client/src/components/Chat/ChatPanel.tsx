@@ -88,13 +88,15 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, code, activeFile, onApp
   const [copied, setCopied] = useState(false);
   const [applied, setApplied] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleApply = () => {
+  const handleApply = (e: React.MouseEvent) => {
+    e.stopPropagation();
     onApplyCode(code);
     setApplied(true);
     setTimeout(() => setApplied(false), 2500);
@@ -255,7 +257,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
       doc.transact(() => {
         if (yText) {
-          yText.delete(0, yText.length);
+          if (yText.length > 0) {
+            yText.delete(0, yText.length);
+          }
           yText.insert(0, newCode);
         }
       });
@@ -699,6 +703,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                         <ReactMarkdown
                           remarkPlugins={[remarkGfm]}
                           components={{
+                            pre(props: any) {
+                              return <>{props.children}</>;
+                            },
                             code(props: any) {
                               const { children, className, node: _node, ...rest } = props;
                               const match = /language-(\w+)/.exec(className || '');
