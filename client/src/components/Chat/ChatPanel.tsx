@@ -1,49 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as Y from 'yjs';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import {
   MessageSquare,
   Sparkles,
   Send,
   X,
-  Bot,
   Code,
   Lightbulb,
   Bug,
   TestTube,
   FileText,
-  Copy,
-  Check,
-  Share2,
   FileCode,
   Layers,
   Square,
   Trash2,
-  ArrowRightCircle,
 } from 'lucide-react';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
+import {
+  type ChatTab,
+  type YChatMessage,
+  type AIChatMessage,
+  formatTimestamp,
+  generateMessageId,
+  sendYChatMessage,
+} from './chatUtils';
+import { ChatMessageItem } from './ChatMessageItem';
+import { useChatResize } from './useChatResize';
 
-export type ChatTab = 'group' | 'ai';
-
-export interface YChatMessage {
-  id: string;
-  senderId?: number;
-  senderName: string;
-  senderColor?: string;
-  text: string;
-  timestamp: string;
-}
-
-interface AIChatMessage {
-  id: string;
-  senderName: string;
-  isSelf: boolean;
-  isAI?: boolean;
-  text: string;
-  timestamp: string;
-  error?: boolean;
-}
+// Re-export types for backward compatibility with App.tsx
+export type { ChatTab, YChatMessage };
 
 interface ChatPanelProps {
   doc: Y.Doc | null;
@@ -55,219 +40,6 @@ interface ChatPanelProps {
   activeFile: string;
 }
 
-function getContrastTextColor(hexColor?: string): string {
-  if (!hexColor) return '#ffffff';
-  const cleanHex = hexColor.replace('#', '');
-  let r = 255;
-  let g = 255;
-  let b = 255;
-  if (cleanHex.length === 3) {
-    r = parseInt(cleanHex[0] + cleanHex[0], 16);
-    g = parseInt(cleanHex[1] + cleanHex[1], 16);
-    b = parseInt(cleanHex[2] + cleanHex[2], 16);
-  } else if (cleanHex.length === 6) {
-    r = parseInt(cleanHex.substring(0, 2), 16);
-    g = parseInt(cleanHex.substring(2, 4), 16);
-    b = parseInt(cleanHex.substring(4, 6), 16);
-  }
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-  return brightness > 150 ? '#0f172a' : '#ffffff';
-}
-
-/**
- * Code Block Component with Copy and Apply to Editor features
- */
-interface CodeBlockProps {
-  language?: string;
-  code: string;
-  activeFile: string;
-  onApplyCode: (code: string) => void;
-}
-
-const CodeBlock: React.FC<CodeBlockProps> = ({ language, code, activeFile, onApplyCode }) => {
-  const [copied, setCopied] = useState(false);
-  const [applied, setApplied] = useState(false);
-
-  const handleCopy = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleApply = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onApplyCode(code);
-    setApplied(true);
-    setTimeout(() => setApplied(false), 2500);
-  };
-
-  return (
-    <div className="ai-code-block-container">
-      <div className="ai-code-block-header">
-        <span className="ai-code-lang">{language || 'code'}</span>
-        <div className="ai-code-actions">
-          <button
-            type="button"
-            className="ai-code-btn"
-            onClick={handleCopy}
-            title="Copy code snippet"
-          >
-            {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            type="button"
-            className={`ai-code-btn ai-code-apply-btn ${applied ? 'ai-code-applied' : ''}`}
-            onClick={handleApply}
-            title={`Apply snippet directly to ${activeFile}`}
-          >
-            {applied ? <Check size={12} className="text-success" /> : <ArrowRightCircle size={12} />}
-            <span>{applied ? `Applied to ${activeFile}` : `Apply to ${activeFile}`}</span>
-          </button>
-        </div>
-      </div>
-      <pre className="ai-code-pre">
-        <code>{code}</code>
-      </pre>
-    </div>
-  );
-};
-
-interface ChatMessageItemProps {
-  id: string;
-  senderName: string;
-  senderColor?: string;
-  isSelf: boolean;
-  isAI?: boolean;
-  text: string;
-  timestamp: string;
-  error?: boolean;
-  isStreaming?: boolean;
-  activeFile: string;
-  onApplyCode: (code: string) => void;
-  onShareToRoom?: (text: string) => void;
-}
-
-const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
-  senderName,
-  senderColor,
-  isSelf,
-  isAI,
-  text,
-  timestamp,
-  error,
-  isStreaming,
-  activeFile,
-  onApplyCode,
-  onShareToRoom,
-}) => {
-  const avatarTextColor = getContrastTextColor(senderColor);
-  const isSharedAI = senderName.includes('[Shared from AI]');
-  const cleanSenderName = isSelf
-    ? 'You'
-    : senderName.replace(' 🤖 [Shared from AI]', '').replace(' [Shared from AI]', '');
-
-  return (
-    <div className={`chat-message ${isSelf ? 'chat-message-self' : ''}`}>
-      {!isSelf && (
-        <div
-          className={`chat-avatar ${isAI && !isSharedAI ? 'ai-avatar' : ''}`}
-          style={
-            !isAI || isSharedAI
-              ? { backgroundColor: senderColor || '#3b82f6', color: avatarTextColor }
-              : undefined
-          }
-        >
-          {isAI && !isSharedAI ? (
-            <Bot size={15} />
-          ) : (
-            cleanSenderName.charAt(0).toUpperCase()
-          )}
-        </div>
-      )}
-
-      <div className="chat-bubble-wrapper">
-        <div className="chat-sender-info">
-          <span
-            className="chat-sender-name"
-            style={{ color: senderColor || (isSelf ? '#60a5fa' : '#a1a1aa') }}
-          >
-            {cleanSenderName}
-          </span>
-          {isSharedAI && (
-            <span className="chat-shared-badge" title="Shared from AI Assistant">
-              <Sparkles size={9} />
-              <span>AI</span>
-            </span>
-          )}
-          <span className="chat-timestamp">{timestamp}</span>
-        </div>
-
-        <div
-          className={`chat-bubble ${isSelf ? 'chat-bubble-self' : ''} ${
-            error ? 'chat-bubble-error' : ''
-          }`}
-        >
-          <div className="ai-markdown-content">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                pre(props: any) {
-                  return <>{props.children}</>;
-                },
-                code(props: any) {
-                  const { children, className, node: _node, ...rest } = props;
-                  const match = /language-(\w+)/.exec(className || '');
-                  const codeString = String(children).replace(/\n$/, '');
-
-                  if (match || codeString.includes('\n')) {
-                    return (
-                      <CodeBlock
-                        language={match ? match[1] : undefined}
-                        code={codeString}
-                        activeFile={activeFile}
-                        onApplyCode={onApplyCode}
-                      />
-                    );
-                  }
-                  return (
-                    <code className="ai-inline-code" {...rest}>
-                      {children}
-                    </code>
-                  );
-                },
-              }}
-            >
-              {text || (isStreaming ? 'Thinking...' : '')}
-            </ReactMarkdown>
-
-            {isStreaming && <span className="ai-streaming-cursor" />}
-          </div>
-        </div>
-
-        {onShareToRoom && !error && text.trim() && (
-          <div className="ai-message-footer">
-            <button
-              type="button"
-              className="ai-footer-action-btn"
-              onClick={() => onShareToRoom(text)}
-              title="Share this response to the collaborative room chat"
-            >
-              <Share2 size={11} />
-              <span>Share to Room</span>
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const DEFAULT_CHAT_WIDTH = 340;
-const MIN_CHAT_WIDTH = 260;
-const MAX_CHAT_WIDTH = 800;
-
 export const ChatPanel: React.FC<ChatPanelProps> = ({
   doc,
   activeTab,
@@ -277,25 +49,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   currentUser,
   activeFile,
 }) => {
-  // Resizable width state with localStorage persistence
-  const [panelWidth, setPanelWidth] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('codesync_chat_width');
-      if (saved) {
-        const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= MIN_CHAT_WIDTH && parsed <= MAX_CHAT_WIDTH) {
-          return parsed;
-        }
-      }
-    } catch {
-      // Ignore localStorage read errors
-    }
-    return DEFAULT_CHAT_WIDTH;
-  });
-
-  const [isResizing, setIsResizing] = useState(false);
-  const panelWidthRef = useRef(panelWidth);
-  panelWidthRef.current = panelWidth;
+  const { panelWidth, isResizing, handleResizeStart, handleResetWidth } = useChatResize();
 
   // Group chat state bound to Y.Array
   const [groupInput, setGroupInput] = useState('');
@@ -308,6 +62,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [includeProjectContext, setIncludeProjectContext] = useState(false);
   const [aiNotification, setAiNotification] = useState<string | null>(null);
+  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const [aiMessages, setAiMessages] = useState<AIChatMessage[]>([
@@ -317,67 +72,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       isSelf: false,
       isAI: true,
       text: `👋 Hello ${currentUser.name}! I am **CodeSync AI**, your real-time collaborative coding companion.\n\nI can analyze **\`${activeFile}\`**, explain logic, debug syntax issues, write unit tests, and apply code directly into the editor for all collaborators to see.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: formatTimestamp(),
     },
   ]);
 
-  // Handle panel resizing via dragging left edge
-  const handleResizeStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-
-    const startX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const startWidth = panelWidthRef.current;
-
-    const handlePointerMove = (moveEvent: MouseEvent | TouchEvent) => {
-      const currentX =
-        'touches' in moveEvent ? moveEvent.touches[0].clientX : moveEvent.clientX;
-      // Moving mouse left expands the right-side panel
-      const deltaX = startX - currentX;
-      const maxAvailableWidth = Math.min(MAX_CHAT_WIDTH, window.innerWidth - 220);
-      const newWidth = Math.max(
-        MIN_CHAT_WIDTH,
-        Math.min(maxAvailableWidth, startWidth + deltaX)
-      );
-
-      setPanelWidth(newWidth);
-    };
-
-    const handlePointerUp = () => {
-      setIsResizing(false);
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('mouseup', handlePointerUp);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('touchend', handlePointerUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-
-      try {
-        localStorage.setItem('codesync_chat_width', panelWidthRef.current.toString());
-      } catch {
-        // Ignore localStorage write errors
-      }
-    };
-
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerUp);
-    window.addEventListener('touchmove', handlePointerMove, { passive: false });
-    window.addEventListener('touchend', handlePointerUp);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
+  const showNotification = (msg: string) => {
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    setAiNotification(msg);
+    notificationTimerRef.current = setTimeout(() => {
+      setAiNotification(null);
+      notificationTimerRef.current = null;
+    }, 3000);
   };
 
-  const handleResetWidth = () => {
-    setPanelWidth(DEFAULT_CHAT_WIDTH);
-    try {
-      localStorage.setItem('codesync_chat_width', DEFAULT_CHAT_WIDTH.toString());
-    } catch {}
-  };
+  useEffect(() => {
+    return () => {
+      if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    };
+  }, []);
 
   // Subscribe to Yjs 'chat-messages' Array
   useEffect(() => {
     if (!doc) return;
-
     const chatArray = doc.getArray<YChatMessage>('chat-messages');
 
     const updateMessages = () => {
@@ -411,18 +127,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const text = groupInput.trim();
     if (!text || !doc) return;
 
-    const newMsg: YChatMessage = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+    sendYChatMessage(doc, {
       senderId: doc.clientID,
       senderName: currentUser.name,
       senderColor: currentUser.color,
       text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    const chatArray = doc.getArray<YChatMessage>('chat-messages');
-    doc.transact(() => {
-      chatArray.push([newMsg]);
     });
 
     setGroupInput('');
@@ -471,8 +180,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         }
       });
 
-      setAiNotification(`✓ Code applied to ${activeFile}`);
-      setTimeout(() => setAiNotification(null), 3000);
+      showNotification(`✓ Code applied to ${activeFile}`);
     } catch (err) {
       console.error('Failed to apply code to editor:', err);
     }
@@ -482,22 +190,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const handleShareToGroup = (messageText: string) => {
     if (!doc) return;
 
-    const chatArray = doc.getArray<YChatMessage>('chat-messages');
-    const sharedMsg: YChatMessage = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
+    sendYChatMessage(doc, {
       senderId: doc.clientID,
       senderName: `${currentUser.name} 🤖 [Shared from AI]`,
       senderColor: currentUser.color,
       text: messageText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    doc.transact(() => {
-      chatArray.push([sharedMsg]);
     });
 
-    setAiNotification('✓ Shared to Group Chat');
-    setTimeout(() => setAiNotification(null), 3000);
+    showNotification('✓ Shared to Group Chat');
+  };
+
+  // Helper to update specific AI message content and error state
+  const updateAiMessage = (id: string, text: string, isError: boolean = false) => {
+    setAiMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, text, error: isError } : m))
+    );
   };
 
   // Send request to AI Backend with streaming
@@ -506,15 +213,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const promptText = (customPrompt || aiInput).trim();
     if (!promptText || isStreaming) return;
 
-    const userMessageId = `user-${Date.now()}`;
-    const aiMessageId = `ai-${Date.now() + 1}`;
+    const userMessageId = generateMessageId('user');
+    const aiMessageId = generateMessageId('ai');
 
     const userMsg: AIChatMessage = {
       id: userMessageId,
       senderName: currentUser.name,
       isSelf: true,
       text: promptText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: formatTimestamp(),
     };
 
     const initialAiMsg: AIChatMessage = {
@@ -523,10 +230,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       isSelf: false,
       isAI: true,
       text: '',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: formatTimestamp(),
     };
 
-    // Append user message & empty AI placeholder
     setAiMessages((prev) => [...prev, userMsg, initialAiMsg]);
     setAiInput('');
     setIsStreaming(true);
@@ -534,7 +240,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     const activeContent = getActiveFileContent();
     const allFilesList = includeProjectContext ? getAllProjectFiles() : undefined;
 
-    // Build conversation history for context
     const history = aiMessages
       .filter((m) => m.id !== 'ai-init' && !m.error && m.text.trim())
       .slice(-6)
@@ -549,9 +254,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     try {
       const response = await fetch('/api/ai/stream', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: promptText,
           activeFile: {
@@ -607,9 +310,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             }
             if (parsed.text) {
               accumulatedText += parsed.text;
-              setAiMessages((prev) =>
-                prev.map((m) => (m.id === aiMessageId ? { ...m, text: accumulatedText } : m))
-              );
+              updateAiMessage(aiMessageId, accumulatedText);
             }
           } catch (jsonErr: any) {
             if (jsonErr.message && !jsonErr.message.includes('JSON')) {
@@ -620,16 +321,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       }
 
       if (!accumulatedText) {
-        setAiMessages((prev) =>
-          prev.map((m) =>
-            m.id === aiMessageId
-              ? {
-                  ...m,
-                  text: 'No response received. Make sure GEMINI_API_KEY is configured in server/.env.',
-                  error: true,
-                }
-              : m
-          )
+        updateAiMessage(
+          aiMessageId,
+          'No response received. Make sure GEMINI_API_KEY is configured in server/.env.',
+          true
         );
       }
     } catch (err: any) {
@@ -643,16 +338,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         );
       } else {
         console.error('AI Request Error:', err);
-        setAiMessages((prev) =>
-          prev.map((m) =>
-            m.id === aiMessageId
-              ? {
-                  ...m,
-                  text: `⚠️ **Error**: ${err.message || 'Could not connect to AI service.'}\n\n*Tip: Check that \`GEMINI_API_KEY\` is set in \`server/.env\` and the server is running.*`,
-                  error: true,
-                }
-              : m
-          )
+        updateAiMessage(
+          aiMessageId,
+          `⚠️ **Error**: ${err.message || 'Could not connect to AI service.'}\n\n*Tip: Check that \`GEMINI_API_KEY\` is set in \`server/.env\` and the server is running.*`,
+          true
         );
       }
     } finally {
@@ -675,38 +364,41 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         isSelf: false,
         isAI: true,
         text: `Conversation cleared. Ready for your questions about **\`${activeFile}\`**!`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: formatTimestamp(),
       },
     ]);
   };
 
-  const promptSuggestions = [
-    {
-      icon: <Bug size={13} />,
-      label: 'Find & Fix Bugs',
-      prompt: `Analyze ${activeFile} for bugs, edge cases, potential runtime exceptions, and provide fixes.`,
-    },
-    {
-      icon: <Code size={13} />,
-      label: 'Explain Code',
-      prompt: `Explain the architecture, structure, and functions of ${activeFile} step by step.`,
-    },
-    {
-      icon: <Lightbulb size={13} />,
-      label: 'Refactor & Optimize',
-      prompt: `Suggest performance optimizations, cleaner patterns, and readability refactoring for ${activeFile}.`,
-    },
-    {
-      icon: <TestTube size={13} />,
-      label: 'Generate Unit Tests',
-      prompt: `Generate comprehensive unit tests for the functions and exports in ${activeFile}.`,
-    },
-    {
-      icon: <FileText size={13} />,
-      label: 'Add Comments & Types',
-      prompt: `Add clear documentation comments and TypeScript annotations to ${activeFile}.`,
-    },
-  ];
+  const promptSuggestions = useMemo(
+    () => [
+      {
+        icon: <Bug size={13} />,
+        label: 'Find & Fix Bugs',
+        prompt: `Analyze ${activeFile} for bugs, edge cases, potential runtime exceptions, and provide fixes.`,
+      },
+      {
+        icon: <Code size={13} />,
+        label: 'Explain Code',
+        prompt: `Explain the architecture, structure, and functions of ${activeFile} step by step.`,
+      },
+      {
+        icon: <Lightbulb size={13} />,
+        label: 'Refactor & Optimize',
+        prompt: `Suggest performance optimizations, cleaner patterns, and readability refactoring for ${activeFile}.`,
+      },
+      {
+        icon: <TestTube size={13} />,
+        label: 'Generate Unit Tests',
+        prompt: `Generate comprehensive unit tests for the functions and exports in ${activeFile}.`,
+      },
+      {
+        icon: <FileText size={13} />,
+        label: 'Add Comments & Types',
+        prompt: `Add clear documentation comments and TypeScript annotations to ${activeFile}.`,
+      },
+    ],
+    [activeFile]
+  );
 
   return (
     <aside
