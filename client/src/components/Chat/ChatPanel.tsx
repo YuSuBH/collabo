@@ -134,6 +134,136 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ language, code, activeFile, onApp
   );
 };
 
+interface ChatMessageItemProps {
+  id: string;
+  senderName: string;
+  senderColor?: string;
+  isSelf: boolean;
+  isAI?: boolean;
+  text: string;
+  timestamp: string;
+  error?: boolean;
+  isStreaming?: boolean;
+  activeFile: string;
+  onApplyCode: (code: string) => void;
+  onShareToRoom?: (text: string) => void;
+}
+
+const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
+  senderName,
+  senderColor,
+  isSelf,
+  isAI,
+  text,
+  timestamp,
+  error,
+  isStreaming,
+  activeFile,
+  onApplyCode,
+  onShareToRoom,
+}) => {
+  const avatarTextColor = getContrastTextColor(senderColor);
+  const isSharedAI = senderName.includes('[Shared from AI]');
+  const cleanSenderName = isSelf
+    ? 'You'
+    : senderName.replace(' 🤖 [Shared from AI]', '').replace(' [Shared from AI]', '');
+
+  return (
+    <div className={`chat-message ${isSelf ? 'chat-message-self' : ''}`}>
+      {!isSelf && (
+        <div
+          className={`chat-avatar ${isAI && !isSharedAI ? 'ai-avatar' : ''}`}
+          style={
+            !isAI || isSharedAI
+              ? { backgroundColor: senderColor || '#3b82f6', color: avatarTextColor }
+              : undefined
+          }
+        >
+          {isAI && !isSharedAI ? (
+            <Bot size={15} />
+          ) : (
+            cleanSenderName.charAt(0).toUpperCase()
+          )}
+        </div>
+      )}
+
+      <div className="chat-bubble-wrapper">
+        <div className="chat-sender-info">
+          <span
+            className="chat-sender-name"
+            style={{ color: senderColor || (isSelf ? '#60a5fa' : '#a1a1aa') }}
+          >
+            {cleanSenderName}
+          </span>
+          {isSharedAI && (
+            <span className="chat-shared-badge" title="Shared from AI Assistant">
+              <Sparkles size={9} />
+              <span>AI</span>
+            </span>
+          )}
+          <span className="chat-timestamp">{timestamp}</span>
+        </div>
+
+        <div
+          className={`chat-bubble ${isSelf ? 'chat-bubble-self' : ''} ${
+            error ? 'chat-bubble-error' : ''
+          }`}
+        >
+          <div className="ai-markdown-content">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                pre(props: any) {
+                  return <>{props.children}</>;
+                },
+                code(props: any) {
+                  const { children, className, node: _node, ...rest } = props;
+                  const match = /language-(\w+)/.exec(className || '');
+                  const codeString = String(children).replace(/\n$/, '');
+
+                  if (match || codeString.includes('\n')) {
+                    return (
+                      <CodeBlock
+                        language={match ? match[1] : undefined}
+                        code={codeString}
+                        activeFile={activeFile}
+                        onApplyCode={onApplyCode}
+                      />
+                    );
+                  }
+                  return (
+                    <code className="ai-inline-code" {...rest}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+            >
+              {text || (isStreaming ? 'Thinking...' : '')}
+            </ReactMarkdown>
+
+            {isStreaming && <span className="ai-streaming-cursor" />}
+          </div>
+        </div>
+
+        {onShareToRoom && !error && text.trim() && (
+          <div className="ai-message-footer">
+            <button
+              type="button"
+              className="ai-footer-action-btn"
+              onClick={() => onShareToRoom(text)}
+              title="Share this response to the collaborative room chat"
+            >
+              <Share2 size={11} />
+              <span>Share to Room</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const DEFAULT_CHAT_WIDTH = 340;
 const MIN_CHAT_WIDTH = 260;
 const MAX_CHAT_WIDTH = 800;
@@ -658,40 +788,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   ? msg.senderId === doc?.clientID
                   : msg.senderName === currentUser.name;
                 const senderColor = msg.senderColor || (isSelf ? currentUser.color : '#3b82f6');
-                const textColor = getContrastTextColor(senderColor);
+                const isAI =
+                  msg.senderName === 'CodeSync AI' ||
+                  msg.senderName.includes('[Shared from AI]');
 
                 return (
-                  <div
+                  <ChatMessageItem
                     key={msg.id}
-                    className={`chat-message ${isSelf ? 'chat-message-self' : ''}`}
-                  >
-                    {!isSelf && (
-                      <div
-                        className="chat-avatar"
-                        style={{ backgroundColor: senderColor }}
-                      >
-                        {msg.senderName.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="chat-bubble-wrapper">
-                      <div className="chat-sender-info">
-                        <span className="chat-sender-name">
-                          {isSelf ? 'You' : msg.senderName}
-                        </span>
-                        <span className="chat-timestamp">{msg.timestamp}</span>
-                      </div>
-                      <div
-                        className="chat-bubble chat-bubble-peer"
-                        style={{
-                          backgroundColor: senderColor,
-                          color: textColor,
-                          borderColor: 'transparent',
-                        }}
-                      >
-                        {msg.text}
-                      </div>
-                    </div>
-                  </div>
+                    id={msg.id}
+                    senderName={msg.senderName}
+                    senderColor={senderColor}
+                    isSelf={isSelf}
+                    isAI={isAI}
+                    text={msg.text}
+                    timestamp={msg.timestamp}
+                    activeFile={activeFile}
+                    onApplyCode={handleApplyCodeToEditor}
+                  />
                 );
               })
             )}
@@ -769,90 +882,32 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             </div>
 
             {/* AI Messages List */}
-            {aiMessages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`chat-message ${msg.isSelf ? 'chat-message-self' : ''} ${
-                  msg.isAI ? 'chat-message-ai' : ''
-                }`}
-              >
-                {!msg.isSelf && (
-                  <div className="chat-avatar ai-avatar">
-                    <Bot size={15} />
-                  </div>
-                )}
-                <div className="chat-bubble-wrapper">
-                  <div className="chat-sender-info">
-                    <span className="chat-sender-name">
-                      {msg.isSelf ? 'You' : msg.senderName}
-                    </span>
-                    <span className="chat-timestamp">{msg.timestamp}</span>
-                  </div>
+            {aiMessages.map((msg) => {
+              const isLastMessage = msg.id === aiMessages[aiMessages.length - 1]?.id;
+              const isStreamingThis = isStreaming && isLastMessage;
 
-                  <div className={`chat-bubble ${msg.isAI ? 'chat-bubble-ai' : ''} ${msg.error ? 'chat-bubble-error' : ''}`}>
-                    {msg.isSelf ? (
-                      <div className="chat-text-plain">{msg.text}</div>
-                    ) : (
-                      <div className="ai-markdown-content">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            pre(props: any) {
-                              return <>{props.children}</>;
-                            },
-                            code(props: any) {
-                              const { children, className, node: _node, ...rest } = props;
-                              const match = /language-(\w+)/.exec(className || '');
-                              const codeString = String(children).replace(/\n$/, '');
-
-                              // If it's a code block (contains newlines or has a language class)
-                              if (match || codeString.includes('\n')) {
-                                return (
-                                  <CodeBlock
-                                    language={match ? match[1] : undefined}
-                                    code={codeString}
-                                    activeFile={activeFile}
-                                    onApplyCode={handleApplyCodeToEditor}
-                                  />
-                                );
-                              }
-                              // Inline code
-                              return (
-                                <code className="ai-inline-code" {...rest}>
-                                  {children}
-                                </code>
-                              );
-                            },
-                          }}
-                        >
-                          {msg.text || 'Thinking...'}
-                        </ReactMarkdown>
-
-                        {/* Streaming cursor pulse */}
-                        {isStreaming && msg.id === aiMessages[aiMessages.length - 1]?.id && (
-                          <span className="ai-streaming-cursor" />
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Message Action Footer for AI messages */}
-                  {msg.isAI && !msg.error && msg.text.trim() && msg.id !== 'ai-init' && (
-                    <div className="ai-message-footer">
-                      <button
-                        type="button"
-                        className="ai-footer-action-btn"
-                        onClick={() => handleShareToGroup(msg.text)}
-                        title="Share this response to the collaborative room chat"
-                      >
-                        <Share2 size={11} />
-                        <span>Share to Room</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              return (
+                <ChatMessageItem
+                  key={msg.id}
+                  id={msg.id}
+                  senderName={msg.senderName}
+                  senderColor={msg.isSelf ? currentUser.color : '#c084fc'}
+                  isSelf={msg.isSelf}
+                  isAI={msg.isAI}
+                  text={msg.text}
+                  timestamp={msg.timestamp}
+                  error={msg.error}
+                  isStreaming={isStreamingThis}
+                  activeFile={activeFile}
+                  onApplyCode={handleApplyCodeToEditor}
+                  onShareToRoom={
+                    msg.isAI && msg.id !== 'ai-init'
+                      ? handleShareToGroup
+                      : undefined
+                  }
+                />
+              );
+            })}
             <div ref={aiEndRef} />
           </div>
 
