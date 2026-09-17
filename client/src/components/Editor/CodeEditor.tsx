@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
+import * as monaco from 'monaco-editor';
 import * as Y from 'yjs';
 import { MonacoBinding } from '../../utils/yMonacoBinding';
 import type { Awareness } from 'y-protocols/awareness';
@@ -23,7 +24,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   const bindingRef = useRef<MonacoBinding | null>(null);
   const observerCleanupRef = useRef<(() => void) | null>(null);
 
-  const handleEditorMount: OnMount = (editorInstance) => {
+  const handleEditorMount: OnMount = (editorInstance, monacoInstance) => {
+    (window as any).monaco = monacoInstance || monaco;
     setEditor(editorInstance);
 
     editorInstance.onDidChangeCursorPosition((e) => {
@@ -55,22 +57,22 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     const language = getLanguageFromFileName(activeFile);
 
     // Get the Monaco instance and create a fresh model for this file
-    const monaco = (window as any).monaco;
-    if (!monaco) return;
+    const monacoApi = (window as any).monaco || monaco;
+    if (!monacoApi) return;
 
     // Dispose the old model if there is one
     const oldModel = editor.getModel();
 
     // Create a new model with the correct language
     // Use a unique URI so Monaco doesn't complain about duplicates
-    const uri = monaco.Uri.parse(`file:///${activeFile}`);
-    let model = monaco.editor.getModel(uri);
+    const uri = monacoApi.Uri.parse(`file:///${activeFile}`);
+    let model = monacoApi.editor.getModel(uri);
     if (!model) {
       // Create with empty string — MonacoBinding will sync the content from Y.Text
-      model = monaco.editor.createModel('', language, uri);
+      model = monacoApi.editor.createModel('', language, uri);
     } else {
       // Model exists, just update language
-      monaco.editor.setModelLanguage(model, language);
+      monacoApi.editor.setModelLanguage(model, language);
     }
 
     editor.setModel(model);

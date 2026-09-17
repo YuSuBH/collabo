@@ -3,6 +3,7 @@ import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
 import { setupYjsWebSocketServer, getRoomActiveColors } from './websocket/yjsServer.js';
+import { aiRouter } from './routes/ai.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,8 @@ app.get('/api/rooms/:roomId/colors', (req, res) => {
     const colors = getRoomActiveColors(roomId);
     res.json({ roomId, colors });
 });
+// Mount AI Proxy Routes
+app.use('/api/ai', aiRouter);
 const server = http.createServer(app);
 // Mount Yjs WebSocket relay
 setupYjsWebSocketServer(server);
