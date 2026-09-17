@@ -161,7 +161,6 @@ html, body, #root {
 .collaborator-item,
 .current-user-card,
 .chat-bubble,
-.ai-suggestions-container,
 .zip-mode-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
@@ -1346,50 +1345,6 @@ html, body, #root {
   max-width: 220px;
 }
 
-.ai-suggestions-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  background: rgba(168, 85, 247, 0.05);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  margin-bottom: 6px;
-}
-.ai-suggestions-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--color-ai-text);
-}
-.ai-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.ai-chip {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 5px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  cursor: pointer;
-  text-align: left;
-  transition: var(--transition-normal);
-}
-.ai-chip:hover:not(:disabled) {
-  background: var(--bg-hover);
-  border-color: var(--color-ai);
-  color: #ffffff;
-}
-.ai-chip:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 
 .ai-markdown-content {
   font-size: 12.5px;

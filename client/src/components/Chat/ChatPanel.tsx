@@ -1,15 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import {
   MessageSquare,
   Sparkles,
   Send,
   X,
-  Code,
-  Lightbulb,
-  Bug,
-  TestTube,
-  FileText,
   FileCode,
   Layers,
   Square,
@@ -369,36 +364,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     ]);
   };
 
-  const promptSuggestions = useMemo(
-    () => [
-      {
-        icon: <Bug size={13} />,
-        label: 'Find & Fix Bugs',
-        prompt: `Analyze ${activeFile} for bugs, edge cases, potential runtime exceptions, and provide fixes.`,
-      },
-      {
-        icon: <Code size={13} />,
-        label: 'Explain Code',
-        prompt: `Explain the architecture, structure, and functions of ${activeFile} step by step.`,
-      },
-      {
-        icon: <Lightbulb size={13} />,
-        label: 'Refactor & Optimize',
-        prompt: `Suggest performance optimizations, cleaner patterns, and readability refactoring for ${activeFile}.`,
-      },
-      {
-        icon: <TestTube size={13} />,
-        label: 'Generate Unit Tests',
-        prompt: `Generate comprehensive unit tests for the functions and exports in ${activeFile}.`,
-      },
-      {
-        icon: <FileText size={13} />,
-        label: 'Add Comments & Types',
-        prompt: `Add clear documentation comments and TypeScript annotations to ${activeFile}.`,
-      },
-    ],
-    [activeFile]
-  );
 
   return (
     <aside
@@ -554,24 +519,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           )}
 
           <div className="chat-messages-container">
-            {/* Quick Suggestions Chips */}
-            <div className="ai-suggestions-container">
-              <span className="ai-suggestions-title">Quick Actions for {activeFile}</span>
-              <div className="ai-chips">
-                {promptSuggestions.map((item, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="ai-chip"
-                    onClick={() => handleSendAI(undefined, item.prompt)}
-                    disabled={isStreaming}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* AI Messages List */}
             {aiMessages.map((msg) => {
