@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import * as Y from 'yjs';
 import {
   getWandboxCompiler,
@@ -6,25 +6,22 @@ import {
   isBundlableWith,
   ENTRY_FILE_PRIORITY,
 } from '../utils/languageDetection';
+import type { UserPresence } from '../utils/collaborators';
+import type { ExecutionResult, SharedExecutionRun } from '../types/execution';
+
+export type { ExecutionResult, SharedExecutionRun };
 
 const EXECUTE_API_URL =
   (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/execute';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const MAX_SHARED_RUNS = 25;
 
-export interface ExecutionResult {
-  stdout: string;
-  stderr: string;
-  compilerError: string;
-  exitCode: string; // Wandbox returns status as string ("0", "1", etc.)
-  durationMs: number;
-  entryFile: string;
-  compiler: string;
-}
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface UseCodeExecutionOptions {
   doc: Y.Doc | null;
   activeFile: string;
+  currentUser?: UserPresence;
 }
 
 export interface UseCodeExecutionReturn {
@@ -35,6 +32,18 @@ export interface UseCodeExecutionReturn {
   clearResult: () => void;
   /** Auto-detected or last-used entry file (may differ from activeFile) */
   resolvedEntryFile: string | null;
+  /** Shared runs list across all collaborators in the room (newest first) */
+  sharedRuns: SharedExecutionRun[];
+  /** ID of the currently selected run to display in output */
+  selectedRunId: string | null;
+  /** Select a specific run (or null for current user's active result) */
+  selectRun: (runId: string | null) => void;
+  /** The actively displayed run object (if a peer run is selected) */
+  displayedRun: SharedExecutionRun | null;
+  /** Most recent run executed by another peer (for live notifications) */
+  latestPeerRun: SharedExecutionRun | null;
+  /** Clear latest peer run notification banner */
+  clearPeerNotification: () => void;
 }
 
 // ─── Helper: auto-detect the best entry file from a list ─────────────────────
@@ -73,12 +82,64 @@ export function autoDetectEntryFile(
 export function useCodeExecution({
   doc,
   activeFile,
+  currentUser,
 }: UseCodeExecutionOptions): UseCodeExecutionReturn {
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<ExecutionResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resolvedEntryFile, setResolvedEntryFile] = useState<string | null>(null);
+  const [sharedRuns, setSharedRuns] = useState<SharedExecutionRun[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [latestPeerRun, setLatestPeerRun] = useState<SharedExecutionRun | null>(null);
 
+  // ── Sync shared-executions Y.Array ──────────────────────────────────────────
+  useEffect(() => {
+    if (!doc) return;
+
+    const sharedArray = doc.getArray<SharedExecutionRun>('shared-executions');
+
+    const updateRuns = () => {
+      const runs = sharedArray.toArray();
+      // Sort newest first
+      const sorted = [...runs].sort((a, b) => b.timestamp - a.timestamp);
+      setSharedRuns(sorted);
+    };
+
+    updateRuns();
+
+    const handleArrayChange = (event: Y.YArrayEvent<SharedExecutionRun>) => {
+      updateRuns();
+
+      // Check if a new run was added by someone else
+      event.changes.added.forEach((item) => {
+        item.content.getContent().forEach((runObj: SharedExecutionRun) => {
+          if (
+            runObj &&
+            runObj.executorId !== doc.clientID &&
+            runObj.executorName !== currentUser?.name
+          ) {
+            setLatestPeerRun(runObj);
+          }
+        });
+      });
+    };
+
+    sharedArray.observe(handleArrayChange);
+
+    return () => {
+      sharedArray.unobserve(handleArrayChange);
+    };
+  }, [doc, currentUser?.name]);
+
+  const selectRun = useCallback((runId: string | null) => {
+    setSelectedRunId(runId);
+  }, []);
+
+  const clearPeerNotification = useCallback(() => {
+    setLatestPeerRun(null);
+  }, []);
+
+  // ── Run Function ────────────────────────────────────────────────────────────
   const run = useCallback(
     async (entryFileOverride?: string, stdin?: string) => {
       if (!doc) {
@@ -125,6 +186,7 @@ export function useCodeExecution({
       setIsRunning(true);
       setError(null);
       setResult(null);
+      setSelectedRunId(null); // Reset selection to current local run
 
       const startMs = Date.now();
 
@@ -148,7 +210,7 @@ export function useCodeExecution({
           return;
         }
 
-        setResult({
+        const runResult: ExecutionResult = {
           stdout: data.program_output ?? '',
           stderr: data.program_error ?? '',
           compilerError: data.compiler_error ?? '',
@@ -156,6 +218,27 @@ export function useCodeExecution({
           durationMs,
           entryFile,
           compiler,
+          stdin: stdin || undefined,
+        };
+
+        setResult(runResult);
+
+        // ── Broadcast to shared-executions Y.Array ─────────────────────────
+        const sharedRun: SharedExecutionRun = {
+          ...runResult,
+          id: `${doc.clientID}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          executorId: doc.clientID,
+          executorName: currentUser?.name || 'Anonymous',
+          executorColor: currentUser?.color || '#3b82f6',
+          timestamp: Date.now(),
+        };
+
+        const sharedArray = doc.getArray<SharedExecutionRun>('shared-executions');
+        doc.transact(() => {
+          sharedArray.push([sharedRun]);
+          while (sharedArray.length > MAX_SHARED_RUNS) {
+            sharedArray.delete(0, 1);
+          }
         });
       } catch (err: any) {
         setError(err?.message ?? 'Network error — could not reach the execution server.');
@@ -163,13 +246,31 @@ export function useCodeExecution({
         setIsRunning(false);
       }
     },
-    [doc, activeFile]
+    [doc, activeFile, currentUser]
   );
 
   const clearResult = useCallback(() => {
     setResult(null);
     setError(null);
+    setSelectedRunId(null);
   }, []);
 
-  return { run, isRunning, result, error, clearResult, resolvedEntryFile };
+  const displayedRun = selectedRunId
+    ? sharedRuns.find((r) => r.id === selectedRunId) ?? null
+    : null;
+
+  return {
+    run,
+    isRunning,
+    result,
+    error,
+    clearResult,
+    resolvedEntryFile,
+    sharedRuns,
+    selectedRunId,
+    selectRun,
+    displayedRun,
+    latestPeerRun,
+    clearPeerNotification,
+  };
 }

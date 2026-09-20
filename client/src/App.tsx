@@ -69,9 +69,22 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
   });
 
   // Code execution hook
-  const { run, isRunning, result, error, clearResult } = useCodeExecution({
+  const {
+    run,
+    isRunning,
+    result,
+    error,
+    clearResult,
+    sharedRuns,
+    selectedRunId,
+    selectRun,
+    displayedRun,
+    latestPeerRun,
+    clearPeerNotification,
+  } = useCodeExecution({
     doc,
     activeFile,
+    currentUser,
   });
 
   // Derive the currently resolved entry file for display in header
@@ -317,6 +330,12 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           onClear={clearResult}
           onClose={() => setIsOutputPanelOpen(false)}
           onRunWithStdin={handleRunWithStdin}
+          sharedRuns={sharedRuns}
+          selectedRunId={selectedRunId}
+          onSelectRun={selectRun}
+          displayedRun={displayedRun}
+          latestPeerRun={latestPeerRun}
+          onClearPeerNotification={clearPeerNotification}
         />
       )}
 

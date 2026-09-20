@@ -2236,6 +2236,285 @@ html, body, #root {
   color: var(--accent-primary) !important;
 }
 
+/* ── Runs dropdown in output header ──────────────────────────── */
+.output-runs-dropdown-container {
+  position: relative;
+}
+.output-runs-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.output-runs-count-badge {
+  font-size: 9.5px;
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent-primary);
+  padding: 0 4px;
+  border-radius: 8px;
+  font-weight: 700;
+  line-height: 14px;
+}
+.output-runs-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  width: 260px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 50;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.output-runs-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-darker);
+}
+.output-runs-menu-list {
+  max-height: 220px;
+  overflow-y: auto;
+}
+.output-runs-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.output-runs-menu-item:hover {
+  background: var(--bg-hover);
+}
+.output-runs-menu-item-active {
+  background: rgba(59, 130, 246, 0.08);
+  border-left: 2px solid var(--accent-primary);
+}
+.output-runs-item-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.output-runs-item-avatar.my-avatar {
+  background: var(--accent-primary);
+}
+.output-runs-item-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.output-runs-item-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.output-runs-item-file {
+  font-family: monospace;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  font-weight: normal;
+}
+.output-runs-item-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.output-runs-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.status-dot-ok { background: #22c55e; }
+.status-dot-err { background: #ef4444; }
+.output-runs-stdin-tag {
+  background: var(--bg-dark);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--text-dim);
+}
+.output-runs-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* ── Live peer run notification toast ────────────────────────── */
+.output-live-peer-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.25);
+  font-size: 11.5px;
+  color: var(--text-main);
+  animation: toastSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastSlideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.output-live-peer-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.output-toast-msg {
+  flex: 1;
+}
+.output-toast-msg code {
+  background: var(--bg-dark);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+}
+.output-toast-view-btn {
+  background: var(--accent-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.output-toast-view-btn:hover {
+  background: var(--accent-hover);
+}
+.output-toast-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  border-radius: 3px;
+}
+.output-toast-dismiss-btn:hover {
+  color: var(--text-main);
+}
+
+/* ── Shared Peer Run Banner ──────────────────────────────────── */
+.output-peer-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--bg-darker);
+  border-bottom: 1px solid var(--border-color);
+}
+.output-peer-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.output-peer-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.output-peer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.output-peer-name {
+  font-size: 12px;
+  color: var(--text-main);
+}
+.output-peer-time {
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.output-peer-time code {
+  background: var(--bg-surface);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+.output-peer-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.output-peer-stdin-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  padding: 2px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.output-peer-stdin-badge code {
+  color: var(--text-main);
+  font-family: monospace;
+}
+.output-peer-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.output-peer-back-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
 /* ── Body ────────────────────────────────────────────────────── */
 .output-body {
   flex: 1 1 0;
