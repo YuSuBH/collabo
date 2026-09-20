@@ -6,8 +6,12 @@
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
   '.js': 'javascript',
   '.jsx': 'javascript',
+  '.mjs': 'javascript',
+  '.cjs': 'javascript',
   '.ts': 'typescript',
   '.tsx': 'typescript',
+  '.mts': 'typescript',
+  '.cts': 'typescript',
   '.py': 'python',
   '.cpp': 'cpp',
   '.c': 'c',
@@ -114,9 +118,13 @@ export const getFileIconColor = (fileName: string): FileIconColor => {
   switch (ext) {
     case '.ts':
     case '.tsx':
+    case '.mts':
+    case '.cts':
       return 'blue';
     case '.js':
     case '.jsx':
+    case '.mjs':
+    case '.cjs':
       return 'yellow';
     case '.py':
       return 'green';
@@ -190,8 +198,8 @@ export const getExecutableLanguage = (fileName: string): string | null => {
  * Keys are language IDs; values are the extensions that belong to that language.
  */
 export const EXECUTABLE_EXTENSIONS_BY_LANGUAGE: Record<string, string[]> = {
-  javascript: ['.js', '.jsx'],
-  typescript: ['.ts', '.tsx'],
+  javascript: ['.js', '.jsx', '.mjs', '.cjs', '.json'],
+  typescript: ['.ts', '.tsx', '.mts', '.cts', '.json'],
   python: ['.py'],
 };
 
@@ -202,6 +210,15 @@ export const EXECUTABLE_EXTENSIONS_BY_LANGUAGE: Record<string, string[]> = {
 export const isBundlableWith = (entryFile: string, otherFile: string): boolean => {
   const entryLang = getExecutableLanguage(entryFile);
   if (!entryLang) return false;
+
+  // Always bundle package.json for JavaScript / TypeScript projects
+  if (
+    (entryLang === 'javascript' || entryLang === 'typescript') &&
+    otherFile.toLowerCase() === 'package.json'
+  ) {
+    return true;
+  }
+
   const otherExt = otherFile.lastIndexOf('.') > 0
     ? otherFile.slice(otherFile.lastIndexOf('.')).toLowerCase()
     : '';

@@ -33,6 +33,20 @@ interface WandboxResponse {
   compiler_error?: string;
 }
 
+/**
+ * Detects if JavaScript code contains ES Module syntax (import / export statements).
+ */
+function isEsmCode(text: string): boolean {
+  if (!text) return false;
+  const clean = text
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*/g, '');
+  return (
+    /^\s*(import\s+|export\s+|export\s+default\s+)/m.test(clean) ||
+    /\bimport\s*\(/.test(clean)
+  );
+}
+
 // ─── POST /api/execute ────────────────────────────────────────────────────────
 executeRouter.post(
   '/',
@@ -58,39 +72,75 @@ executeRouter.post(
       stdin: typeof stdin === 'string' ? stdin : '',
     };
 
-    if (Array.isArray(codes) && codes.length > 0) {
-      payload.codes = codes;
+    const finalCodes: CodeFile[] = Array.isArray(codes) ? [...codes] : [];
+
+    // For Node.js, auto-inject a package.json with "type": "module" if ES Module syntax is used
+    // and no explicit package.json was provided by the user.
+    if (compiler.startsWith('nodejs')) {
+      const hasExplicitPackageJson = finalCodes.some(
+        (c) => c.file.toLowerCase() === 'package.json'
+      );
+
+      if (!hasExplicitPackageJson) {
+        const needsEsm =
+          isEsmCode(code) || finalCodes.some((c) => isEsmCode(c.code));
+        if (needsEsm) {
+          finalCodes.push({
+            file: 'package.json',
+            code: JSON.stringify({ type: 'module' }, null, 2),
+          });
+        }
+      }
     }
 
-    try {
-      const wandboxRes = await fetch(WANDBOX_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    if (finalCodes.length > 0) {
+      payload.codes = finalCodes;
+    }
 
-      if (!wandboxRes.ok) {
-        const errText = await wandboxRes.text().catch(() => 'Unknown error');
-        console.error(`[Execute] Wandbox HTTP ${wandboxRes.status}: ${errText}`);
-        return res.status(502).json({
-          error: `Wandbox returned HTTP ${wandboxRes.status}. The service may be temporarily unavailable.`,
+    let wandboxRes: globalThis.Response | null = null;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        wandboxRes = await fetch(WANDBOX_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
+        if (wandboxRes.ok || wandboxRes.status < 500) {
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 400));
+        }
       }
+    }
 
-      const data = (await wandboxRes.json()) as WandboxResponse;
-
-      return res.json({
-        status: data.status ?? '-1',
-        program_output: data.program_output ?? '',
-        program_error: data.program_error ?? '',
-        compiler_error: data.compiler_error ?? data.compiler_output ?? '',
-      });
-    } catch (err: any) {
-      console.error('[Execute] Network/proxy error:', err);
+    if (!wandboxRes) {
+      console.error('[Execute] Network/proxy error:', lastError);
       return res.status(503).json({
         error:
           'Could not reach Wandbox. Check your internet connection or try again later.',
       });
     }
+
+    if (!wandboxRes.ok) {
+      const errText = await wandboxRes.text().catch(() => 'Unknown error');
+      console.error(`[Execute] Wandbox HTTP ${wandboxRes.status}: ${errText}`);
+      return res.status(502).json({
+        error: `Wandbox returned HTTP ${wandboxRes.status}. The service may be temporarily unavailable.`,
+      });
+    }
+
+    const data = (await wandboxRes.json()) as WandboxResponse;
+
+    return res.json({
+      status: data.status ?? '-1',
+      program_output: data.program_output ?? '',
+      program_error: data.program_error ?? '',
+      compiler_error: data.compiler_error ?? data.compiler_output ?? '',
+    });
   }
 );
