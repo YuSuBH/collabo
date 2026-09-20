@@ -2248,12 +2248,18 @@ html, body, #root {
 /* ── stdin row ───────────────────────────────────────────────── */
 .output-stdin-row {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   padding: 6px 10px;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-darker);
   flex-shrink: 0;
+}
+.output-stdin-label-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 4px;
 }
 .output-stdin-label {
   font-size: 10px;
@@ -2263,17 +2269,26 @@ html, body, #root {
   text-transform: uppercase;
   flex-shrink: 0;
 }
+.output-stdin-hint {
+  font-size: 8.5px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  white-space: nowrap;
+}
 .output-stdin-input {
   flex: 1;
-  height: 26px;
-  padding: 0 8px;
+  min-height: 28px;
+  max-height: 120px;
+  padding: 5px 8px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-main);
   font-family: monospace;
   font-size: 12px;
+  line-height: 1.4;
   outline: none;
+  resize: vertical;
   transition: border-color var(--transition-fast);
 }
 .output-stdin-input:focus {
@@ -2285,7 +2300,7 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   width: 28px;
-  height: 26px;
+  height: 28px;
   background: var(--accent-primary);
   color: #fff;
   border: none;
@@ -2293,9 +2308,35 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-fast);
   flex-shrink: 0;
+  margin-top: 1px;
 }
 .output-stdin-run:hover:not(:disabled) { background: var(--accent-hover); }
 .output-stdin-run:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── EOF / Stdin hint ────────────────────────────────────────── */
+.output-eof-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 12px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  color: #f59e0b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.output-eof-hint-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.output-eof-hint-text code {
+  background: rgba(245, 158, 11, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
 
 /* ── Loading state ───────────────────────────────────────────── */
 .output-loading {

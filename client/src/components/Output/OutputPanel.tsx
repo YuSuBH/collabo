@@ -10,6 +10,7 @@ import {
   Loader2,
   Send,
   ChevronRight,
+  Lightbulb,
 } from 'lucide-react';
 import type { ExecutionResult } from '../../hooks/useCodeExecution';
 
@@ -43,6 +44,7 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   const dragStartY = useRef(0);
   const dragStartH = useRef(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const stdinInputRef = useRef<HTMLTextAreaElement>(null);
 
   // ── Drag-to-resize ─────────────────────────────────────────────────────────
   const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
@@ -87,6 +89,20 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
     if (ms < 1000) return `${ms}ms`;
     return `${(ms / 1000).toFixed(2)}s`;
   };
+
+  const isEofError =
+    !isRunning &&
+    (result?.stderr?.includes('EOFError') ||
+      result?.stderr?.includes('EOF when reading a line'));
+
+  useEffect(() => {
+    if (isEofError) {
+      setShowStdin(true);
+      setTimeout(() => {
+        stdinInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isEofError]);
 
   const handleRunWithStdin = () => {
     onRunWithStdin?.(stdin);
@@ -190,22 +206,32 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
           {/* stdin input row */}
           {showStdin && onRunWithStdin && (
             <div className="output-stdin-row">
-              <span className="output-stdin-label">stdin</span>
-              <input
+              <div className="output-stdin-label-col">
+                <span className="output-stdin-label">stdin</span>
+                <span className="output-stdin-hint">Ctrl+Enter</span>
+              </div>
+              <textarea
+                ref={stdinInputRef}
                 className="output-stdin-input"
-                type="text"
+                rows={Math.min(5, Math.max(1, stdin.split('\n').length))}
                 value={stdin}
                 onChange={(e) => setStdin(e.target.value)}
-                placeholder="Enter stdin for your program…"
+                placeholder="Enter standard input (e.g. separate multiple lines with Enter)…"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !isRunning) handleRunWithStdin();
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!isRunning) handleRunWithStdin();
+                  } else if (e.key === 'Enter' && !e.shiftKey && !stdin.includes('\n') && stdin.trim().length > 0) {
+                    // Quick-run on single Enter only if it's currently a single line without Shift
+                    // (User can press Shift+Enter for multiple lines or Ctrl+Enter anytime)
+                  }
                 }}
               />
               <button
                 className="output-stdin-run"
                 onClick={handleRunWithStdin}
                 disabled={isRunning}
-                title="Run with this stdin"
+                title="Run with this stdin (Ctrl+Enter)"
               >
                 <Send size={12} />
               </button>
@@ -261,6 +287,17 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
                 stderr
               </div>
               <pre className="output-pre output-pre-error">{result!.stderr}</pre>
+            </div>
+          )}
+
+          {/* EOF / Stdin Guidance Banner */}
+          {isEofError && (
+            <div className="output-eof-hint">
+              <Lightbulb size={14} className="output-eof-hint-icon" />
+              <div className="output-eof-hint-text">
+                <strong>Input Required:</strong> Your program requested input via{' '}
+                <code>input()</code>. Provide input in the <strong>stdin</strong> bar above and press <strong>Enter</strong> to run.
+              </div>
             </div>
           )}
 
