@@ -11,13 +11,7 @@ const MESSAGE_QUERY_AWARENESS = 3;
 const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
 // Open this same URL in another browser tab to experience real-time sync & remote cursors.
 
-interface User {
-  id: string;
-  name: string;
-  role: 'admin' | 'editor' | 'viewer';
-}
-
-function greetCollaborator(user: User): string {
+function greetCollaborator(user) {
   return \`👋 Hello \${user.name}, you are currently editing with live CRDT sync!\`;
 }
 
