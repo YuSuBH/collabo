@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 import { useYjs } from './hooks/useYjs';
+import { useCodeExecution, autoDetectEntryFile } from './hooks/useCodeExecution';
 import { Header } from './components/Header/Header';
 import { CodeEditor } from './components/Editor/CodeEditor';
 import { FileExplorer } from './components/FileExplorer/FileExplorer';
 import { RoomInfo } from './components/Sidebar/RoomInfo';
 import { ChatPanel, type ChatTab, type YChatMessage } from './components/Chat/ChatPanel';
 import { LobbyPage } from './components/Lobby/LobbyPage';
+import { OutputPanel } from './components/Output/OutputPanel';
 import { getLanguageLabel } from './utils/languageDetection';
 import { FileCode, Activity, Terminal, FolderTree, Users } from 'lucide-react';
 import './index.css';
@@ -47,6 +49,15 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
   const [rightSidebarTab, setRightSidebarTab] = useState<ChatTab>('group');
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
 
+  // Output panel state
+  const [isOutputPanelOpen, setIsOutputPanelOpen] = useState<boolean>(false);
+
+  // Project files list (synced from Yjs for the run config popover)
+  const [projectFiles, setProjectFiles] = useState<string[]>([]);
+
+  // User-selected entry file (overrides auto-detect when set)
+  const [entryFileOverride, setEntryFileOverride] = useState<string | null>(null);
+
   const {
     doc,
     awareness,
@@ -62,6 +73,15 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     initialName: joinInfo.username,
     initialColor: joinInfo.color,
   });
+
+  // Code execution hook
+  const { run, isRunning, result, error, clearResult } = useCodeExecution({
+    doc,
+    activeFile,
+  });
+
+  // Derive the currently resolved entry file for display in header
+  const resolvedEntry = entryFileOverride ?? autoDetectEntryFile(projectFiles, activeFile);
 
   // Clear unread count when group chat drawer is opened
   useEffect(() => {
@@ -127,6 +147,21 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     }
   }, [doc, isSynced]);
 
+  // Keep projectFiles in sync with Yjs filesMap
+  useEffect(() => {
+    if (!doc) return;
+    const filesMap = doc.getMap<Y.Text>('files');
+    const sync = () => {
+      const names = Array.from(filesMap.keys()).sort((a, b) =>
+        a.localeCompare(b, undefined, { sensitivity: 'base' })
+      );
+      setProjectFiles(names);
+    };
+    sync();
+    filesMap.observe(sync);
+    return () => filesMap.unobserve(sync);
+  }, [doc]);
+
   // Publish active file to awareness so peers can see what we're editing
   useEffect(() => {
     if (awareness && activeFile) {
@@ -159,12 +194,17 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     }
   }, [isRightSidebarOpen, rightSidebarTab]);
 
-  // Handle Execute Code placeholder
+  // Execute code: open output panel and run
   const handleExecuteCode = useCallback(() => {
-    console.log(`[Execute] Running code for active file: ${activeFile}`);
-    // Future execution backend integration
-    alert(`⚡ Execution triggered for ${activeFile}!\nExecution runner can be connected to the backend.`);
-  }, [activeFile]);
+    setIsOutputPanelOpen(true);
+    run(entryFileOverride ?? undefined);
+  }, [run, entryFileOverride]);
+
+  // Run with custom stdin
+  const handleRunWithStdin = useCallback((stdin: string) => {
+    setIsOutputPanelOpen(true);
+    run(entryFileOverride ?? undefined, stdin);
+  }, [run, entryFileOverride]);
 
   const languageLabel = getLanguageLabel(activeFile);
 
@@ -184,6 +224,10 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         rightSidebarTab={rightSidebarTab}
         onToggleRightSidebar={handleToggleRightSidebar}
         onExecute={handleExecuteCode}
+        isRunning={isRunning}
+        projectFiles={projectFiles}
+        entryFile={resolvedEntry}
+        onEntryFileChange={setEntryFileOverride}
         onLeaveRoom={onLeave}
       />
 
@@ -269,6 +313,18 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           />
         )}
       </div>
+
+      {/* Output Panel — slides up from bottom */}
+      {isOutputPanelOpen && (
+        <OutputPanel
+          isRunning={isRunning}
+          result={result}
+          error={error}
+          onClear={clearResult}
+          onClose={() => setIsOutputPanelOpen(false)}
+          onRunWithStdin={handleRunWithStdin}
+        />
+      )}
 
       <footer className="status-bar">
         <div className="status-bar-left">

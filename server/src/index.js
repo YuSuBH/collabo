@@ -4,6 +4,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { setupYjsWebSocketServer, getRoomActiveColors } from './websocket/yjsServer.js';
 import { aiRouter } from './routes/ai.js';
+import { executeRouter } from './routes/execute.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,6 +26,8 @@ app.get('/api/rooms/:roomId/colors', (req, res) => {
 });
 // Mount AI Proxy Routes
 app.use('/api/ai', aiRouter);
+// Mount Wandbox Code Execution Proxy
+app.use('/api/execute', executeRouter);
 const server = http.createServer(app);
 // Mount Yjs WebSocket relay
 setupYjsWebSocketServer(server);

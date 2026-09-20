@@ -153,3 +153,67 @@ export const FILE_ICON_CSS_COLORS: Record<FileIconColor, string> = {
   cyan: '#06b6d4',
   muted: '#71717a',
 };
+
+// ─── Wandbox Execution Support ────────────────────────────────────────────────
+
+/**
+ * Maps Monaco language IDs to verified Wandbox compiler strings.
+ * Only languages supported by the execution backend are listed here.
+ */
+const WANDBOX_COMPILER_MAP: Record<string, string> = {
+  javascript: 'nodejs-20.17.0',
+  typescript: 'typescript-5.6.2',
+  python: 'cpython-3.12.7',
+};
+
+/**
+ * Returns the Wandbox compiler string for a given filename,
+ * or null if the language is not supported for execution.
+ */
+export const getWandboxCompiler = (fileName: string): string | null => {
+  const lang = getLanguageFromFileName(fileName);
+  return WANDBOX_COMPILER_MAP[lang] ?? null;
+};
+
+/**
+ * Returns the Monaco language ID for execution-supported files only.
+ * Returns null for non-executable file types.
+ */
+export const getExecutableLanguage = (fileName: string): string | null => {
+  const lang = getLanguageFromFileName(fileName);
+  return lang in WANDBOX_COMPILER_MAP ? lang : null;
+};
+
+/**
+ * File extensions that are considered executable (used to filter
+ * companion/helper files when bundling multi-file projects).
+ * Keys are language IDs; values are the extensions that belong to that language.
+ */
+export const EXECUTABLE_EXTENSIONS_BY_LANGUAGE: Record<string, string[]> = {
+  javascript: ['.js', '.jsx'],
+  typescript: ['.ts', '.tsx'],
+  python: ['.py'],
+};
+
+/**
+ * Given an entry file, returns whether a second file should be bundled
+ * alongside it (i.e. it belongs to the same executable language group).
+ */
+export const isBundlableWith = (entryFile: string, otherFile: string): boolean => {
+  const entryLang = getExecutableLanguage(entryFile);
+  if (!entryLang) return false;
+  const otherExt = otherFile.lastIndexOf('.') > 0
+    ? otherFile.slice(otherFile.lastIndexOf('.')).toLowerCase()
+    : '';
+  return (EXECUTABLE_EXTENSIONS_BY_LANGUAGE[entryLang] ?? []).includes(otherExt);
+};
+
+/**
+ * Priority-ordered list of canonical entry-point filenames per language.
+ * Used for auto-detecting the entry file in a multi-file project.
+ */
+export const ENTRY_FILE_PRIORITY: Record<string, string[]> = {
+  javascript: ['index.js', 'main.js', 'app.js'],
+  typescript: ['index.ts', 'main.ts', 'app.ts'],
+  python: ['main.py', 'index.py', 'app.py'],
+};
