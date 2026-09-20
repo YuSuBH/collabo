@@ -336,6 +336,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           displayedRun={displayedRun}
           latestPeerRun={latestPeerRun}
           onClearPeerNotification={clearPeerNotification}
+          currentUserName={currentUser.name}
+          currentClientId={doc?.clientID}
         />
       )}
 

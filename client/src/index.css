@@ -2289,6 +2289,16 @@ html, body, #root {
   max-height: 220px;
   overflow-y: auto;
 }
+.output-runs-menu-empty {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.output-runs-item-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
 .output-runs-menu-item {
   display: flex;
   align-items: center;

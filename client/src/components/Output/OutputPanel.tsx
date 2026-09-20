@@ -37,6 +37,10 @@ interface OutputPanelProps {
   latestPeerRun?: SharedExecutionRun | null;
   /** Clear notification */
   onClearPeerNotification?: () => void;
+  /** Current user's name to filter out own runs */
+  currentUserName?: string;
+  /** Current client ID to filter out own runs */
+  currentClientId?: number;
 }
 
 const MIN_HEIGHT = 120;
@@ -56,6 +60,8 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   displayedRun = null,
   latestPeerRun = null,
   onClearPeerNotification,
+  currentUserName,
+  currentClientId,
 }) => {
   const [height, setHeight] = useState(DEFAULT_HEIGHT);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -155,6 +161,13 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
     onRunWithStdin?.(stdin);
   };
 
+  // ── Peer Runs Only (Exclude current user's runs) ───────────────────────────
+  const peerRuns = sharedRuns.filter((r) => {
+    if (currentClientId !== undefined && r.executorId === currentClientId) return false;
+    if (currentUserName && r.executorName === currentUserName) return false;
+    return true;
+  });
+
   return (
     <div
       className="output-panel"
@@ -204,8 +217,8 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
         </div>
 
         <div className="output-header-actions">
-          {/* Shared Runs Selector Dropdown */}
-          {sharedRuns.length > 0 && (
+          {/* Peer Runs Selector Dropdown (Collaborators Only) */}
+          {(peerRuns.length > 0 || isViewingPeerRun) && (
             <div className="output-runs-dropdown-container" ref={dropdownRef}>
               <button
                 className={`output-action-btn output-runs-dropdown-btn ${
@@ -215,8 +228,10 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
                 title="View executions by collaborators"
               >
                 <Users size={12} />
-                <span>{isViewingPeerRun ? displayedRun.executorName : 'Runs'}</span>
-                <span className="output-runs-count-badge">{sharedRuns.length}</span>
+                <span>{isViewingPeerRun ? displayedRun.executorName : 'Peer Outputs'}</span>
+                {peerRuns.length > 0 && (
+                  <span className="output-runs-count-badge">{peerRuns.length}</span>
+                )}
                 <ChevronDown size={11} />
               </button>
 
@@ -224,31 +239,37 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
                 <div className="output-runs-dropdown-menu">
                   <div className="output-runs-menu-header">
                     <History size={12} />
-                    <span>Collaborator Executions</span>
+                    <span>Collaborator Runs</span>
                   </div>
 
-                  {/* Option for My Latest Output */}
-                  <div
-                    className={`output-runs-menu-item ${!selectedRunId ? 'output-runs-menu-item-active' : ''}`}
-                    onClick={() => {
-                      onSelectRun?.(null);
-                      setShowRunsDropdown(false);
-                    }}
-                  >
-                    <div className="output-runs-item-avatar my-avatar">Me</div>
-                    <div className="output-runs-item-details">
-                      <div className="output-runs-item-title">My Latest Run</div>
-                      <div className="output-runs-item-sub">
-                        {result ? `${result.entryFile} • Exit ${result.exitCode}` : 'Local execution state'}
+                  {/* If viewing a peer's run, provide quick button to return to My Output */}
+                  {isViewingPeerRun && (
+                    <>
+                      <div
+                        className="output-runs-menu-item"
+                        onClick={() => {
+                          onSelectRun?.(null);
+                          setShowRunsDropdown(false);
+                        }}
+                      >
+                        <ArrowLeft size={12} className="output-runs-item-icon" />
+                        <div className="output-runs-item-details">
+                          <div className="output-runs-item-title">Back to My Output</div>
+                          <div className="output-runs-item-sub">Return to your local execution</div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                      <div className="output-runs-menu-divider" />
+                    </>
+                  )}
 
-                  <div className="output-runs-menu-divider" />
-
-                  {/* List of all shared runs */}
+                  {/* List of peer runs only */}
                   <div className="output-runs-menu-list">
-                    {sharedRuns.map((runItem) => {
+                    {peerRuns.length === 0 && (
+                      <div className="output-runs-menu-empty">
+                        No other collaborator runs yet
+                      </div>
+                    )}
+                    {peerRuns.map((runItem) => {
                       const isItemExitOk = runItem.exitCode === '0';
                       const isSelected = selectedRunId === runItem.id;
                       return (
