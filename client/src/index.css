@@ -2368,3 +2368,116 @@ html, body, #root {
 }
 .output-pre-stdout { color: #86efac; }
 .output-pre-error  { color: #fca5a5; }
+
+/* ==========================================================================
+   Header Run Info Button & Execution Info Modal
+   ========================================================================== */
+.header-run-info-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.header-run-info-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+  border-color: var(--text-dim);
+  transform: translateY(-1px);
+}
+.header-run-info-btn-active {
+  color: var(--accent-primary) !important;
+  background: rgba(59, 130, 246, 0.15) !important;
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.header-run-info-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Dropdown Popover */
+.exec-info-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dropdown-pop-in 0.15s ease forwards;
+}
+@keyframes dropdown-pop-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Header */
+.exec-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+.exec-info-plain-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.exec-info-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.exec-info-close-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* Body */
+.exec-info-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.exec-info-plain-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+
+

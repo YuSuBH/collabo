@@ -10,10 +10,12 @@ import {
   Radio,
   ChevronDown,
   Loader2,
+  HelpCircle,
 } from 'lucide-react';
 import type { ConnectionStatus } from '../../hooks/useYjs';
 import type { Collaborator } from '../../utils/collaborators';
 import { RunConfigPopover } from './RunConfigPopover';
+import { ExecutionInfoModal } from './ExecutionInfoModal';
 
 interface HeaderProps {
   roomId: string;
@@ -59,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLeaveRoom,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
   const handleLeave = () => {
     if (window.confirm('Are you sure you want to leave the room?')) {
@@ -167,6 +170,24 @@ export const Header: React.FC<HeaderProps> = ({
               />
             )}
           </div>
+        </div>
+
+        {/* Info / Guide button (?) with dropdown popover */}
+        <div className="header-run-info-wrapper">
+          <button
+            className={`header-run-info-btn ${isInfoModalOpen ? 'header-run-info-btn-active' : ''}`}
+            onClick={() => setIsInfoModalOpen((v) => !v)}
+            title="How code execution works (Guide & multi-file setup)"
+            aria-label="How code execution works"
+          >
+            <HelpCircle size={15} />
+          </button>
+
+          {isInfoModalOpen && (
+            <ExecutionInfoModal
+              onClose={() => setIsInfoModalOpen(false)}
+            />
+          )}
         </div>
       </div>
 
