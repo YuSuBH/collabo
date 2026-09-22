@@ -310,18 +310,19 @@ html, body, #root {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
   border: none;
-  padding: 5px 14px;
+  height: 28px;
+  padding: 0 12px;
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   transition: var(--transition-normal);
+  box-sizing: border-box;
 }
 .header-execute-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   box-shadow: 0 3px 12px rgba(16, 185, 129, 0.45);
-  transform: translateY(-1px);
 }
 .header-execute-btn:active:not(:disabled) { transform: translateY(0); }
 .header-execute-btn:disabled { opacity: 0.75; cursor: not-allowed; }
@@ -342,13 +343,15 @@ html, body, #root {
 }
 .header-run-chevron-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 .header-run-chevron {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 22px;
-  height: 30px;
+  height: 28px;
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: #ffffff;
   border: none;
@@ -357,6 +360,7 @@ html, body, #root {
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   transition: var(--transition-fast);
+  box-sizing: border-box;
 }
 .header-run-chevron:hover:not(:disabled) {
   background: linear-gradient(135deg, #047857 0%, #065f46 100%);
