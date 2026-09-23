@@ -43,7 +43,7 @@ const isIgnoredFile = (path: string): boolean => {
 /**
  * Sanitize a string into a clean, safe filename
  */
-export const sanitizeFileName = (name: string): string => {
+const sanitizeFileName = (name: string): string => {
   // Replace invalid characters with underscores
   const cleaned = name.replace(/[^a-zA-Z0-9._\-]/g, '_');
   // Ensure it has at least a valid name

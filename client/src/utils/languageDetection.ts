@@ -197,7 +197,7 @@ export const getExecutableLanguage = (fileName: string): string | null => {
  * companion/helper files when bundling multi-file projects).
  * Keys are language IDs; values are the extensions that belong to that language.
  */
-export const EXECUTABLE_EXTENSIONS_BY_LANGUAGE: Record<string, string[]> = {
+const EXECUTABLE_EXTENSIONS_BY_LANGUAGE: Record<string, string[]> = {
   javascript: ['.js', '.jsx', '.mjs', '.cjs', '.json'],
   typescript: ['.ts', '.tsx', '.mts', '.cts', '.json'],
   python: ['.py'],
