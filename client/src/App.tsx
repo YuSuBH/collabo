@@ -10,7 +10,7 @@ import { ChatPanel, type ChatTab, type YChatMessage } from './components/Chat/Ch
 import { LobbyPage } from './components/Lobby/LobbyPage';
 import { OutputPanel } from './components/Output/OutputPanel';
 import { getLanguageLabel } from './utils/languageDetection';
-import { FileCode, Activity, Terminal, FolderTree, Users } from 'lucide-react';
+import { FileCode, Activity, Terminal, FolderTree, Users, Radio, Loader2 } from 'lucide-react';
 import './index.css';
 
 const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
@@ -343,8 +343,24 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
 
       <footer className="status-bar">
         <div className="status-bar-left">
+          <button
+            type="button"
+            className={`status-bar-btn ${isOutputPanelOpen ? 'status-bar-btn-active' : ''}`}
+            onClick={() => setIsOutputPanelOpen((prev) => !prev)}
+            title={isOutputPanelOpen ? 'Hide Output Panel' : 'Show Output Panel'}
+            aria-label="Toggle Output Panel"
+          >
+            {isRunning ? (
+              <Loader2 size={12} className="spin-icon" />
+            ) : (
+              <Terminal size={12} />
+            )}
+            <span>Output</span>
+            {isRunning && <span className="status-bar-running-badge">Running...</span>}
+          </button>
+
           <div className="status-item">
-            <Terminal size={12} />
+            <Radio size={12} style={{ color: status === 'connected' ? 'var(--color-success)' : 'var(--color-warning)' }} />
             <span>CodeSync Relay</span>
           </div>
           <div className="status-item">
