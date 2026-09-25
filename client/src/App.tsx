@@ -8,6 +8,8 @@ import { OutputPanel } from './components/Output/OutputPanel';
 import { TabBar } from './components/IDE/TabBar';
 import { LeftSidebar } from './components/IDE/LeftSidebar';
 import { StatusBar } from './components/IDE/StatusBar';
+import { PermissionRequestModal } from './components/Permissions/PermissionRequestModal';
+import { Info, X } from 'lucide-react';
 import './index.css';
 
 interface JoinInfo {
@@ -32,6 +34,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     unreadChatCount,
     isOutputPanelOpen,
     setIsOutputPanelOpen,
+    isRequestModalOpen,
+    setIsRequestModalOpen,
     projectFiles,
     setEntryFileOverride,
     resolvedEntry,
@@ -52,6 +56,25 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     displayedRun,
     latestPeerRun,
     clearPeerNotification,
+    // Permissions
+    roomMeta,
+    permissions,
+    role,
+    isOwner,
+    canEdit,
+    canManagePermissions,
+    allUserPermissions,
+    pendingRequests,
+    userPendingRequest,
+    statusMessage,
+    clearStatusMessage,
+    requestPermissions,
+    cancelRequest,
+    approveRequest,
+    rejectRequest,
+    updateUserPermissions,
+    transferOwnership,
+    // Handlers
     handleFileSelect,
     handleToggleLeftSidebar,
     handleToggleRightSidebar,
@@ -62,12 +85,27 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
 
   return (
     <div className="ide-layout">
+      {/* Global Status Message Toast */}
+      {statusMessage && (
+        <div className="global-status-toast">
+          <Info size={15} />
+          <span>{statusMessage}</span>
+          <button className="toast-close-btn" onClick={clearStatusMessage}>
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
       <Header
         roomId={roomId}
         status={status}
         isSynced={isSynced}
         users={users}
         unreadChatCount={unreadChatCount}
+        pendingRequestsCount={canManagePermissions ? pendingRequests.length : 0}
+        role={role}
+        isOwner={isOwner}
+        canExecute={permissions.execute}
         isLeftSidebarOpen={isLeftSidebarOpen}
         leftSidebarTab={leftSidebarTab}
         onToggleLeftSidebar={handleToggleLeftSidebar}
@@ -96,6 +134,21 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             users={users}
             roomId={roomId}
             currentUser={currentUser}
+            roomMeta={roomMeta}
+            permissions={permissions}
+            role={role}
+            isOwner={isOwner}
+            canManagePermissions={canManagePermissions}
+            allUserPermissions={allUserPermissions}
+            pendingRequests={pendingRequests}
+            userPendingRequest={userPendingRequest}
+            onRequestPermissions={requestPermissions}
+            onCancelRequest={cancelRequest}
+            onApproveRequest={approveRequest}
+            onRejectRequest={rejectRequest}
+            onUpdateUserPermissions={updateUserPermissions}
+            onTransferOwnership={transferOwnership}
+            onOpenPermissionRequestModal={() => setIsRequestModalOpen(true)}
           />
         )}
 
@@ -104,6 +157,10 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             doc={doc}
             awareness={awareness}
             activeFile={activeFile}
+            canEdit={canEdit}
+            userPendingRequest={userPendingRequest}
+            onRequestEditAccess={() => setIsRequestModalOpen(true)}
+            onCancelRequest={cancelRequest}
             onCursorChange={(line, col) => setCursorPos({ line, col })}
           />
         </div>
@@ -149,6 +206,17 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         cursorPos={cursorPos}
         languageLabel={languageLabel}
       />
+
+      {/* Permission Request Modal */}
+      {isRequestModalOpen && (
+        <PermissionRequestModal
+          currentPermissions={permissions}
+          userPendingRequest={userPendingRequest}
+          onRequestSubmit={requestPermissions}
+          onCancelRequest={cancelRequest}
+          onClose={() => setIsRequestModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

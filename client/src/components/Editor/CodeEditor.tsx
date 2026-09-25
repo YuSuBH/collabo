@@ -6,11 +6,17 @@ import { MonacoBinding } from '../../utils/yMonacoBinding';
 import type { Awareness } from 'y-protocols/awareness';
 import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
 import { getLanguageFromFileName } from '../../utils/languageDetection';
+import { PermissionBanner } from '../Permissions/PermissionBanner';
+import type { PermissionRequest } from '../../types/permissions';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
   awareness: Awareness | null;
   activeFile: string;
+  canEdit?: boolean;
+  userPendingRequest?: PermissionRequest | null;
+  onRequestEditAccess?: () => void;
+  onCancelRequest?: () => void;
   onCursorChange?: (line: number, col: number) => void;
 }
 
@@ -18,6 +24,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   doc,
   awareness,
   activeFile,
+  canEdit = true,
+  userPendingRequest = null,
+  onRequestEditAccess,
+  onCancelRequest,
   onCursorChange,
 }) => {
   const [editor, setEditor] = useState<any>(null);
@@ -60,27 +70,16 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     const monacoApi = (window as any).monaco || monaco;
     if (!monacoApi) return;
 
-    // Dispose the old model if there is one
-    const oldModel = editor.getModel();
-
     // Create a new model with the correct language
-    // Use a unique URI so Monaco doesn't complain about duplicates
     const uri = monacoApi.Uri.parse(`file:///${activeFile}`);
     let model = monacoApi.editor.getModel(uri);
     if (!model) {
-      // Create with empty string — MonacoBinding will sync the content from Y.Text
       model = monacoApi.editor.createModel('', language, uri);
     } else {
-      // Model exists, just update language
       monacoApi.editor.setModelLanguage(model, language);
     }
 
     editor.setModel(model);
-
-    // Dispose old model if it's a different one and not used elsewhere
-    if (oldModel && oldModel !== model && oldModel.uri.toString() !== model.uri.toString()) {
-      // Don't dispose — other editors might reference it. Monaco GCs unused models.
-    }
 
     // Create the MonacoBinding between Y.Text and the new model with activeFile passed
     const binding = new MonacoBinding(
@@ -111,14 +110,36 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     };
   }, [editor, doc, awareness, activeFile]);
 
+  // Dynamically toggle readOnly mode in Monaco editor instance
+  useEffect(() => {
+    if (editor) {
+      editor.updateOptions({
+        readOnly: !canEdit,
+        domReadOnly: !canEdit,
+      });
+    }
+  }, [editor, canEdit]);
+
   return (
     <div className="editor-container">
+      {/* Read-Only Status & Request Action Banner */}
+      {!canEdit && (
+        <PermissionBanner
+          canEdit={canEdit}
+          userPendingRequest={userPendingRequest}
+          onRequestClick={() => onRequestEditAccess?.()}
+          onCancelRequest={() => onCancelRequest?.()}
+        />
+      )}
+
       <Editor
         height="100%"
         language={getLanguageFromFileName(activeFile)}
         theme="vs-dark"
         onMount={handleEditorMount}
         options={{
+          readOnly: !canEdit,
+          domReadOnly: !canEdit,
           fontSize: 14,
           fontFamily: "'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace",
           fontLigatures: true,

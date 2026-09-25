@@ -11,9 +11,12 @@ import {
   ChevronDown,
   Loader2,
   HelpCircle,
+  Lock,
 } from 'lucide-react';
 import type { ConnectionStatus } from '../../hooks/useYjs';
 import type { Collaborator } from '../../utils/collaborators';
+import type { UserRole } from '../../types/permissions';
+import { RoleBadge } from '../Permissions/PermissionBadges';
 import { RunConfigPopover } from './RunConfigPopover';
 import { ExecutionInfoModal } from './ExecutionInfoModal';
 
@@ -23,6 +26,10 @@ interface HeaderProps {
   isSynced: boolean;
   users: Collaborator[];
   unreadChatCount?: number;
+  pendingRequestsCount?: number;
+  role?: UserRole;
+  isOwner?: boolean;
+  canExecute?: boolean;
   // Left sidebar toggles
   isLeftSidebarOpen: boolean;
   leftSidebarTab: 'files' | 'room';
@@ -47,6 +54,10 @@ export const Header: React.FC<HeaderProps> = ({
   isSynced,
   users,
   unreadChatCount = 0,
+  pendingRequestsCount = 0,
+  role = 'editor',
+  isOwner = false,
+  canExecute = true,
   isLeftSidebarOpen,
   leftSidebarTab,
   onToggleLeftSidebar,
@@ -97,10 +108,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="app-header-clean">
-      {/* Left: Logo & Left Sidebar Toggles */}
+      {/* Left: Logo, Role Badge & Left Sidebar Toggles */}
       <div className="header-group-left">
         <div className="brand-logo-only" title="CodeSync Collaborative IDE">
           <Code2 size={20} className="brand-icon" />
+        </div>
+
+        <div className="header-role-container">
+          <RoleBadge role={role} isOwner={isOwner} size="sm" />
         </div>
 
         <div className="header-divider" />
@@ -118,12 +133,17 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             className={`header-icon-btn ${isLeftSidebarOpen && leftSidebarTab === 'room' ? 'header-icon-btn-active' : ''}`}
             onClick={() => onToggleLeftSidebar('room')}
-            title={`Room & Collaborators (${users.length} active)`}
+            title={`Room & Collaborators (${users.length} active)${pendingRequestsCount > 0 ? ` — ${pendingRequestsCount} pending request(s)` : ''}`}
             aria-label="Room & Collaborators"
           >
             <Users size={17} />
             {users.length > 0 && (
               <span className="header-badge-count">{users.length}</span>
+            )}
+            {pendingRequestsCount > 0 && (
+              <span className="header-badge-requests" title={`${pendingRequestsCount} pending permission request(s)`}>
+                {pendingRequestsCount}
+              </span>
             )}
           </button>
         </div>
@@ -134,17 +154,25 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="header-run-group">
           {/* Main Run button */}
           <button
-            className={`header-execute-btn ${isRunning ? 'header-execute-btn-running' : ''}`}
-            onClick={onExecute}
-            title={isRunning ? 'Executing…' : 'Execute Code (Run)'}
+            className={`header-execute-btn ${isRunning ? 'header-execute-btn-running' : ''} ${!canExecute ? 'header-execute-btn-disabled' : ''}`}
+            onClick={() => {
+              if (!canExecute) return;
+              onExecute?.();
+            }}
+            title={!canExecute ? 'Execution permission required' : isRunning ? 'Executing…' : 'Execute Code (Run)'}
             aria-label="Execute Code"
-            disabled={isRunning}
+            disabled={isRunning || !canExecute}
           >
-            {isRunning
-              ? <Loader2 size={14} className="spin" />
-              : <Play size={14} fill="currentColor" />
-            }
-            <span className="execute-btn-text">{isRunning ? 'Running…' : 'Run'}</span>
+            {!canExecute ? (
+              <Lock size={13} />
+            ) : isRunning ? (
+              <Loader2 size={14} className="spin" />
+            ) : (
+              <Play size={14} fill="currentColor" />
+            )}
+            <span className="execute-btn-text">
+              {!canExecute ? 'No Exec Perm' : isRunning ? 'Running…' : 'Run'}
+            </span>
           </button>
 
           {/* Chevron — opens Run Config Popover */}
@@ -154,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setIsPopoverOpen((v) => !v)}
               title="Run configuration"
               aria-label="Run configuration"
-              disabled={isRunning}
+              disabled={isRunning || !canExecute}
             >
               <ChevronDown size={12} />
             </button>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 import { useYjs } from './useYjs';
 import { useCodeExecution, autoDetectEntryFile } from './useCodeExecution';
+import { usePermissions } from './usePermissions';
 import { type ChatTab, type YChatMessage } from '../components/Chat/ChatPanel';
 import { getLanguageLabel } from '../utils/languageDetection';
 
@@ -37,6 +38,9 @@ export function useIDEState(joinInfo: JoinInfo) {
   // Output panel state
   const [isOutputPanelOpen, setIsOutputPanelOpen] = useState<boolean>(false);
 
+  // Permission Request Modal state
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
+
   // Project files list (synced from Yjs for the run config popover)
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
 
@@ -57,6 +61,37 @@ export function useIDEState(joinInfo: JoinInfo) {
     initialRoomId: joinInfo.roomId,
     initialName: joinInfo.username,
     initialColor: joinInfo.color,
+  });
+
+  const {
+    roomMeta,
+    permissions,
+    role,
+    isOwner,
+    canEdit,
+    canCreate,
+    canDelete,
+    canImport,
+    canExecute,
+    canExport,
+    canManagePermissions,
+    allUserPermissions,
+    pendingRequests,
+    userPendingRequest,
+    statusMessage,
+    clearStatusMessage,
+    requestPermissions,
+    cancelRequest,
+    approveRequest,
+    rejectRequest,
+    updateUserPermissions,
+    setUserRole,
+    transferOwnership,
+  } = usePermissions({
+    doc,
+    currentUser,
+    users,
+    isSynced,
   });
 
   const {
@@ -192,14 +227,16 @@ export function useIDEState(joinInfo: JoinInfo) {
   }, [isRightSidebarOpen, rightSidebarTab]);
 
   const handleExecuteCode = useCallback(() => {
+    if (!canExecute) return;
     setIsOutputPanelOpen(true);
     run(entryFileOverride ?? undefined);
-  }, [run, entryFileOverride]);
+  }, [run, entryFileOverride, canExecute]);
 
   const handleRunWithStdin = useCallback((stdin: string) => {
+    if (!canExecute) return;
     setIsOutputPanelOpen(true);
     run(entryFileOverride ?? undefined, stdin);
-  }, [run, entryFileOverride]);
+  }, [run, entryFileOverride, canExecute]);
 
   const handleToggleOutputPanel = useCallback(() => {
     setIsOutputPanelOpen((prev) => !prev);
@@ -224,6 +261,35 @@ export function useIDEState(joinInfo: JoinInfo) {
     // Output state
     isOutputPanelOpen,
     setIsOutputPanelOpen,
+
+    // Permissions Modal state
+    isRequestModalOpen,
+    setIsRequestModalOpen,
+
+    // Permissions & Roles
+    roomMeta,
+    permissions,
+    role,
+    isOwner,
+    canEdit,
+    canCreate,
+    canDelete,
+    canImport,
+    canExecute,
+    canExport,
+    canManagePermissions,
+    allUserPermissions,
+    pendingRequests,
+    userPendingRequest,
+    statusMessage,
+    clearStatusMessage,
+    requestPermissions,
+    cancelRequest,
+    approveRequest,
+    rejectRequest,
+    updateUserPermissions,
+    setUserRole,
+    transferOwnership,
 
     // Project files
     projectFiles,

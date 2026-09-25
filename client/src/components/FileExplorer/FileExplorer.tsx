@@ -13,6 +13,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import {
   getFileIconColor,
@@ -36,6 +37,11 @@ interface FileExplorerProps {
   activeFile: string;
   onFileSelect: (fileName: string) => void;
   users: Collaborator[];
+  canCreate?: boolean;
+  canDelete?: boolean;
+  canImport?: boolean;
+  canExport?: boolean;
+  onRequestPermission?: () => void;
 }
 
 interface ToastNotification {
@@ -49,6 +55,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   activeFile,
   onFileSelect,
   users,
+  canCreate = true,
+  canDelete = true,
+  canImport = true,
+  canExport = true,
+  onRequestPermission,
 }) => {
   const [files, setFiles] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -127,6 +138,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   }, [files, activeFile, onFileSelect]);
 
   const handleCreate = useCallback(() => {
+    if (!canCreate) {
+      showToast('error', 'You do not have permission to create files.');
+      return;
+    }
+
     const trimmed = newFileName.trim();
     if (!trimmed) {
       setCreateError('File name cannot be empty');
@@ -151,10 +167,15 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     setCreateError('');
     setIsCreating(false);
     onFileSelect(trimmed);
-  }, [newFileName, filesMap, doc, onFileSelect]);
+  }, [newFileName, filesMap, doc, onFileSelect, canCreate, showToast]);
 
   const handleDelete = useCallback(
     (fileName: string) => {
+      if (!canDelete) {
+        showToast('error', 'You do not have permission to delete files.');
+        return;
+      }
+
       if (filesMap.size <= 1) return; // Cannot delete last file
 
       doc.transact(() => {
@@ -173,7 +194,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         }
       }
     },
-    [filesMap, doc, activeFile, onFileSelect]
+    [filesMap, doc, activeFile, onFileSelect, canDelete, showToast]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -188,6 +209,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   /** Trigger ZIP Export */
   const handleExportZip = async () => {
+    if (!canExport) {
+      showToast('error', 'You do not have permission to export project files.');
+      return;
+    }
+
     if (filesMap.size === 0) {
       showToast('error', 'No files to export.');
       return;
@@ -206,6 +232,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
   /** Process incoming uploaded or dropped files (single, multi-file, or ZIP) */
   const processIncomingFiles = async (fileList: FileList | File[]) => {
+    if (!canImport) {
+      showToast('error', 'You do not have permission to import files.');
+      return;
+    }
+
     const rawFiles = Array.from(fileList);
     if (rawFiles.length === 0) return;
 
@@ -265,13 +296,16 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     if (e.target.files && e.target.files.length > 0) {
       processIncomingFiles(e.target.files);
     }
-    // Reset file input so the same files can be re-selected
     e.target.value = '';
   };
 
   /** Confirm and apply imported ZIP files from modal */
   const handleConfirmImport = (mode: 'replace' | 'merge') => {
     if (!pendingZipResult) return;
+    if (!canImport) {
+      showToast('error', 'Import permission required.');
+      return;
+    }
 
     try {
       const res = importFilesToYjs(doc, pendingZipResult.files, mode);
@@ -304,6 +338,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+
+    if (!canImport) {
+      showToast('error', 'You do not have permission to import or drop files.');
+      return;
+    }
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processIncomingFiles(e.dataTransfer.files);
@@ -344,34 +383,46 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
         <div className="fe-header-actions">
           {/* New File */}
           <button
-            className="fe-btn-icon"
+            className={`fe-btn-icon ${!canCreate ? 'fe-btn-icon-disabled' : ''}`}
             onClick={() => {
+              if (!canCreate) {
+                showToast('error', 'You need file creation permission to add files.');
+                onRequestPermission?.();
+                return;
+              }
               setIsCreating(true);
               setCreateError('');
             }}
-            title="New File"
+            title={canCreate ? 'New File' : 'File creation permission required'}
           >
-            <Plus size={14} />
+            {canCreate ? <Plus size={14} /> : <Lock size={12} />}
           </button>
 
           {/* Import Single/Multi Files or ZIP */}
           <button
-            className="fe-btn-icon"
-            onClick={() => fileInputRef.current?.click()}
-            title="Import File(s) or ZIP Archive"
+            className={`fe-btn-icon ${!canImport ? 'fe-btn-icon-disabled' : ''}`}
+            onClick={() => {
+              if (!canImport) {
+                showToast('error', 'Import permission required to upload files.');
+                onRequestPermission?.();
+                return;
+              }
+              fileInputRef.current?.click();
+            }}
+            title={canImport ? 'Import File(s) or ZIP Archive' : 'Import permission required'}
             disabled={isProcessingFiles}
           >
-            {isProcessingFiles ? <Loader2 size={13} className="spin" /> : <Upload size={13} />}
+            {isProcessingFiles ? <Loader2 size={13} className="spin" /> : canImport ? <Upload size={13} /> : <Lock size={12} />}
           </button>
 
           {/* Export ZIP */}
           <button
-            className="fe-btn-icon"
+            className={`fe-btn-icon ${!canExport ? 'fe-btn-icon-disabled' : ''}`}
             onClick={handleExportZip}
-            title="Export Project as ZIP"
+            title={canExport ? 'Export Project as ZIP' : 'Export permission required'}
             disabled={isExporting || files.length === 0}
           >
-            {isExporting ? <Loader2 size={13} className="spin" /> : <Download size={13} />}
+            {isExporting ? <Loader2 size={13} className="spin" /> : canExport ? <Download size={13} /> : <Lock size={12} />}
           </button>
         </div>
       </div>
@@ -455,7 +506,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                   </button>
                 </div>
               ) : (
-                filesMap.size > 1 && (
+                canDelete && filesMap.size > 1 && (
                   <button
                     className="fe-btn-delete"
                     onClick={(e) => {
@@ -477,13 +528,17 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {isDragOver && (
         <div className="fe-drop-overlay">
           <FolderArchive size={28} className="fe-drop-icon" />
-          <span className="fe-drop-title">Drop Files or ZIP to Import</span>
-          <span className="fe-drop-hint">Adds & syncs files in real-time</span>
+          <span className="fe-drop-title">
+            {canImport ? 'Drop Files or ZIP to Import' : 'Import Permission Required'}
+          </span>
+          <span className="fe-drop-hint">
+            {canImport ? 'Adds & syncs files in real-time' : 'Ask room admin for import access'}
+          </span>
         </div>
       )}
 
       {/* New file input */}
-      {isCreating && (
+      {isCreating && canCreate && (
         <div className="fe-new-file">
           <div className="fe-new-input-row">
             <FileCode size={14} className="fe-new-icon" />

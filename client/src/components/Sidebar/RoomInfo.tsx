@@ -1,20 +1,78 @@
 import React, { useState } from 'react';
-import { Copy, Check, Radio, Share2, Shield } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Radio,
+  Share2,
+  Shield,
+  Sparkles,
+  SlidersHorizontal,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  FileCode,
+  PlusSquare,
+  Trash2,
+  Upload,
+  Play,
+  Download,
+} from 'lucide-react';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
+import type {
+  UserPermissions,
+  UserRole,
+  PermissionRequest,
+  RoomMeta,
+} from '../../types/permissions';
+import { getRoleFromPermissions, ROLE_PRESETS } from '../../types/permissions';
+import { RoleBadge } from '../Permissions/PermissionBadges';
+import { ManagePermissionsModal } from '../Permissions/ManagePermissionsModal';
+import { PermissionRequestModal } from '../Permissions/PermissionRequestModal';
 
 interface RoomInfoProps {
   roomId: string;
   users: Collaborator[];
   currentUser: UserPresence;
+  roomMeta: RoomMeta | null;
+  permissions: UserPermissions;
+  role: UserRole;
+  isOwner: boolean;
+  canManagePermissions: boolean;
+  allUserPermissions: Map<string, UserPermissions>;
+  pendingRequests: PermissionRequest[];
+  userPendingRequest: PermissionRequest | null;
+  onRequestPermissions: (perms: Partial<UserPermissions>, note?: string) => void;
+  onCancelRequest: () => void;
+  onApproveRequest: (requestId: string) => void;
+  onRejectRequest: (requestId: string) => void;
+  onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
+  onTransferOwnership: (targetUserId: string, targetUserName: string) => void;
 }
 
 export const RoomInfo: React.FC<RoomInfoProps> = ({
   roomId,
   users,
   currentUser,
+  roomMeta,
+  permissions,
+  role,
+  isOwner,
+  canManagePermissions,
+  allUserPermissions,
+  pendingRequests,
+  userPendingRequest,
+  onRequestPermissions,
+  onCancelRequest,
+  onApproveRequest,
+  onRejectRequest,
+  onUpdateUserPermissions,
+  onTransferOwnership,
 }) => {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [targetUserIdToEdit, setTargetUserIdToEdit] = useState<string | undefined>(undefined);
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -30,11 +88,29 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const openManageForUser = (userId: string) => {
+    if (!canManagePermissions) return;
+    setTargetUserIdToEdit(userId);
+    setIsManageModalOpen(true);
+  };
+
   return (
     <div className="room-info-panel">
       {/* Header */}
       <div className="fe-header">
         <span className="fe-title">ROOM INFO</span>
+        {canManagePermissions && (
+          <button
+            className="fe-btn-icon"
+            onClick={() => {
+              setTargetUserIdToEdit(undefined);
+              setIsManageModalOpen(true);
+            }}
+            title="Manage Permissions & Roles"
+          >
+            <SlidersHorizontal size={13} />
+          </button>
+        )}
       </div>
 
       <div className="room-info-body">
@@ -69,63 +145,235 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           </div>
         </div>
 
+        {/* Pending Requests Section (For Admins) */}
+        {canManagePermissions && pendingRequests.length > 0 && (
+          <div className="perm-requests-section">
+            <div className="sidebar-section-header">
+              <span className="sidebar-section-title text-amber-400">
+                PENDING REQUESTS ({pendingRequests.length})
+              </span>
+            </div>
+
+            <div className="perm-requests-list">
+              {pendingRequests.map((req) => (
+                <div key={req.id} className="perm-request-card">
+                  <div className="perm-request-header">
+                    <div className="perm-request-user">
+                      <div
+                        className="collaborator-avatar perm-avatar-xs"
+                        style={{ backgroundColor: req.userColor }}
+                      >
+                        {req.userName.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="perm-request-name">{req.userName}</span>
+                    </div>
+                    <span className="perm-request-time">
+                      <Clock size={11} />
+                      {new Date(req.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+
+                  {req.note && (
+                    <p className="perm-request-note">"{req.note}"</p>
+                  )}
+
+                  <div className="perm-request-badges">
+                    {req.permissions.edit && <span className="perm-chip">Edit Code</span>}
+                    {req.permissions.create && <span className="perm-chip">Create Files</span>}
+                    {req.permissions.delete && <span className="perm-chip">Delete Files</span>}
+                    {req.permissions.import && <span className="perm-chip">Import Files</span>}
+                    {req.permissions.managePermissions && (
+                      <span className="perm-chip perm-chip-admin">Manage Permissions</span>
+                    )}
+                  </div>
+
+                  <div className="perm-request-actions">
+                    <button
+                      className="btn-approve-request"
+                      onClick={() => onApproveRequest(req.id)}
+                      title="Approve permissions"
+                    >
+                      <CheckCircle2 size={13} />
+                      <span>Approve</span>
+                    </button>
+                    <button
+                      className="btn-reject-request"
+                      onClick={() => onRejectRequest(req.id)}
+                      title="Decline request"
+                    >
+                      <XCircle size={13} />
+                      <span>Decline</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Active Collaborators Section */}
         <div className="sidebar-section-header">
           <span className="sidebar-section-title">MEMBERS ({users.length})</span>
+          {canManagePermissions && (
+            <button
+              className="sidebar-link-btn"
+              onClick={() => setIsManageModalOpen(true)}
+            >
+              Manage
+            </button>
+          )}
         </div>
 
         <div className="collaborators-list">
-          {users.map((user) => (
-            <div
-              key={user.clientId}
-              className={`collaborator-item ${user.isCurrentUser ? 'collaborator-item-current' : ''}`}
-            >
+          {users.map((user) => {
+            const userPerms = allUserPermissions.get(user.id) || ROLE_PRESETS.viewer;
+            const isUserOwner = roomMeta?.creatorId === user.id || roomMeta?.currentHostId === user.id;
+            const userRole = getRoleFromPermissions(userPerms, isUserOwner);
+
+            return (
               <div
-                className="collaborator-avatar"
-                style={{ backgroundColor: user.color }}
+                key={user.clientId}
+                className={`collaborator-item ${
+                  user.isCurrentUser ? 'collaborator-item-current' : ''
+                } ${canManagePermissions ? 'collaborator-item-clickable' : ''}`}
+                onClick={() => canManagePermissions && openManageForUser(user.id)}
+                title={canManagePermissions ? `Click to configure permissions for ${user.name}` : undefined}
               >
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-
-              <div className="collaborator-details">
-                <div className="collaborator-name-row">
-                  <span className="collaborator-name">{user.name}</span>
-                  {user.isCurrentUser && (
-                    <span className="collaborator-tag">You</span>
-                  )}
+                <div
+                  className="collaborator-avatar"
+                  style={{ backgroundColor: user.color }}
+                >
+                  {user.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="collaborator-status">
-                  <span
-                    className="collaborator-status-dot"
-                    style={{ backgroundColor: user.color }}
-                  />
-                  Online
-                </span>
+
+                <div className="collaborator-details">
+                  <div className="collaborator-name-row">
+                    <span className="collaborator-name">{user.name}</span>
+                    {user.isCurrentUser && (
+                      <span className="collaborator-tag">You</span>
+                    )}
+                    <RoleBadge role={userRole} isOwner={isUserOwner} size="sm" />
+                  </div>
+                  <span className="collaborator-status">
+                    <span
+                      className="collaborator-status-dot"
+                      style={{ backgroundColor: user.color }}
+                    />
+                    Online
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
-        {/* Current User Profile Summary */}
+        {/* Current User Profile Summary & Permissions Breakdown */}
         <div className="sidebar-section-header" style={{ marginTop: 'auto' }}>
-          <span className="sidebar-section-title">YOUR PROFILE</span>
+          <span className="sidebar-section-title">YOUR ACCESS LEVEL</span>
         </div>
+
         <div className="current-user-card">
-          <div
-            className="collaborator-avatar"
-            style={{ backgroundColor: currentUser.color }}
-          >
-            {currentUser.name.charAt(0).toUpperCase()}
+          <div className="current-user-header-row">
+            <div
+              className="collaborator-avatar"
+              style={{ backgroundColor: currentUser.color }}
+            >
+              {currentUser.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="current-user-info">
+              <span className="current-user-name">{currentUser.name}</span>
+              <RoleBadge role={role} isOwner={isOwner} size="sm" />
+            </div>
           </div>
-          <div className="current-user-info">
-            <span className="current-user-name">{currentUser.name}</span>
-            <span className="current-user-role">
-              <Shield size={11} />
-              Editor
+
+          {/* Granular Permission Checklist */}
+          <div className="current-user-perms-grid">
+            <span className={`perm-mini-pill ${permissions.edit ? 'perm-mini-pill-active' : ''}`}>
+              <FileCode size={10} />
+              <span>Edit</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.create ? 'perm-mini-pill-active' : ''}`}>
+              <PlusSquare size={10} />
+              <span>Create</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.delete ? 'perm-mini-pill-active' : ''}`}>
+              <Trash2 size={10} />
+              <span>Delete</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.import ? 'perm-mini-pill-active' : ''}`}>
+              <Upload size={10} />
+              <span>Import</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.execute ? 'perm-mini-pill-active' : ''}`}>
+              <Play size={10} />
+              <span>Run</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.export ? 'perm-mini-pill-active' : ''}`}>
+              <Download size={10} />
+              <span>Export</span>
+            </span>
+            <span className={`perm-mini-pill ${permissions.managePermissions ? 'perm-mini-pill-active' : ''}`}>
+              <Shield size={10} />
+              <span>Admin</span>
             </span>
           </div>
+
+          {/* Request Button or Pending Indicator */}
+          {!canManagePermissions && (
+            <div className="current-user-actions">
+              {userPendingRequest ? (
+                <div className="perm-pending-box">
+                  <Clock size={12} className="text-amber-400" />
+                  <span>Request Pending...</span>
+                  <button
+                    className="btn-link-cancel"
+                    onClick={onCancelRequest}
+                    title="Cancel request"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn-request-perms-sidebar"
+                  onClick={() => setIsRequestModalOpen(true)}
+                >
+                  <Sparkles size={13} />
+                  <span>Request More Permissions</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Permission Request Modal */}
+      {isRequestModalOpen && (
+        <PermissionRequestModal
+          currentPermissions={permissions}
+          userPendingRequest={userPendingRequest}
+          onRequestSubmit={onRequestPermissions}
+          onCancelRequest={onCancelRequest}
+          onClose={() => setIsRequestModalOpen(false)}
+        />
+      )}
+
+      {/* Manage Permissions Modal */}
+      {isManageModalOpen && (
+        <ManagePermissionsModal
+          users={users}
+          allUserPermissions={allUserPermissions}
+          currentUserId={currentUser.id}
+          isOwner={isOwner}
+          onUpdatePermissions={onUpdateUserPermissions}
+          onTransferOwnership={onTransferOwnership}
+          onClose={() => setIsManageModalOpen(false)}
+          initialSelectedUserId={targetUserIdToEdit}
+        />
+      )}
     </div>
   );
 };

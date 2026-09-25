@@ -1,4 +1,5 @@
 export interface UserPresence {
+  id: string;
   name: string;
   color: string;
 }
@@ -57,6 +58,9 @@ export const CURSOR_COLORS = [
   '#76FF03', // Lime
 ];
 
+export const generateUserId = (): string =>
+  'usr_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+
 export const getAvailableColor = (usedColors: string[] = []): string => {
   const usedSet = new Set(usedColors.map((c) => c.toLowerCase()));
   const available = CURSOR_COLORS.filter(
@@ -89,7 +93,9 @@ export const getRandomCollaborator = (usedColors: string[] = []): UserPresence =
   const color = getAvailableColor(usedColors);
 
   return {
+    id: generateUserId(),
     name: `${adj} ${animal}`,
     color,
   };
 };
+

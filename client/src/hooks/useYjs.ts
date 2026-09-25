@@ -5,6 +5,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import {
   getRandomCollaborator,
   getAvailableColor,
+  generateUserId,
   type UserPresence,
   type Collaborator,
 } from '../utils/collaborators';
@@ -16,7 +17,13 @@ const getInitialUser = (): UserPresence => {
     const saved = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.name && parsed.color) return parsed;
+      if (parsed.name && parsed.color) {
+        if (!parsed.id) {
+          parsed.id = generateUserId();
+          localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(parsed));
+        }
+        return parsed;
+      }
     }
   } catch {
     // Ignore error and generate random user
@@ -57,12 +64,23 @@ export const useYjs = ({
   const [currentUser, setCurrentUserState] = useState<UserPresence>(() => {
     // If the lobby provided explicit credentials, use them (and persist).
     if (initialName && initialColor) {
-      const user: UserPresence = { name: initialName, color: initialColor };
+      let existingId = generateUserId();
+      try {
+        const saved = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.id) existingId = parsed.id;
+        }
+      } catch {
+        // ignore
+      }
+      const user: UserPresence = { id: existingId, name: initialName, color: initialColor };
       try { localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user)); } catch { /* ignore */ }
       return user;
     }
     return getInitialUser();
   });
+
 
   // Synchronize URL search params with roomId
   const setRoomId = useCallback((newRoomId: string) => {
@@ -154,6 +172,7 @@ export const useYjs = ({
         if (state.user && state.user.name && state.user.color) {
           const isMe = clientId === ydoc.clientID;
           collaborators.push({
+            id: state.user.id || `usr_${clientId}`,
             clientId,
             name: state.user.name,
             color: state.user.color,
