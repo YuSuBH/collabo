@@ -22,16 +22,16 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
       <div className="banner-left-content">
         {userPendingRequest ? (
           <>
-            <Clock size={15} className="banner-icon-pulse text-amber-400" />
+            <Clock size={14} className="banner-icon-pulse text-amber-400" />
             <span className="banner-text">
-              <strong>Permission Request Pending:</strong> Awaiting room administrator approval.
+              <strong>Request Pending</strong> — awaiting host approval
             </span>
           </>
         ) : (
           <>
-            <Lock size={15} className="banner-icon text-indigo-400" />
+            <Lock size={14} className="banner-icon text-indigo-400" />
             <span className="banner-text">
-              <strong>Read-Only Mode:</strong> You currently have view, execute, and export permissions.
+              <strong>Read-Only Mode</strong>
             </span>
           </>
         )}
@@ -44,17 +44,17 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
             onClick={onCancelRequest}
             title="Withdraw request"
           >
-            <X size={13} />
-            <span>Cancel Request</span>
+            <X size={12} />
+            <span>Cancel</span>
           </button>
         ) : (
           <button
             className="banner-btn banner-btn-request"
             onClick={onRequestClick}
-            title="Request Edit & Management Permissions"
+            title="Request Edit Access"
           >
-            <Sparkles size={13} />
-            <span>Request Edit Access</span>
+            <Sparkles size={12} />
+            <span>Request Edit</span>
           </button>
         )}
       </div>
