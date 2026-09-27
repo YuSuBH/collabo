@@ -92,7 +92,7 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
           <button
             type="button"
             className="banner-btn banner-btn-cancel"
-            onClick={onCancelRequest}
+            onClick={() => onCancelRequest()}
             title="Withdraw request"
           >
             <X size={12} />

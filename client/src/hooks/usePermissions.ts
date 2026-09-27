@@ -252,14 +252,15 @@ export function usePermissions({
 
   /** Cancel active permission request */
   const cancelRequest = useCallback(
-    (requestId?: string) => {
+    (requestId?: string | unknown) => {
       if (!doc) return;
-      const targetId = requestId || userPendingRequest?.id;
-      if (!targetId) return;
+      const validId = typeof requestId === 'string' && requestId ? requestId : userPendingRequest?.id;
 
       const requestsArray = doc.getArray<PermissionRequest>('permission-requests');
       const list = requestsArray.toArray();
-      const idx = list.findIndex((r) => r.id === targetId);
+      const idx = list.findIndex(
+        (r) => (validId && r.id === validId) || (r.userId === currentUser.id && r.status === 'pending')
+      );
 
       if (idx !== -1) {
         doc.transact(() => {
@@ -267,7 +268,7 @@ export function usePermissions({
         });
       }
     },
-    [doc, userPendingRequest]
+    [doc, userPendingRequest, currentUser.id]
   );
 
   /** Approve permission request (admin workflow) */

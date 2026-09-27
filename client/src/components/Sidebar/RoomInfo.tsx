@@ -323,8 +323,9 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                   <Clock size={12} className="text-amber-400" />
                   <span>Request Pending...</span>
                   <button
+                    type="button"
                     className="btn-link-cancel"
-                    onClick={onCancelRequest}
+                    onClick={() => onCancelRequest()}
                     title="Cancel request"
                   >
                     Cancel

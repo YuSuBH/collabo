@@ -812,6 +812,7 @@ html, body, #root {
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .room-info-body {
   padding: 12px;
@@ -820,6 +821,7 @@ html, body, #root {
   gap: 12px;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .room-card {
@@ -947,15 +949,25 @@ html, body, #root {
 
 .current-user-card {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px;
 }
-.current-user-info { display: flex; flex-direction: column; }
+.current-user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
 .current-user-name {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .current-user-role {
   display: flex;
@@ -3895,26 +3907,28 @@ html, body, #root {
 .current-user-header-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  width: 100%;
 }
 .current-user-perms-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 8px;
 }
 .perm-mini-pill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 2px 4px;
+  padding: 2.5px 6px;
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-color);
   color: var(--text-dim);
   font-size: 9.5px;
   opacity: 0.45;
+  white-space: nowrap;
 }
 .perm-mini-pill-active {
   background: rgba(16, 185, 129, 0.12);
