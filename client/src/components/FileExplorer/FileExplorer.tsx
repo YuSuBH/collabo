@@ -3,17 +3,11 @@ import * as Y from 'yjs';
 import type { Awareness } from 'y-protocols/awareness';
 import {
   FileCode,
-  Plus,
-  Trash2,
   X,
   Check,
-  Download,
-  Upload,
   FolderArchive,
   AlertCircle,
   CheckCircle2,
-  Loader2,
-  Lock,
 } from 'lucide-react';
 import {
   getFileIconColor,
@@ -30,6 +24,8 @@ import {
   type ExtractedFile,
 } from '../../utils/zipUtils';
 import { ImportZipModal } from './ImportZipModal';
+import { FileItem } from './FileItem';
+import { FileExplorerToolbar } from './FileExplorerToolbar';
 
 interface FileExplorerProps {
   doc: Y.Doc;
@@ -186,9 +182,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
       // If we deleted the active file, switch to first remaining
       if (fileName === activeFile) {
-        const remaining = Array.from(filesMap.keys()).filter(
-          (k) => k !== fileName
-        );
+        const remaining = Array.from(filesMap.keys()).filter((k) => k !== fileName);
         if (remaining.length > 0) {
           onFileSelect(remaining.sort()[0]);
         }
@@ -323,9 +317,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isDragOver) {
-      setIsDragOver(true);
-    }
+    if (!isDragOver) setIsDragOver(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -347,6 +339,27 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       processIncomingFiles(e.dataTransfer.files);
     }
+  };
+
+  /** Toolbar callback: new file button */
+  const handleNewFile = () => {
+    if (!canCreate) {
+      showToast('error', 'You need file creation permission to add files.');
+      onRequestPermission?.();
+      return;
+    }
+    setIsCreating(true);
+    setCreateError('');
+  };
+
+  /** Toolbar callback: import button */
+  const handleImportClick = () => {
+    if (!canImport) {
+      showToast('error', 'Import permission required to upload files.');
+      onRequestPermission?.();
+      return;
+    }
+    fileInputRef.current?.click();
   };
 
   /** Get peer avatars for a given file */
@@ -380,51 +393,17 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* Explorer Header */}
       <div className="fe-header">
         <span className="fe-title">EXPLORER</span>
-        <div className="fe-header-actions">
-          {/* New File */}
-          <button
-            className={`fe-btn-icon ${!canCreate ? 'fe-btn-icon-disabled' : ''}`}
-            onClick={() => {
-              if (!canCreate) {
-                showToast('error', 'You need file creation permission to add files.');
-                onRequestPermission?.();
-                return;
-              }
-              setIsCreating(true);
-              setCreateError('');
-            }}
-            title={canCreate ? 'New File' : 'File creation permission required'}
-          >
-            {canCreate ? <Plus size={14} /> : <Lock size={12} />}
-          </button>
-
-          {/* Import Single/Multi Files or ZIP */}
-          <button
-            className={`fe-btn-icon ${!canImport ? 'fe-btn-icon-disabled' : ''}`}
-            onClick={() => {
-              if (!canImport) {
-                showToast('error', 'Import permission required to upload files.');
-                onRequestPermission?.();
-                return;
-              }
-              fileInputRef.current?.click();
-            }}
-            title={canImport ? 'Import File(s) or ZIP Archive' : 'Import permission required'}
-            disabled={isProcessingFiles}
-          >
-            {isProcessingFiles ? <Loader2 size={13} className="spin" /> : canImport ? <Upload size={13} /> : <Lock size={12} />}
-          </button>
-
-          {/* Export ZIP */}
-          <button
-            className={`fe-btn-icon ${!canExport ? 'fe-btn-icon-disabled' : ''}`}
-            onClick={handleExportZip}
-            title={canExport ? 'Export Project as ZIP' : 'Export permission required'}
-            disabled={isExporting || files.length === 0}
-          >
-            {isExporting ? <Loader2 size={13} className="spin" /> : canExport ? <Download size={13} /> : <Lock size={12} />}
-          </button>
-        </div>
+        <FileExplorerToolbar
+          canCreate={canCreate}
+          canImport={canImport}
+          canExport={canExport}
+          isProcessingFiles={isProcessingFiles}
+          isExporting={isExporting}
+          hasFiles={files.length > 0}
+          onNewFile={handleNewFile}
+          onImport={handleImportClick}
+          onExport={handleExportZip}
+        />
       </div>
 
       {/* Toast Notification Alert */}
@@ -443,83 +422,22 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       {/* File List */}
       <div className="fe-file-list">
         {files.map((fileName) => {
-          const isActive = fileName === activeFile;
-          const isDeleting = deletingFile === fileName;
           const iconColor = FILE_ICON_CSS_COLORS[getFileIconColor(fileName)];
           const peersOnFile = getPeersOnFile(fileName);
-
           return (
-            <div
+            <FileItem
               key={fileName}
-              className={`fe-file-item ${isActive ? 'fe-file-active' : ''}`}
-              onClick={() => onFileSelect(fileName)}
-              title={fileName}
-            >
-              <div className="fe-file-info">
-                <FileCode
-                  size={14}
-                  className="fe-file-icon"
-                  style={{ color: iconColor }}
-                />
-                <span className="fe-file-name">{fileName}</span>
-                {peersOnFile.length > 0 && (
-                  <div className="fe-peer-dots">
-                    {peersOnFile.slice(0, 3).map((peer) => (
-                      <span
-                        key={peer.clientId}
-                        className="fe-peer-dot"
-                        style={{ backgroundColor: peer.color }}
-                        title={`${peer.name} is editing this file`}
-                      />
-                    ))}
-                    {peersOnFile.length > 3 && (
-                      <span className="fe-peer-overflow">
-                        +{peersOnFile.length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Delete controls */}
-              {isDeleting ? (
-                <div className="fe-delete-confirm" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    className="fe-btn-confirm-yes"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(fileName);
-                    }}
-                    title="Confirm delete"
-                  >
-                    <Check size={12} />
-                  </button>
-                  <button
-                    className="fe-btn-confirm-no"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeletingFile(null);
-                    }}
-                    title="Cancel"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              ) : (
-                canDelete && filesMap.size > 1 && (
-                  <button
-                    className="fe-btn-delete"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeletingFile(fileName);
-                    }}
-                    title="Delete file"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )
-              )}
-            </div>
+              fileName={fileName}
+              isActive={fileName === activeFile}
+              isDeleting={deletingFile === fileName}
+              iconColor={iconColor}
+              peersOnFile={peersOnFile}
+              canDelete={canDelete && filesMap.size > 1}
+              onSelect={() => onFileSelect(fileName)}
+              onDeleteStart={() => setDeletingFile(fileName)}
+              onDeleteConfirm={() => handleDelete(fileName)}
+              onDeleteCancel={() => setDeletingFile(null)}
+            />
           );
         })}
       </div>

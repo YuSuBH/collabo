@@ -214,7 +214,7 @@ export const importFilesToYjs = (
   files: ExtractedFile[],
   mode: 'replace' | 'merge' = 'replace'
 ): { importedCount: number; firstFileName: string } => {
-  const filesMap = doc.getMap('files');
+  const filesMap = doc.getMap('files') as Y.Map<Y.Text>;
 
   doc.transact(() => {
     if (mode === 'replace') {
@@ -240,7 +240,7 @@ export const importDirectFiles = (
   files: Array<{ name: string; content: string }>,
   mode: 'merge' | 'replace' = 'merge'
 ): { importedCount: number; firstFileName: string; importedNames: string[] } => {
-  const filesMap = doc.getMap('files');
+  const filesMap = doc.getMap('files') as Y.Map<Y.Text>;
   const importedNames: string[] = [];
 
   doc.transact(() => {

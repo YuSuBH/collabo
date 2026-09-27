@@ -8,14 +8,13 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Send,
   ChevronRight,
   Lightbulb,
-  Users,
-  History,
   ArrowLeft,
 } from 'lucide-react';
 import type { ExecutionResult, SharedExecutionRun } from '../../types/execution';
+import { PeerRunsDropdown } from './PeerRunsDropdown';
+import { StdinRow } from './StdinRow';
 
 interface OutputPanelProps {
   isRunning: boolean;
@@ -67,29 +66,12 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [stdin, setStdin] = useState('');
   const [showStdin, setShowStdin] = useState(false);
-  const [showRunsDropdown, setShowRunsDropdown] = useState(false);
 
   const isDragging = useRef(false);
   const dragStartY = useRef(0);
   const dragStartH = useRef(0);
   const panelRef = useRef<HTMLDivElement>(null);
   const stdinInputRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowRunsDropdown(false);
-      }
-    };
-    if (showRunsDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showRunsDropdown]);
 
   // ── Drag-to-resize ─────────────────────────────────────────────────────────
   const handleResizeMouseDown = useCallback((e: React.MouseEvent) => {
@@ -219,103 +201,13 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
         <div className="output-header-actions">
           {/* Peer Runs Selector Dropdown (Collaborators Only) */}
           {(peerRuns.length > 0 || isViewingPeerRun) && (
-            <div className="output-runs-dropdown-container" ref={dropdownRef}>
-              <button
-                className={`output-action-btn output-runs-dropdown-btn ${
-                  isViewingPeerRun ? 'output-action-btn-active' : ''
-                }`}
-                onClick={() => setShowRunsDropdown((v) => !v)}
-                title="View executions by collaborators"
-              >
-                <Users size={12} />
-                <span>{isViewingPeerRun ? displayedRun.executorName : 'Peer Outputs'}</span>
-                {peerRuns.length > 0 && (
-                  <span className="output-runs-count-badge">{peerRuns.length}</span>
-                )}
-                <ChevronDown size={11} />
-              </button>
-
-              {showRunsDropdown && (
-                <div className="output-runs-dropdown-menu">
-                  <div className="output-runs-menu-header">
-                    <History size={12} />
-                    <span>Collaborator Runs</span>
-                  </div>
-
-                  {/* If viewing a peer's run, provide quick button to return to My Output */}
-                  {isViewingPeerRun && (
-                    <>
-                      <div
-                        className="output-runs-menu-item"
-                        onClick={() => {
-                          onSelectRun?.(null);
-                          setShowRunsDropdown(false);
-                        }}
-                      >
-                        <ArrowLeft size={12} className="output-runs-item-icon" />
-                        <div className="output-runs-item-details">
-                          <div className="output-runs-item-title">Back to My Output</div>
-                          <div className="output-runs-item-sub">Return to your local execution</div>
-                        </div>
-                      </div>
-                      <div className="output-runs-menu-divider" />
-                    </>
-                  )}
-
-                  {/* List of peer runs only */}
-                  <div className="output-runs-menu-list">
-                    {peerRuns.length === 0 && (
-                      <div className="output-runs-menu-empty">
-                        No other collaborator runs yet
-                      </div>
-                    )}
-                    {peerRuns.map((runItem) => {
-                      const isItemExitOk = runItem.exitCode === '0';
-                      const isSelected = selectedRunId === runItem.id;
-                      return (
-                        <div
-                          key={runItem.id}
-                          className={`output-runs-menu-item ${isSelected ? 'output-runs-menu-item-active' : ''}`}
-                          onClick={() => {
-                            onSelectRun?.(runItem.id);
-                            setShowRunsDropdown(false);
-                          }}
-                        >
-                          <div
-                            className="output-runs-item-avatar"
-                            style={{ backgroundColor: runItem.executorColor }}
-                          >
-                            {runItem.executorName.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="output-runs-item-details">
-                            <div className="output-runs-item-title">
-                              <span>{runItem.executorName}</span>
-                              <span className="output-runs-item-file">{runItem.entryFile}</span>
-                            </div>
-                            <div className="output-runs-item-sub">
-                              <span
-                                className={`output-runs-status-dot ${
-                                  isItemExitOk ? 'status-dot-ok' : 'status-dot-err'
-                                }`}
-                              />
-                              <span>Exit {runItem.exitCode}</span>
-                              <span>•</span>
-                              <span>{formatTime(runItem.timestamp)}</span>
-                              {runItem.stdin && (
-                                <>
-                                  <span>•</span>
-                                  <span className="output-runs-stdin-tag">stdin</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            <PeerRunsDropdown
+              peerRuns={peerRuns}
+              isViewingPeerRun={isViewingPeerRun}
+              displayedRun={displayedRun}
+              selectedRunId={selectedRunId ?? null}
+              onSelectRun={(id) => onSelectRun?.(id)}
+            />
           )}
 
           {/* stdin toggle */}
@@ -436,34 +328,13 @@ export const OutputPanel: React.FC<OutputPanelProps> = ({
 
           {/* stdin input row */}
           {showStdin && onRunWithStdin && !isViewingPeerRun && (
-            <div className="output-stdin-row">
-              <div className="output-stdin-label-col">
-                <span className="output-stdin-label">stdin</span>
-                <span className="output-stdin-hint">Ctrl+Enter</span>
-              </div>
-              <textarea
-                ref={stdinInputRef}
-                className="output-stdin-input"
-                rows={Math.min(5, Math.max(1, stdin.split('\n').length))}
-                value={stdin}
-                onChange={(e) => setStdin(e.target.value)}
-                placeholder="Enter standard input (e.g. separate multiple lines with Enter)…"
-                onKeyDown={(e) => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                    e.preventDefault();
-                    if (!isRunning) handleRunWithStdin();
-                  }
-                }}
-              />
-              <button
-                className="output-stdin-run"
-                onClick={handleRunWithStdin}
-                disabled={isRunning}
-                title="Run with this stdin (Ctrl+Enter)"
-              >
-                <Send size={12} />
-              </button>
-            </div>
+            <StdinRow
+              stdin={stdin}
+              isRunning={isRunning}
+              stdinInputRef={stdinInputRef}
+              onChange={setStdin}
+              onRun={handleRunWithStdin}
+            />
           )}
 
           {/* Running state */}

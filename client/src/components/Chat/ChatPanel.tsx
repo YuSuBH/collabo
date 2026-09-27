@@ -14,13 +14,11 @@ import type { Collaborator, UserPresence } from '../../utils/collaborators';
 import {
   type ChatTab,
   type YChatMessage,
-  type AIChatMessage,
-  formatTimestamp,
-  generateMessageId,
   sendYChatMessage,
 } from './chatUtils';
 import { ChatMessageItem } from './ChatMessageItem';
 import { useChatResize } from './useChatResize';
+import { useAIStream } from './useAIStream';
 
 // Re-export types for backward compatibility with App.tsx
 export type { ChatTab, YChatMessage };
@@ -46,31 +44,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const { panelWidth, isResizing, handleResizeStart, handleResetWidth } = useChatResize();
 
-  // Group chat state bound to Y.Array
+  // ── Group chat ──────────────────────────────────────────────────────────────
   const [groupInput, setGroupInput] = useState('');
   const [groupMessages, setGroupMessages] = useState<YChatMessage[]>([]);
   const groupEndRef = useRef<HTMLDivElement>(null);
   const aiEndRef = useRef<HTMLDivElement>(null);
 
-  // AI chat state
+  // ── AI input & context ──────────────────────────────────────────────────────
   const [aiInput, setAiInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
   const [includeProjectContext, setIncludeProjectContext] = useState(false);
   const [aiNotification, setAiNotification] = useState<string | null>(null);
   const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const [aiMessages, setAiMessages] = useState<AIChatMessage[]>([
-    {
-      id: 'ai-init',
-      senderName: 'CodeSync AI',
-      isSelf: false,
-      isAI: true,
-      text: `👋 Hello ${currentUser.name}! I am **CodeSync AI**, your real-time collaborative coding companion.\n\nI can analyze **\`${activeFile}\`**, explain logic, debug syntax issues, write unit tests, and apply code directly into the editor for all collaborators to see.`,
-      timestamp: formatTimestamp(),
-    },
-  ]);
+  const { aiMessages, isStreaming, sendMessage, stopStreaming, clearHistory } = useAIStream({
+    doc,
+    activeFile,
+    currentUser,
+    includeProjectContext,
+  });
 
+  // ── Notification toast ──────────────────────────────────────────────────────
   const showNotification = (msg: string) => {
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     setAiNotification(msg);
@@ -86,284 +79,80 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     };
   }, []);
 
-  // Subscribe to Yjs 'chat-messages' Array
+  // ── Yjs group chat subscription ─────────────────────────────────────────────
   useEffect(() => {
     if (!doc) return;
     const chatArray = doc.getArray<YChatMessage>('chat-messages');
-
-    const updateMessages = () => {
-      setGroupMessages(chatArray.toArray());
-    };
-
+    const updateMessages = () => setGroupMessages(chatArray.toArray());
     updateMessages();
     chatArray.observe(updateMessages);
-
-    return () => {
-      chatArray.unobserve(updateMessages);
-    };
+    return () => chatArray.unobserve(updateMessages);
   }, [doc]);
 
-  // Auto-scroll when messages update
+  // ── Auto-scroll ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeTab === 'group') {
-      groupEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (activeTab === 'group') groupEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [groupMessages, activeTab]);
 
   useEffect(() => {
-    if (activeTab === 'ai') {
-      aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (activeTab === 'ai') aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [aiMessages, activeTab, isStreaming]);
 
-  // Send message to shared room chat
+  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleSendGroup = (e: React.FormEvent) => {
     e.preventDefault();
     const text = groupInput.trim();
     if (!text || !doc) return;
-
     sendYChatMessage(doc, {
       senderId: doc.clientID,
       senderName: currentUser.name,
       senderColor: currentUser.color,
       text,
     });
-
     setGroupInput('');
   };
 
-  // Helper to extract active file code
-  const getActiveFileContent = (): string => {
-    if (!doc || !activeFile) return '';
-    const filesMap = doc.getMap('files');
-    const yText = filesMap.get(activeFile) as Y.Text | undefined;
-    return yText ? yText.toString() : '';
-  };
-
-  // Helper to extract all project files
-  const getAllProjectFiles = (): Array<{ name: string; content: string }> => {
-    if (!doc) return [];
-    const filesMap = doc.getMap('files');
-    const result: Array<{ name: string; content: string }> = [];
-    filesMap.forEach((val, key) => {
-      if (val instanceof Y.Text) {
-        result.push({ name: key, content: val.toString() });
-      }
-    });
-    return result;
-  };
-
-  // Apply code to active file in Monaco / Yjs
+  /** Apply an AI code suggestion directly to the active file in the Yjs doc. */
   const handleApplyCodeToEditor = (newCode: string) => {
     if (!doc || !activeFile) return;
-
     try {
       const filesMap = doc.getMap('files');
       let yText = filesMap.get(activeFile) as Y.Text | undefined;
-
       if (!yText) {
         yText = new Y.Text();
         filesMap.set(activeFile, yText);
       }
-
       doc.transact(() => {
         if (yText) {
-          if (yText.length > 0) {
-            yText.delete(0, yText.length);
-          }
+          if (yText.length > 0) yText.delete(0, yText.length);
           yText.insert(0, newCode);
         }
       });
-
       showNotification(`✓ Code applied to ${activeFile}`);
     } catch (err) {
       console.error('Failed to apply code to editor:', err);
     }
   };
 
-  // Share AI message to group chat
+  /** Forward an AI response to the shared group chat. */
   const handleShareToGroup = (messageText: string) => {
     if (!doc) return;
-
     sendYChatMessage(doc, {
       senderId: doc.clientID,
       senderName: `${currentUser.name} 🤖 [Shared from AI]`,
       senderColor: currentUser.color,
       text: messageText,
     });
-
     showNotification('✓ Shared to Group Chat');
   };
 
-  // Helper to update specific AI message content and error state
-  const updateAiMessage = (id: string, text: string, isError: boolean = false) => {
-    setAiMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, text, error: isError } : m))
-    );
-  };
-
-  // Send request to AI Backend with streaming
-  const handleSendAI = async (e?: React.FormEvent, customPrompt?: string) => {
-    if (e) e.preventDefault();
-    const promptText = (customPrompt || aiInput).trim();
-    if (!promptText || isStreaming) return;
-
-    const userMessageId = generateMessageId('user');
-    const aiMessageId = generateMessageId('ai');
-
-    const userMsg: AIChatMessage = {
-      id: userMessageId,
-      senderName: currentUser.name,
-      isSelf: true,
-      text: promptText,
-      timestamp: formatTimestamp(),
-    };
-
-    const initialAiMsg: AIChatMessage = {
-      id: aiMessageId,
-      senderName: 'CodeSync AI',
-      isSelf: false,
-      isAI: true,
-      text: '',
-      timestamp: formatTimestamp(),
-    };
-
-    setAiMessages((prev) => [...prev, userMsg, initialAiMsg]);
+  const handleAIFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const text = aiInput.trim();
+    if (!text || isStreaming) return;
+    sendMessage(text);
     setAiInput('');
-    setIsStreaming(true);
-
-    const activeContent = getActiveFileContent();
-    const allFilesList = includeProjectContext ? getAllProjectFiles() : undefined;
-
-    const history = aiMessages
-      .filter((m) => m.id !== 'ai-init' && !m.error && m.text.trim())
-      .slice(-6)
-      .map((m) => ({
-        role: m.isSelf ? ('user' as const) : ('model' as const),
-        text: m.text,
-      }));
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    try {
-      const response = await fetch('/api/ai/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: promptText,
-          activeFile: {
-            name: activeFile,
-            content: activeContent,
-          },
-          allFiles: allFilesList,
-          history,
-        }),
-        signal: controller.signal,
-      });
-
-      if (!response.ok) {
-        let errorData: any = {};
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { error: `Server error (${response.status})` };
-        }
-        throw new Error(errorData.error || `HTTP ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error('ReadableStream not supported on response.');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let accumulatedText = '';
-      let buffer = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data:')) continue;
-
-          const dataStr = trimmed.replace(/^data:\s*/, '');
-          if (dataStr === '[DONE]') {
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(dataStr);
-            if (parsed.error) {
-              throw new Error(parsed.error);
-            }
-            if (parsed.text) {
-              accumulatedText += parsed.text;
-              updateAiMessage(aiMessageId, accumulatedText);
-            }
-          } catch (jsonErr: any) {
-            if (jsonErr.message && !jsonErr.message.includes('JSON')) {
-              throw jsonErr;
-            }
-          }
-        }
-      }
-
-      if (!accumulatedText) {
-        updateAiMessage(
-          aiMessageId,
-          'No response received. Make sure GEMINI_API_KEY is configured in server/.env.',
-          true
-        );
-      }
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        setAiMessages((prev) =>
-          prev.map((m) =>
-            m.id === aiMessageId
-              ? { ...m, text: m.text + '\n\n*(Generation stopped by user)*' }
-              : m
-          )
-        );
-      } else {
-        console.error('AI Request Error:', err);
-        updateAiMessage(
-          aiMessageId,
-          `⚠️ **Error**: ${err.message || 'Could not connect to AI service.'}\n\n*Tip: Check that \`GEMINI_API_KEY\` is set in \`server/.env\` and the server is running.*`,
-          true
-        );
-      }
-    } finally {
-      setIsStreaming(false);
-      abortControllerRef.current = null;
-    }
   };
-
-  const handleStopStreaming = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-  };
-
-  const handleClearAIHistory = () => {
-    setAiMessages([
-      {
-        id: 'ai-init',
-        senderName: 'CodeSync AI',
-        isSelf: false,
-        isAI: true,
-        text: `Conversation cleared. Ready for your questions about **\`${activeFile}\`**!`,
-        timestamp: formatTimestamp(),
-      },
-    ]);
-  };
-
 
   return (
     <aside
@@ -409,17 +198,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           {activeTab === 'ai' && (
             <button
               className="chat-header-btn"
-              onClick={handleClearAIHistory}
+              onClick={clearHistory}
               title="Clear conversation history"
             >
               <Trash2 size={13} />
             </button>
           )}
-          <button
-            className="chat-close-btn"
-            onClick={onClose}
-            title="Close panel"
-          >
+          <button className="chat-close-btn" onClick={onClose} title="Close panel">
             <X size={15} />
           </button>
         </div>
@@ -519,7 +304,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           )}
 
           <div className="chat-messages-container">
-
             {/* AI Messages List */}
             {aiMessages.map((msg) => {
               const isLastMessage = msg.id === aiMessages[aiMessages.length - 1]?.id;
@@ -539,11 +323,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   isStreaming={isStreamingThis}
                   activeFile={activeFile}
                   onApplyCode={handleApplyCodeToEditor}
-                  onShareToRoom={
-                    msg.isAI && msg.id !== 'ai-init'
-                      ? handleShareToGroup
-                      : undefined
-                  }
+                  onShareToRoom={msg.isAI && msg.id !== 'ai-init' ? handleShareToGroup : undefined}
                 />
               );
             })}
@@ -551,11 +331,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           </div>
 
           {/* AI Input Form */}
-          <form onSubmit={handleSendAI} className="chat-input-form">
+          <form onSubmit={handleAIFormSubmit} className="chat-input-form">
             <input
               type="text"
               className="chat-input"
-              placeholder={isStreaming ? 'CodeSync AI is generating...' : `Ask AI about ${activeFile}...`}
+              placeholder={
+                isStreaming ? 'CodeSync AI is generating...' : `Ask AI about ${activeFile}...`
+              }
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}
               disabled={isStreaming}
@@ -564,7 +346,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               <button
                 type="button"
                 className="chat-send-btn ai-stop-btn"
-                onClick={handleStopStreaming}
+                onClick={stopStreaming}
                 title="Stop generation"
               >
                 <Square size={13} fill="currentColor" />
