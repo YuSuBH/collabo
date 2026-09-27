@@ -4,7 +4,7 @@ import { Send } from 'lucide-react';
 interface StdinRowProps {
   stdin: string;
   isRunning: boolean;
-  stdinInputRef: React.RefObject<HTMLTextAreaElement>;
+  stdinInputRef: React.RefObject<HTMLTextAreaElement | null>;
   onChange: (value: string) => void;
   onRun: () => void;
 }
