@@ -15,10 +15,10 @@ import {
   type ChatTab,
   type YChatMessage,
   sendYChatMessage,
-} from './chatUtils';
+} from '../../utils/chatUtils';
 import { ChatMessageItem } from './ChatMessageItem';
-import { useChatResize } from './useChatResize';
-import { useAIStream } from './useAIStream';
+import { useChatResize } from '../../hooks/useChatResize';
+import { useAIStream } from '../../hooks/useAIStream';
 
 // Re-export types for backward compatibility with App.tsx
 export type { ChatTab, YChatMessage };

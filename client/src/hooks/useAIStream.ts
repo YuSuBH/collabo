@@ -1,11 +1,11 @@
 import { useState, useRef } from 'react';
 import * as Y from 'yjs';
-import type { UserPresence } from '../../utils/collaborators';
+import type { UserPresence } from '../utils/collaborators';
 import {
   type AIChatMessage,
   formatTimestamp,
   generateMessageId,
-} from './chatUtils';
+} from '../utils/chatUtils';
 
 interface UseAIStreamOptions {
   doc: Y.Doc | null;

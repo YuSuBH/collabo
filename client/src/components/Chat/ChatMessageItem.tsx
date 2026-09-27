@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, Sparkles, Share2 } from 'lucide-react';
 import { CodeBlock } from './CodeBlock';
-import { getContrastTextColor } from './chatUtils';
+import { getContrastTextColor } from '../../utils/chatUtils';
 
 export interface ChatMessageItemProps {
   id: string;
