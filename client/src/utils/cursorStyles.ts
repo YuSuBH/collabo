@@ -56,7 +56,6 @@ export const injectCursorStyles = () => {
       user-select: none;
       line-height: 14px;
       letter-spacing: 0.02em;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.45);
     }
 
     /* Selection highlight — also fades when idle */
