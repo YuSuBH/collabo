@@ -11,6 +11,7 @@ import type {
   PermissionRequest,
   RoomMeta,
 } from '../../types/permissions';
+import { ROLE_PRESETS } from '../../types/permissions';
 
 interface LeftSidebarProps {
   leftSidebarTab: LeftSidebarTab;
@@ -37,7 +38,6 @@ interface LeftSidebarProps {
   onRejectRequest: (requestId: string) => void;
   onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
   onTransferOwnership: (targetUserId: string, targetUserName: string) => void;
-  onOpenPermissionRequestModal?: () => void;
 }
 
 export function LeftSidebar({
@@ -64,7 +64,6 @@ export function LeftSidebar({
   onRejectRequest,
   onUpdateUserPermissions,
   onTransferOwnership,
-  onOpenPermissionRequestModal,
 }: LeftSidebarProps) {
   return (
     <div className="sidebar-container left-sidebar">
@@ -102,7 +101,7 @@ export function LeftSidebar({
             canDelete={permissions.delete}
             canImport={permissions.import}
             canExport={permissions.export}
-            onRequestPermission={onOpenPermissionRequestModal}
+            onRequestPermission={() => onRequestPermissions(ROLE_PRESETS.editor)}
           />
         )}
 

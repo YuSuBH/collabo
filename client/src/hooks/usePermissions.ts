@@ -307,10 +307,11 @@ export function usePermissions({
       const currentTargetPerms =
         permsMap.get(req.userId) || { ...DEFAULT_JOINER_PERMISSIONS };
 
-      // Apply granted permissions
+      // Apply granted permissions (defaulting to clean editor preset if requesting edit access)
       const updatedPerms: UserPermissions = customGrant || {
         ...currentTargetPerms,
         ...req.permissions,
+        managePermissions: Boolean(req.permissions.managePermissions),
       };
 
       const updatedReq: PermissionRequest = {

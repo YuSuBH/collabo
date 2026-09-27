@@ -16,6 +16,8 @@ import {
   Upload,
   Play,
   Download,
+  Send,
+  X,
 } from 'lucide-react';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
 import type {
@@ -27,7 +29,6 @@ import type {
 import { getRoleFromPermissions, ROLE_PRESETS } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
 import { ManagePermissionsModal } from '../Permissions/ManagePermissionsModal';
-import { PermissionRequestModal } from '../Permissions/PermissionRequestModal';
 
 interface RoomInfoProps {
   roomId: string;
@@ -71,7 +72,8 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [isManageModalOpen, setIsManageModalOpen] = useState(false);
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+  const [requestNote, setRequestNote] = useState('');
   const [targetUserIdToEdit, setTargetUserIdToEdit] = useState<string | undefined>(undefined);
 
   const handleCopyRoomId = () => {
@@ -337,30 +339,56 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                     Cancel
                   </button>
                 </div>
+              ) : isRequesting ? (
+                <div className="perm-sidebar-inline-form">
+                  <input
+                    type="text"
+                    className="perm-sidebar-input"
+                    placeholder="Add a note (optional)..."
+                    value={requestNote}
+                    onChange={(e) => setRequestNote(e.target.value)}
+                    maxLength={100}
+                    autoFocus
+                  />
+                  <div className="perm-sidebar-actions">
+                    <button
+                      type="button"
+                      className="btn-sidebar-cancel"
+                      onClick={() => {
+                        setIsRequesting(false);
+                        setRequestNote('');
+                      }}
+                    >
+                      <X size={11} />
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-sidebar-send"
+                      onClick={() => {
+                        onRequestPermissions(ROLE_PRESETS.editor, requestNote.trim() || undefined);
+                        setIsRequesting(false);
+                        setRequestNote('');
+                      }}
+                    >
+                      <Send size={11} />
+                      <span>Send Request</span>
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <button
                   className="btn-request-perms-sidebar"
-                  onClick={() => setIsRequestModalOpen(true)}
+                  onClick={() => setIsRequesting(true)}
                 >
                   <Sparkles size={13} />
-                  <span>Request More Permissions</span>
+                  <span>Request Edit Access</span>
                 </button>
               )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Permission Request Modal */}
-      {isRequestModalOpen && (
-        <PermissionRequestModal
-          currentPermissions={permissions}
-          userPendingRequest={userPendingRequest}
-          onRequestSubmit={onRequestPermissions}
-          onCancelRequest={onCancelRequest}
-          onClose={() => setIsRequestModalOpen(false)}
-        />
-      )}
 
       {/* Manage Permissions Modal */}
       {isManageModalOpen && (

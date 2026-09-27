@@ -7,7 +7,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
 import { getLanguageFromFileName } from '../../utils/languageDetection';
 import { PermissionBanner } from '../Permissions/PermissionBanner';
-import type { PermissionRequest } from '../../types/permissions';
+import type { PermissionRequest, UserPermissions } from '../../types/permissions';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
@@ -15,7 +15,7 @@ interface CodeEditorProps {
   activeFile: string;
   canEdit?: boolean;
   userPendingRequest?: PermissionRequest | null;
-  onRequestEditAccess?: () => void;
+  onRequestPermissions?: (permissions: Partial<UserPermissions>, note?: string) => void;
   onCancelRequest?: () => void;
   onCursorChange?: (line: number, col: number) => void;
 }
@@ -26,7 +26,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   activeFile,
   canEdit = true,
   userPendingRequest = null,
-  onRequestEditAccess,
+  onRequestPermissions,
   onCancelRequest,
   onCursorChange,
 }) => {
@@ -127,43 +127,45 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         <PermissionBanner
           canEdit={canEdit}
           userPendingRequest={userPendingRequest}
-          onRequestClick={() => onRequestEditAccess?.()}
+          onRequestPermissions={(perms, note) => onRequestPermissions?.(perms, note)}
           onCancelRequest={() => onCancelRequest?.()}
         />
       )}
 
-      <Editor
-        height="100%"
-        language={getLanguageFromFileName(activeFile)}
-        theme="vs-dark"
-        onMount={handleEditorMount}
-        options={{
-          readOnly: !canEdit,
-          domReadOnly: !canEdit,
-          fontSize: 14,
-          fontFamily: "'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace",
-          fontLigatures: true,
-          minimap: { enabled: true, side: 'right' },
-          automaticLayout: true,
-          smoothScrolling: true,
-          cursorBlinking: 'smooth',
-          cursorSmoothCaretAnimation: 'on',
-          lineNumbers: 'on',
-          lineNumbersMinChars: 3,
-          renderLineHighlight: 'all',
-          tabSize: 2,
-          scrollBeyondLastLine: false,
-          bracketPairColorization: { enabled: true },
-          padding: { top: 12, bottom: 12 },
-          wordWrap: 'on',
-        }}
-        loading={
-          <div className="editor-loading">
-            <div className="spinner"></div>
-            <span>Loading Monaco Editor...</span>
-          </div>
-        }
-      />
+      <div className="monaco-editor-wrapper">
+        <Editor
+          height="100%"
+          language={getLanguageFromFileName(activeFile)}
+          theme="vs-dark"
+          onMount={handleEditorMount}
+          options={{
+            readOnly: !canEdit,
+            domReadOnly: !canEdit,
+            fontSize: 14,
+            fontFamily: "'Fira Code', 'Cascadia Code', Consolas, 'Courier New', monospace",
+            fontLigatures: true,
+            minimap: { enabled: true, side: 'right' },
+            automaticLayout: true,
+            smoothScrolling: true,
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            lineNumbers: 'on',
+            lineNumbersMinChars: 3,
+            renderLineHighlight: 'all',
+            tabSize: 2,
+            scrollBeyondLastLine: false,
+            bracketPairColorization: { enabled: true },
+            padding: { top: 12, bottom: 12 },
+            wordWrap: 'on',
+          }}
+          loading={
+            <div className="editor-loading">
+              <div className="spinner"></div>
+              <span>Loading Monaco Editor...</span>
+            </div>
+          }
+        />
+      </div>
     </div>
   );
 };

@@ -8,7 +8,6 @@ import { OutputPanel } from './components/Output/OutputPanel';
 import { TabBar } from './components/IDE/TabBar';
 import { LeftSidebar } from './components/IDE/LeftSidebar';
 import { StatusBar } from './components/IDE/StatusBar';
-import { PermissionRequestModal } from './components/Permissions/PermissionRequestModal';
 import { Info, X } from 'lucide-react';
 import './index.css';
 
@@ -34,8 +33,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     unreadChatCount,
     isOutputPanelOpen,
     setIsOutputPanelOpen,
-    isRequestModalOpen,
-    setIsRequestModalOpen,
     projectFiles,
     setEntryFileOverride,
     resolvedEntry,
@@ -148,7 +145,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             onRejectRequest={rejectRequest}
             onUpdateUserPermissions={updateUserPermissions}
             onTransferOwnership={transferOwnership}
-            onOpenPermissionRequestModal={() => setIsRequestModalOpen(true)}
           />
         )}
 
@@ -159,7 +155,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             activeFile={activeFile}
             canEdit={canEdit}
             userPendingRequest={userPendingRequest}
-            onRequestEditAccess={() => setIsRequestModalOpen(true)}
+            onRequestPermissions={requestPermissions}
             onCancelRequest={cancelRequest}
             onCursorChange={(line, col) => setCursorPos({ line, col })}
           />
@@ -206,17 +202,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         cursorPos={cursorPos}
         languageLabel={languageLabel}
       />
-
-      {/* Permission Request Modal */}
-      {isRequestModalOpen && (
-        <PermissionRequestModal
-          currentPermissions={permissions}
-          userPendingRequest={userPendingRequest}
-          onRequestSubmit={requestPermissions}
-          onCancelRequest={cancelRequest}
-          onClose={() => setIsRequestModalOpen(false)}
-        />
-      )}
     </div>
   );
 }

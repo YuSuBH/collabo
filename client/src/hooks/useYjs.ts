@@ -61,19 +61,10 @@ export const useYjs = ({
   const [currentUser, setCurrentUserState] = useState<UserPresence>(() => {
     // If the lobby provided explicit credentials, use them with a tab-unique ID
     if (initialName && initialColor) {
-      let id = generateUserId();
-      try {
-        const saved = sessionStorage.getItem(SESSION_STORAGE_USER_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.id) id = parsed.id;
-        }
-      } catch {
-        // ignore
-      }
+      const id = generateUserId();
       const user: UserPresence = { id, name: initialName, color: initialColor };
       try {
-        sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(user));
+        sessionStorage.setItem(`${SESSION_STORAGE_USER_KEY}_${initialRoomId}`, JSON.stringify(user));
         localStorage.setItem(LOCAL_STORAGE_PREF_KEY, initialName);
       } catch {
         // ignore

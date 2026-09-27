@@ -38,9 +38,6 @@ export function useIDEState(joinInfo: JoinInfo) {
   // Output panel state
   const [isOutputPanelOpen, setIsOutputPanelOpen] = useState<boolean>(false);
 
-  // Permission Request Modal state
-  const [isRequestModalOpen, setIsRequestModalOpen] = useState<boolean>(false);
-
   // Project files list (synced from Yjs for the run config popover)
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
 
@@ -261,10 +258,6 @@ export function useIDEState(joinInfo: JoinInfo) {
     // Output state
     isOutputPanelOpen,
     setIsOutputPanelOpen,
-
-    // Permissions Modal state
-    isRequestModalOpen,
-    setIsRequestModalOpen,
 
     // Permissions & Roles
     roomMeta,

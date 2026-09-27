@@ -649,6 +649,16 @@ html, body, #root {
 .editor-container {
   height: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.monaco-editor-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  position: relative;
 }
 .editor-loading {
   height: 100%;
@@ -2998,14 +3008,15 @@ html, body, #root {
 
 /* ── Read-Only Permission Banner (Above/In Editor) ───────────── */
 .permission-read-only-banner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 6px 14px;
-  background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: linear-gradient(90deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
   border-bottom: 1px solid rgba(99, 102, 241, 0.25);
   flex-shrink: 0;
-  z-index: 10;
+  z-index: 50;
   animation: banner-fade-in 0.2s ease forwards;
 }
 @keyframes banner-fade-in {
@@ -3056,6 +3067,183 @@ html, body, #root {
 .banner-btn-cancel:hover {
   background: rgba(239, 68, 68, 0.25);
 }
+
+.banner-actions-wrapper {
+  display: flex;
+  align-items: center;
+}
+.banner-btn-dropdown-anchor {
+  position: relative;
+  display: inline-block;
+  z-index: 60;
+}
+.banner-btn-active {
+  background: #4338ca !important;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.6) !important;
+}
+
+/* ── Small Dropdown Popover for Editor Access Request ────────── */
+.perm-request-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 280px;
+  background: #27272a;
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dropdown-pop-in-right 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes dropdown-pop-in-right {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.perm-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-darker);
+  border-bottom: 1px solid var(--border-color);
+}
+.perm-dropdown-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: 0.3px;
+}
+.perm-dropdown-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+.perm-dropdown-close:hover { color: var(--text-main); }
+.perm-dropdown-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.perm-dropdown-input {
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 6px 9px;
+  font-size: 11.5px;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+.perm-dropdown-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+.perm-dropdown-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.btn-dropdown-cancel {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.btn-dropdown-cancel:hover { background: var(--bg-hover); color: var(--text-main); }
+.btn-dropdown-send {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  color: #fff;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.35);
+}
+.btn-dropdown-send:hover { opacity: 0.92; }
+
+/* ── Sidebar Inline Request Form ─────────────────────────────── */
+.perm-sidebar-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-darker);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+}
+.perm-sidebar-input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-main);
+  outline: none;
+}
+.perm-sidebar-input:focus {
+  border-color: var(--accent-primary);
+}
+.perm-sidebar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.btn-sidebar-cancel {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+.btn-sidebar-cancel:hover { background: var(--bg-hover); color: var(--text-main); }
+.btn-sidebar-send {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.35);
+  transition: opacity var(--transition-fast);
+}
+.btn-sidebar-send:hover { opacity: 0.92; }
+
 
 /* ── Modal Common Styles ─────────────────────────────────────── */
 .perm-modal-container {

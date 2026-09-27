@@ -96,37 +96,13 @@ export const getRoleFromPermissions = (
   isOwner: boolean = false
 ): UserRole => {
   if (isOwner) return 'owner';
-  if (
-    permissions.managePermissions &&
-    permissions.edit &&
-    permissions.create &&
-    permissions.delete &&
-    permissions.import &&
-    permissions.execute &&
-    permissions.export
-  ) {
+  if (permissions.managePermissions) {
     return 'admin';
   }
-  if (
-    !permissions.managePermissions &&
-    permissions.edit &&
-    permissions.create &&
-    permissions.delete &&
-    permissions.import &&
-    permissions.execute &&
-    permissions.export
-  ) {
+  if (permissions.edit) {
     return 'editor';
   }
-  if (
-    !permissions.managePermissions &&
-    !permissions.edit &&
-    !permissions.create &&
-    !permissions.delete &&
-    !permissions.import &&
-    permissions.execute &&
-    permissions.export
-  ) {
+  if (!permissions.create && !permissions.delete && !permissions.import) {
     return 'viewer';
   }
   return 'custom';
