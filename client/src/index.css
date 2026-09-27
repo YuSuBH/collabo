@@ -89,15 +89,8 @@ html, body, #root {
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 @keyframes cursor-pulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-@keyframes badge-pop { 0% { opacity: 0; } 70% { } 100% { opacity: 1; } }
-@keyframes blob-float {
-  0% { }
-  33% { }
-  66% { }
-  100% { }
-}
+@keyframes badge-pop { 0% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes slideInDown { from { opacity: 0; } to { opacity: 1; } }
-@keyframes bounce { from { } to { } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes scaleUp { from { opacity: 0; } to { opacity: 1; } }
 
@@ -247,8 +240,6 @@ html, body, #root {
   border-radius: var(--radius-md);
   transition: transform var(--transition-fast);
 }
-.brand-logo-only:hover { }
-.brand-icon { }
 
 .header-divider {
   width: 1px;
@@ -318,15 +309,10 @@ html, body, #root {
 .header-execute-btn:hover:not(:disabled) {
   background: #059669;
 }
-.header-execute-btn:active:not(:disabled) { }
 .header-execute-btn:disabled { opacity: 0.75; cursor: not-allowed; }
 .header-execute-btn-running {
   background: #059669 !important;
   animation: btn-pulse 1.5s ease-in-out infinite;
-}
-@keyframes btn-pulse {
-  0%, 100% { }
-  50% { }
 }
 .execute-btn-text { letter-spacing: 0.3px; }
 
@@ -977,7 +963,6 @@ html, body, #root {
   gap: 4px;
 }
 .fe-file-item:hover { background: var(--bg-surface); }
-.fe-file-item:hover .fe-btn-delete { }
 .fe-file-active {
   background: rgba(59, 130, 246, 0.08);
 }
@@ -1012,7 +997,6 @@ html, body, #root {
   border-radius: 50%;
   transition: transform var(--transition-normal);
 }
-.fe-peer-dot:hover { }
 .fe-peer-overflow {
   font-size: 9px;
   color: var(--text-dim);
@@ -1073,10 +1057,6 @@ html, body, #root {
   padding: 4px 8px;
   font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
   transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
-}
-.fe-new-input:focus {
-}
-.fe-new-input-error {
 }
 .fe-btn-create,
 .fe-btn-cancel {
@@ -1230,8 +1210,6 @@ html, body, #root {
 .lobby-input:focus {
   background: rgba(59, 130, 246, 0.06);
 }
-.lobby-input-error {
-}
 .lobby-error {
   font-size: 12px;
   color: var(--color-error-text);
@@ -1277,8 +1255,6 @@ html, body, #root {
   letter-spacing: 0.2px;
   transition: opacity var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-smooth);
   margin-top: 4px;
-}
-.lobby-btn-join:hover {
 }
 .lobby-btn-join:active {
   opacity: 1;
@@ -1453,7 +1429,6 @@ html, body, #root {
   user-select: text;
   width: 100%;
 }
-.chat-bubble-self { }
 .chat-bubble-error {
   background: var(--color-error-bg) !important;
   color: var(--color-error-dim) !important;
@@ -1682,7 +1657,6 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-normal);
 }
-.ai-footer-action-btn:hover { }
 
 .ai-streaming-cursor {
   display: inline-block;
@@ -1710,7 +1684,6 @@ html, body, #root {
   font-size: 12px;
   transition: border-color var(--transition-normal);
 }
-.chat-input:focus { }
 
 .chat-send-btn {
   display: flex;
@@ -2514,8 +2487,6 @@ html, body, #root {
   resize: vertical;
   transition: border-color var(--transition-fast);
 }
-.output-stdin-input:focus {
-}
 .output-stdin-run {
   display: flex;
   align-items: center;
@@ -2595,9 +2566,6 @@ html, body, #root {
 }
 
 /* ── Output sections ─────────────────────────────────────────── */
-.output-section {
-}
-.output-section:last-child { }
 
 .output-section-label {
   display: flex;
@@ -2797,10 +2765,6 @@ html, body, #root {
   justify-content: center;
   animation: pulse-badge 1.8s infinite;
 }
-@keyframes pulse-badge {
-  0%, 100% { }
-  50% { }
-}
 
 .header-execute-btn-disabled {
   opacity: 0.5 !important;
@@ -2895,8 +2859,6 @@ html, body, #root {
   background: #6366f1;
   color: #fff;
 }
-.banner-btn-request:hover {
-}
 .banner-btn-cancel {
   background: rgba(239, 68, 68, 0.15);
   color: #f87171;
@@ -2977,8 +2939,6 @@ html, body, #root {
   color: var(--text-main);
   transition: border-color var(--transition-fast);
 }
-.perm-dropdown-input:focus {
-}
 .perm-dropdown-actions {
   display: flex;
   align-items: center;
@@ -3006,7 +2966,6 @@ html, body, #root {
   gap: 4px;
   cursor: pointer;
 }
-.btn-dropdown-send:hover { }
 
 /* ── Sidebar Inline Request Form ─────────────────────────────── */
 .perm-sidebar-inline-form {
@@ -3023,8 +2982,6 @@ html, body, #root {
   padding: 5px 8px;
   font-size: 11px;
   color: var(--text-main);
-}
-.perm-sidebar-input:focus {
 }
 .perm-sidebar-actions {
   display: flex;
@@ -3058,7 +3015,6 @@ html, body, #root {
   cursor: pointer;
   transition: opacity var(--transition-fast);
 }
-.btn-sidebar-send:hover { }
 
 
 /* ── Modal Common Styles ─────────────────────────────────────── */
@@ -3315,8 +3271,6 @@ html, body, #root {
   color: var(--text-main);
   font-size: 12.5px;
   transition: border-color var(--transition-fast);
-}
-.perm-input-text:focus {
 }
 
 /* ── Manage Permissions Modal Layout ─────────────────────────── */
