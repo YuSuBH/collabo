@@ -190,6 +190,23 @@ export const readLocalTextFile = async (file: File): Promise<ExtractedFile> => {
 };
 
 /**
+ * Upsert a single file into a Yjs Map as a Y.Text node.
+ * If the key already exists its content is replaced in-place;
+ * otherwise a new Y.Text is created and inserted.
+ */
+const upsertYText = (filesMap: Y.Map<Y.Text>, name: string, content: string): void => {
+  let yText = filesMap.get(name) as Y.Text | undefined;
+  if (yText) {
+    yText.delete(0, yText.length);
+    yText.insert(0, content);
+  } else {
+    yText = new Y.Text();
+    yText.insert(0, content);
+    filesMap.set(name, yText);
+  }
+};
+
+/**
  * Populate the Yjs files map with extracted files inside a single transaction.
  */
 export const importFilesToYjs = (
@@ -203,23 +220,10 @@ export const importFilesToYjs = (
     if (mode === 'replace') {
       // Clear all existing files
       const existingKeys = Array.from(filesMap.keys());
-      existingKeys.forEach((key) => {
-        filesMap.delete(key);
-      });
+      existingKeys.forEach((key) => filesMap.delete(key));
     }
 
-    // Set each imported file as a Y.Text
-    files.forEach((file) => {
-      let yText = filesMap.get(file.name) as Y.Text | undefined;
-      if (yText) {
-        yText.delete(0, yText.length);
-        yText.insert(0, file.content);
-      } else {
-        yText = new Y.Text();
-        yText.insert(0, file.content);
-        filesMap.set(file.name, yText);
-      }
-    });
+    files.forEach((file) => upsertYText(filesMap, file.name, file.content));
   });
 
   return {
@@ -246,15 +250,7 @@ export const importDirectFiles = (
     }
 
     files.forEach((file) => {
-      let yText = filesMap.get(file.name) as Y.Text | undefined;
-      if (yText) {
-        yText.delete(0, yText.length);
-        yText.insert(0, file.content);
-      } else {
-        yText = new Y.Text();
-        yText.insert(0, file.content);
-        filesMap.set(file.name, yText);
-      }
+      upsertYText(filesMap, file.name, file.content);
       importedNames.push(file.name);
     });
   });

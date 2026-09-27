@@ -78,24 +78,39 @@ Strict Guidelines:
 }
 
 /**
+ * Validates the prompt field and checks that the Gemini API key is configured.
+ * Returns null on success, or an error descriptor to be forwarded as an HTTP response.
+ */
+function validateRequest(prompt: unknown): { status: number; body: object } | null {
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+    return { status: 400, body: { error: 'A prompt is required.' } };
+  }
+  const ai = getGenAIClient();
+  if (!ai) {
+    return {
+      status: 503,
+      body: {
+        error: 'Gemini API key is not configured on the server. Please set GEMINI_API_KEY in server/.env file.',
+        isDemoMock: true,
+      },
+    };
+  }
+  return null;
+}
+
+/**
  * POST /api/ai/chat
  * Standard non-streaming endpoint
  */
 aiRouter.post('/chat', async (req: Request<{}, {}, AIChatRequestBody>, res: Response) => {
   try {
     const { prompt } = req.body;
-    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
-      return res.status(400).json({ error: 'A prompt is required.' });
+    const validationError = validateRequest(prompt);
+    if (validationError) {
+      return res.status(validationError.status).json(validationError.body);
     }
 
-    const ai = getGenAIClient();
-    if (!ai) {
-      return res.status(503).json({
-        error: 'Gemini API key is not configured on the server. Please set GEMINI_API_KEY in server/.env file.',
-        isDemoMock: true,
-      });
-    }
-
+    const ai = getGenAIClient()!;
     const { systemInstruction, userMessage } = buildPromptWithContext(req.body);
     const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 
@@ -128,20 +143,22 @@ aiRouter.post('/chat', async (req: Request<{}, {}, AIChatRequestBody>, res: Resp
 aiRouter.post('/stream', async (req: Request<{}, {}, AIChatRequestBody>, res: Response) => {
   try {
     const { prompt } = req.body;
-    if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
-      return res.status(400).json({ error: 'A prompt is required.' });
+    const validationError = validateRequest(prompt);
+    if (validationError) {
+      // For the streaming endpoint, surface config errors over SSE so the client
+      // can display them inline rather than as a hard HTTP error.
+      if (validationError.status === 503) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.write(`data: ${JSON.stringify({ error: 'GEMINI_API_KEY is not configured in server/.env. Please configure your API key.' })}\n\n`);
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
+      return res.status(validationError.status).json(validationError.body);
     }
 
-    const ai = getGenAIClient();
-    if (!ai) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.write(`data: ${JSON.stringify({ error: 'GEMINI_API_KEY is not configured in server/.env. Please configure your API key.' })}\n\n`);
-      res.write('data: [DONE]\n\n');
-      return res.end();
-    }
-
+    const ai = getGenAIClient()!;
     const { systemInstruction, userMessage } = buildPromptWithContext(req.body);
     const modelName = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 

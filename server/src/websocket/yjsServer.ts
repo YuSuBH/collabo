@@ -52,6 +52,18 @@ const send = (ws: WebSocket, message: Uint8Array) => {
   }
 };
 
+/**
+ * Broadcast an encoded message to every open client in a room, skipping
+ * the originating connection so it does not receive its own updates.
+ */
+const broadcastToRoom = (room: Room, message: Uint8Array, origin: WebSocket | null): void => {
+  room.clients.forEach((client) => {
+    if (client !== origin && client.readyState === WebSocket.OPEN) {
+      send(client, message);
+    }
+  });
+};
+
 const getOrCreateRoom = (roomName: string): Room => {
   let room = rooms.get(roomName);
   if (!room) {
@@ -80,13 +92,7 @@ const getOrCreateRoom = (roomName: string): Room => {
       const encoder = encoding.createEncoder();
       encoding.writeVarUint(encoder, MESSAGE_SYNC);
       syncProtocol.writeUpdate(encoder, update);
-      const message = encoding.toUint8Array(encoder);
-
-      newRoom.clients.forEach((client) => {
-        if (client !== origin && client.readyState === WebSocket.OPEN) {
-          send(client, message);
-        }
-      });
+      broadcastToRoom(newRoom, encoding.toUint8Array(encoder), origin);
     });
 
     // Broadcast awareness updates (remote cursors, presence)
@@ -103,13 +109,7 @@ const getOrCreateRoom = (roomName: string): Room => {
           encoder,
           awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients)
         );
-        const message = encoding.toUint8Array(encoder);
-
-        newRoom.clients.forEach((client) => {
-          if (client !== origin && client.readyState === WebSocket.OPEN) {
-            send(client, message);
-          }
-        });
+        broadcastToRoom(newRoom, encoding.toUint8Array(encoder), origin);
       }
     );
 
