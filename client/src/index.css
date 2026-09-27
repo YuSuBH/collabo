@@ -2906,9 +2906,10 @@ html, body, #root {
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
 }
 .role-badge-admin {
-  background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
-  border: 1px solid rgba(99, 102, 241, 0.35);
+  background: rgba(99, 102, 241, 0.18);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
 }
 .role-badge-editor {
   background: rgba(16, 185, 129, 0.15);

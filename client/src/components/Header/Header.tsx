@@ -28,7 +28,6 @@ interface HeaderProps {
   unreadChatCount?: number;
   pendingRequestsCount?: number;
   role?: UserRole;
-  isOwner?: boolean;
   canExecute?: boolean;
   // Left sidebar toggles
   isLeftSidebarOpen: boolean;
@@ -56,7 +55,6 @@ export const Header: React.FC<HeaderProps> = ({
   unreadChatCount = 0,
   pendingRequestsCount = 0,
   role = 'editor',
-  isOwner = false,
   canExecute = true,
   isLeftSidebarOpen,
   leftSidebarTab,
@@ -115,7 +113,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="header-role-container">
-          <RoleBadge role={role} isOwner={isOwner} size="sm" />
+          <RoleBadge role={role} size="sm" />
         </div>
 
         <div className="header-divider" />

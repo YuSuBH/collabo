@@ -54,10 +54,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     latestPeerRun,
     clearPeerNotification,
     // Permissions
-    roomMeta,
     permissions,
     role,
-    isOwner,
     canEdit,
     canManagePermissions,
     allUserPermissions,
@@ -70,7 +68,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     approveRequest,
     rejectRequest,
     updateUserPermissions,
-    transferOwnership,
     // Handlers
     handleFileSelect,
     handleToggleLeftSidebar,
@@ -101,7 +98,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         unreadChatCount={unreadChatCount}
         pendingRequestsCount={canManagePermissions ? pendingRequests.length : 0}
         role={role}
-        isOwner={isOwner}
         canExecute={permissions.execute}
         isLeftSidebarOpen={isLeftSidebarOpen}
         leftSidebarTab={leftSidebarTab}
@@ -131,10 +127,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             users={users}
             roomId={roomId}
             currentUser={currentUser}
-            roomMeta={roomMeta}
             permissions={permissions}
             role={role}
-            isOwner={isOwner}
             canManagePermissions={canManagePermissions}
             allUserPermissions={allUserPermissions}
             pendingRequests={pendingRequests}
@@ -144,7 +138,6 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             onApproveRequest={approveRequest}
             onRejectRequest={rejectRequest}
             onUpdateUserPermissions={updateUserPermissions}
-            onTransferOwnership={transferOwnership}
           />
         )}
 

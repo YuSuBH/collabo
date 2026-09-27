@@ -1,31 +1,21 @@
 import React from 'react';
-import { Crown, ShieldCheck, Edit3, Eye, Sliders } from 'lucide-react';
+import { ShieldCheck, Edit3, Eye, Sliders } from 'lucide-react';
 import type { UserRole } from '../../types/permissions';
 
 interface RoleBadgeProps {
   role: UserRole;
-  isOwner?: boolean;
   size?: 'sm' | 'md';
 }
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, isOwner = false, size = 'sm' }) => {
-  const displayRole = isOwner ? 'owner' : role;
-
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'sm' }) => {
   const getRoleConfig = () => {
-    switch (displayRole) {
-      case 'owner':
-        return {
-          label: 'Host',
-          icon: <Crown size={size === 'sm' ? 11 : 13} className="role-badge-icon" />,
-          className: 'role-badge-owner',
-          tooltip: 'Room Creator / Host (Full Control)',
-        };
+    switch (role) {
       case 'admin':
         return {
           label: 'Admin',
           icon: <ShieldCheck size={size === 'sm' ? 11 : 13} className="role-badge-icon" />,
           className: 'role-badge-admin',
-          tooltip: 'Administrator (Can manage permissions & edit)',
+          tooltip: 'Administrator (Can manage permissions & edit code)',
         };
       case 'editor':
         return {

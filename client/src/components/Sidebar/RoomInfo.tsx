@@ -24,7 +24,6 @@ import type {
   UserPermissions,
   UserRole,
   PermissionRequest,
-  RoomMeta,
 } from '../../types/permissions';
 import { getRoleFromPermissions, ROLE_PRESETS } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
@@ -34,10 +33,8 @@ interface RoomInfoProps {
   roomId: string;
   users: Collaborator[];
   currentUser: UserPresence;
-  roomMeta: RoomMeta | null;
   permissions: UserPermissions;
   role: UserRole;
-  isOwner: boolean;
   canManagePermissions: boolean;
   allUserPermissions: Map<string, UserPermissions>;
   pendingRequests: PermissionRequest[];
@@ -47,17 +44,14 @@ interface RoomInfoProps {
   onApproveRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
   onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
-  onTransferOwnership: (targetUserId: string, targetUserName: string) => void;
 }
 
 export const RoomInfo: React.FC<RoomInfoProps> = ({
   roomId,
   users,
   currentUser,
-  roomMeta,
   permissions,
   role,
-  isOwner,
   canManagePermissions,
   allUserPermissions,
   pendingRequests,
@@ -67,7 +61,6 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
   onApproveRequest,
   onRejectRequest,
   onUpdateUserPermissions,
-  onTransferOwnership,
 }) => {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -232,9 +225,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
         <div className="collaborators-list">
           {users.map((user) => {
             const userPerms = allUserPermissions.get(user.id) || ROLE_PRESETS.viewer;
-            const activeHostId = roomMeta?.currentHostId || roomMeta?.creatorId;
-            const isUserOwner = Boolean(activeHostId && activeHostId === user.id);
-            const userRole = getRoleFromPermissions(userPerms, isUserOwner);
+            const userRole = getRoleFromPermissions(userPerms);
 
             return (
               <div
@@ -258,7 +249,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                     {user.isCurrentUser && (
                       <span className="collaborator-tag">You</span>
                     )}
-                    <RoleBadge role={userRole} isOwner={isUserOwner} size="sm" />
+                    <RoleBadge role={userRole} size="sm" />
                   </div>
                   <span className="collaborator-status">
                     <span
@@ -288,7 +279,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
             </div>
             <div className="current-user-info">
               <span className="current-user-name">{currentUser.name}</span>
-              <RoleBadge role={role} isOwner={isOwner} size="sm" />
+              <RoleBadge role={role} size="sm" />
             </div>
           </div>
 
@@ -396,9 +387,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           users={users}
           allUserPermissions={allUserPermissions}
           currentUserId={currentUser.id}
-          isOwner={isOwner}
           onUpdatePermissions={onUpdateUserPermissions}
-          onTransferOwnership={onTransferOwnership}
           onClose={() => setIsManageModalOpen(false)}
           initialSelectedUserId={targetUserIdToEdit}
         />

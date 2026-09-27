@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Shield,
-  Crown,
   FileCode,
   PlusSquare,
   Trash2,
@@ -12,7 +11,6 @@ import {
   Users,
   Check,
   Sparkles,
-  ArrowRightLeft,
   CheckCircle2,
 } from 'lucide-react';
 import type { Collaborator } from '../../utils/collaborators';
@@ -31,9 +29,7 @@ interface ManagePermissionsModalProps {
   users: Collaborator[];
   allUserPermissions: Map<string, UserPermissions>;
   currentUserId: string;
-  isOwner: boolean;
   onUpdatePermissions: (targetUserId: string, targetUserName: string, permissions: UserPermissions) => void;
-  onTransferOwnership: (targetUserId: string, targetUserName: string) => void;
   onClose: () => void;
   initialSelectedUserId?: string;
 }
@@ -42,9 +38,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
   users,
   allUserPermissions,
   currentUserId,
-  isOwner,
   onUpdatePermissions,
-  onTransferOwnership,
   onClose,
   initialSelectedUserId,
 }) => {
@@ -65,7 +59,6 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
   const [editedPerms, setEditedPerms] = useState<UserPermissions>(currentPermsForUser);
   const [hasChanges, setHasChanges] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [showTransferConfirm, setShowTransferConfirm] = useState(false);
 
   useEffect(() => {
     if (initialSelectedUserId) {
@@ -73,7 +66,6 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
       const perms = allUserPermissions.get(initialSelectedUserId) || ROLE_PRESETS.viewer;
       setEditedPerms(perms);
       setHasChanges(false);
-      setShowTransferConfirm(false);
     }
   }, [initialSelectedUserId]);
 
@@ -84,10 +76,9 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
     setEditedPerms(perms);
     setHasChanges(false);
     setSavedSuccess(false);
-    setShowTransferConfirm(false);
   };
 
-  const handlePresetSelect = (preset: Exclude<UserRole, 'custom' | 'owner'>) => {
+  const handlePresetSelect = (preset: Exclude<UserRole, 'custom'>) => {
     setEditedPerms(ROLE_PRESETS[preset]);
     setHasChanges(true);
     setSavedSuccess(false);
@@ -108,13 +99,6 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
     setHasChanges(false);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
-  };
-
-  const handleConfirmTransfer = () => {
-    if (!selectedCollaborator) return;
-    onTransferOwnership(selectedCollaborator.id, selectedCollaborator.name);
-    setShowTransferConfirm(false);
-    onClose();
   };
 
   const currentRole = getRoleFromPermissions(editedPerms);
@@ -283,45 +267,6 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                     }
                   )}
                 </div>
-
-                {/* Transfer Ownership Section (Host Only) */}
-                {isOwner && selectedCollaborator.id !== currentUserId && (
-                  <div className="perm-transfer-section">
-                    {showTransferConfirm ? (
-                      <div className="perm-transfer-confirm-box">
-                        <span className="perm-transfer-warn-text">
-                          Transfer Room Host role to <strong>{selectedCollaborator.name}</strong>? They will have full administrative control.
-                        </span>
-                        <div className="perm-transfer-actions">
-                          <button
-                            type="button"
-                            className="btn-danger-sm"
-                            onClick={handleConfirmTransfer}
-                          >
-                            Yes, Transfer Ownership
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-secondary-sm"
-                            onClick={() => setShowTransferConfirm(false)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-transfer-ownership"
-                        onClick={() => setShowTransferConfirm(true)}
-                      >
-                        <Crown size={14} className="text-amber-400" />
-                        <ArrowRightLeft size={14} />
-                        <span>Transfer Room Ownership to {selectedCollaborator.name}</span>
-                      </button>
-                    )}
-                  </div>
-                )}
               </>
             ) : (
               <div className="perm-no-selection">

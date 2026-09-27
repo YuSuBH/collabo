@@ -64,7 +64,6 @@ export function useIDEState(joinInfo: JoinInfo) {
     roomMeta,
     permissions,
     role,
-    isOwner,
     canEdit,
     canCreate,
     canDelete,
@@ -83,7 +82,6 @@ export function useIDEState(joinInfo: JoinInfo) {
     rejectRequest,
     updateUserPermissions,
     setUserRole,
-    transferOwnership,
   } = usePermissions({
     doc,
     currentUser,
@@ -263,7 +261,6 @@ export function useIDEState(joinInfo: JoinInfo) {
     roomMeta,
     permissions,
     role,
-    isOwner,
     canEdit,
     canCreate,
     canDelete,
@@ -282,7 +279,6 @@ export function useIDEState(joinInfo: JoinInfo) {
     rejectRequest,
     updateUserPermissions,
     setUserRole,
-    transferOwnership,
 
     // Project files
     projectFiles,

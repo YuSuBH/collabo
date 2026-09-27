@@ -8,7 +8,7 @@ export interface UserPermissions {
   managePermissions: boolean;
 }
 
-export type UserRole = 'owner' | 'admin' | 'editor' | 'viewer' | 'custom';
+export type UserRole = 'admin' | 'editor' | 'viewer' | 'custom';
 
 export const DEFAULT_CREATOR_PERMISSIONS: UserPermissions = {
   edit: true,
@@ -31,15 +31,6 @@ export const DEFAULT_JOINER_PERMISSIONS: UserPermissions = {
 };
 
 export const ROLE_PRESETS: Record<Exclude<UserRole, 'custom'>, UserPermissions> = {
-  owner: {
-    edit: true,
-    create: true,
-    delete: true,
-    import: true,
-    execute: true,
-    export: true,
-    managePermissions: true,
-  },
   admin: {
     edit: true,
     create: true,
@@ -86,16 +77,10 @@ export interface RoomMeta {
   creatorId: string;
   creatorName: string;
   creatorColor: string;
-  currentHostId: string;
-  currentHostName: string;
   createdAt: number;
 }
 
-export const getRoleFromPermissions = (
-  permissions: UserPermissions,
-  isOwner: boolean = false
-): UserRole => {
-  if (isOwner) return 'owner';
+export const getRoleFromPermissions = (permissions: UserPermissions): UserRole => {
   if (permissions.managePermissions) {
     return 'admin';
   }

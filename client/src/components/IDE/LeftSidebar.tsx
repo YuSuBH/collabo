@@ -9,7 +9,6 @@ import type {
   UserPermissions,
   UserRole,
   PermissionRequest,
-  RoomMeta,
 } from '../../types/permissions';
 import { ROLE_PRESETS } from '../../types/permissions';
 
@@ -24,10 +23,8 @@ interface LeftSidebarProps {
   roomId: string;
   currentUser: UserPresence;
   // Permissions props
-  roomMeta: RoomMeta | null;
   permissions: UserPermissions;
   role: UserRole;
-  isOwner: boolean;
   canManagePermissions: boolean;
   allUserPermissions: Map<string, UserPermissions>;
   pendingRequests: PermissionRequest[];
@@ -37,7 +34,6 @@ interface LeftSidebarProps {
   onApproveRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
   onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
-  onTransferOwnership: (targetUserId: string, targetUserName: string) => void;
 }
 
 export function LeftSidebar({
@@ -50,10 +46,8 @@ export function LeftSidebar({
   users,
   roomId,
   currentUser,
-  roomMeta,
   permissions,
   role,
-  isOwner,
   canManagePermissions,
   allUserPermissions,
   pendingRequests,
@@ -63,7 +57,6 @@ export function LeftSidebar({
   onApproveRequest,
   onRejectRequest,
   onUpdateUserPermissions,
-  onTransferOwnership,
 }: LeftSidebarProps) {
   return (
     <div className="sidebar-container left-sidebar">
@@ -110,10 +103,8 @@ export function LeftSidebar({
             roomId={roomId}
             users={users}
             currentUser={currentUser}
-            roomMeta={roomMeta}
             permissions={permissions}
             role={role}
-            isOwner={isOwner}
             canManagePermissions={canManagePermissions}
             allUserPermissions={allUserPermissions}
             pendingRequests={pendingRequests}
@@ -123,7 +114,6 @@ export function LeftSidebar({
             onApproveRequest={onApproveRequest}
             onRejectRequest={onRejectRequest}
             onUpdateUserPermissions={onUpdateUserPermissions}
-            onTransferOwnership={onTransferOwnership}
           />
         )}
       </div>

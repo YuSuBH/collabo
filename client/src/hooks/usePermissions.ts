@@ -43,8 +43,6 @@ export function usePermissions({
       const creatorId = metaMap.get('creatorId') as string | undefined;
       const creatorName = metaMap.get('creatorName') as string | undefined;
       const creatorColor = metaMap.get('creatorColor') as string | undefined;
-      const currentHostId = metaMap.get('currentHostId') as string | undefined;
-      const currentHostName = metaMap.get('currentHostName') as string | undefined;
       const createdAt = metaMap.get('createdAt') as number | undefined;
 
       if (creatorId && creatorName) {
@@ -52,18 +50,14 @@ export function usePermissions({
           creatorId,
           creatorName,
           creatorColor: creatorColor || '#FF4B4B',
-          currentHostId: currentHostId || creatorId,
-          currentHostName: currentHostName || creatorName,
           createdAt: createdAt || Date.now(),
         });
       } else {
-        // First user creates the room
+        // First user creates the room as the initial Admin
         doc.transact(() => {
           metaMap.set('creatorId', currentUser.id);
           metaMap.set('creatorName', currentUser.name);
           metaMap.set('creatorColor', currentUser.color);
-          metaMap.set('currentHostId', currentUser.id);
-          metaMap.set('currentHostName', currentUser.name);
           metaMap.set('createdAt', Date.now());
 
           permsMap.set(currentUser.id, { ...DEFAULT_CREATOR_PERMISSIONS });
@@ -92,13 +86,11 @@ export function usePermissions({
       });
 
       const creatorId = metaMap.get('creatorId') as string | undefined;
-      const currentHostId = metaMap.get('currentHostId') as string | undefined;
-      const activeHostId = currentHostId || creatorId;
-      const isHost = activeHostId === currentUser.id;
+      const isCreator = creatorId === currentUser.id;
 
       // If current user is not in permissions map yet, initialize them
       if (!permsMap.has(currentUser.id)) {
-        const initialPerms = isHost
+        const initialPerms = isCreator
           ? { ...DEFAULT_CREATOR_PERMISSIONS }
           : { ...DEFAULT_JOINER_PERMISSIONS };
 
@@ -133,22 +125,20 @@ export function usePermissions({
   }, [doc, isSynced]);
 
   // ─── 4. Current User Permissions & Role ───────────────────────────────────────
-  const isOwner = useMemo(() => {
-    if (!roomMeta) return false;
-    const activeHostId = roomMeta.currentHostId || roomMeta.creatorId;
-    return activeHostId === currentUser.id;
+  const isCreator = useMemo(() => {
+    return roomMeta?.creatorId === currentUser.id;
   }, [roomMeta, currentUser.id]);
 
   const permissions: UserPermissions = useMemo(() => {
     const userPerms = allUserPermissions.get(currentUser.id);
     if (userPerms) return userPerms;
-    if (isOwner) return DEFAULT_CREATOR_PERMISSIONS;
+    if (isCreator) return DEFAULT_CREATOR_PERMISSIONS;
     return DEFAULT_JOINER_PERMISSIONS;
-  }, [allUserPermissions, currentUser.id, isOwner]);
+  }, [allUserPermissions, currentUser.id, isCreator]);
 
   const role: UserRole = useMemo(() => {
-    return getRoleFromPermissions(permissions, isOwner);
-  }, [permissions, isOwner]);
+    return getRoleFromPermissions(permissions);
+  }, [permissions]);
 
   // Specific granular permission booleans
   const canEdit = permissions.edit;
@@ -173,41 +163,30 @@ export function usePermissions({
     );
   }, [requests, currentUser.id]);
 
-  // ─── 5. Host Election & Failover (When Creator / Admins Leave) ────────────────
+  // ─── 5. Admin Failover (If all Admins leave the room) ────────────────────────
   useEffect(() => {
-    if (!doc || !isSynced || users.length === 0 || allUserPermissions.size === 0 || !roomMeta) return;
+    if (!doc || !isSynced || users.length === 0 || allUserPermissions.size === 0) return;
 
-    const activeHostId = roomMeta.currentHostId || roomMeta.creatorId;
-    if (!activeHostId) return;
-
-    // Check if the current room host is currently online in the room
-    const isHostOnline = users.some((u) => u.id === activeHostId);
-
-    // Check if any currently connected user has managePermissions === true
+    // Check if any currently connected user has managePermissions === true (Admin)
     const activeAdmins = users.filter((u) => {
       const p = allUserPermissions.get(u.id);
       return p?.managePermissions === true;
     });
 
-    // Only failover if the host is offline AND no active connected user has admin privileges
-    if (!isHostOnline && activeAdmins.length === 0) {
-      // Deterministically pick the senior active user (lowest clientId as tie-breaker)
+    // If no connected user is an Admin, auto-promote the senior connected user to Admin
+    if (activeAdmins.length === 0) {
       const sortedUsers = [...users].sort((a, b) => a.clientId - b.clientId);
-      const electedHost = sortedUsers[0];
+      const seniorUser = sortedUsers[0];
 
-      if (electedHost && electedHost.id === currentUser.id) {
+      if (seniorUser && seniorUser.id === currentUser.id) {
         console.log(
-          `[Permissions Failover] Host is offline and no active admin present. Automatically elevating ${electedHost.name} (${electedHost.id}) to Room Host/Admin.`
+          `[Admin Failover] No active Admin present. Promoting senior user ${seniorUser.name} (${seniorUser.id}) to Admin.`
         );
 
         const permsMap = doc.getMap<UserPermissions>('user-permissions');
-        const metaMap = doc.getMap('room-meta');
 
         doc.transact(() => {
-          metaMap.set('currentHostId', electedHost.id);
-          metaMap.set('currentHostName', electedHost.name);
-
-          permsMap.set(electedHost.id, {
+          permsMap.set(seniorUser.id, {
             ...DEFAULT_CREATOR_PERMISSIONS,
           });
 
@@ -219,18 +198,18 @@ export function usePermissions({
               senderId: 0,
               senderName: 'System',
               senderColor: '#6366f1',
-              text: `👑 Room host left. ${electedHost.name} has been automatically elected as the new Room Admin.`,
+              text: `🛡️ All administrators left the room. ${seniorUser.name} has been automatically promoted to Admin.`,
               timestamp: Date.now(),
               fileRef: null,
             },
           ]);
         });
 
-        setStatusMessage('You have been promoted to Room Admin as the previous host left.');
+        setStatusMessage('You have been promoted to Room Admin as all previous admins left.');
         setTimeout(() => setStatusMessage(null), 6000);
       }
     }
-  }, [doc, isSynced, users, allUserPermissions, currentUser.id, roomMeta]);
+  }, [doc, isSynced, users, allUserPermissions, currentUser.id]);
 
   // ─── 6. Action Handlers ──────────────────────────────────────────────────────
 
@@ -407,43 +386,10 @@ export function usePermissions({
     [doc, canManagePermissions, updateUserPermissions]
   );
 
-  /** Transfer room host ownership */
-  const transferOwnership = useCallback(
-    (targetUserId: string, targetUserName: string) => {
-      if (!doc || !isOwner) return;
-
-      const metaMap = doc.getMap('room-meta');
-      const permsMap = doc.getMap<UserPermissions>('user-permissions');
-
-      doc.transact(() => {
-        metaMap.set('currentHostId', targetUserId);
-        metaMap.set('currentHostName', targetUserName);
-
-        // Ensure new host has full permissions
-        permsMap.set(targetUserId, { ...DEFAULT_CREATOR_PERMISSIONS });
-
-        const chatArray = doc.getArray('chat-messages');
-        chatArray.push([
-          {
-            id: `sys_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-            senderId: 0,
-            senderName: 'System',
-            senderColor: '#f59e0b',
-            text: `👑 ${currentUser.name} transferred Room Host ownership to ${targetUserName}.`,
-            timestamp: Date.now(),
-            fileRef: null,
-          },
-        ]);
-      });
-    },
-    [doc, isOwner, currentUser.name]
-  );
-
   return {
     roomMeta,
     permissions,
     role,
-    isOwner,
     canEdit,
     canCreate,
     canDelete,
@@ -462,6 +408,5 @@ export function usePermissions({
     rejectRequest,
     updateUserPermissions,
     setUserRole,
-    transferOwnership,
   };
 }
