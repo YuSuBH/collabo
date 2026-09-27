@@ -10,18 +10,15 @@ import {
   type Collaborator,
 } from '../utils/collaborators';
 
-const LOCAL_STORAGE_USER_KEY = 'collab_ide_user_profile';
+const SESSION_STORAGE_USER_KEY = 'collab_ide_tab_session_user';
+const LOCAL_STORAGE_PREF_KEY = 'collab_ide_user_pref_name';
 
 const getInitialUser = (): UserPresence => {
   try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+    const saved = sessionStorage.getItem(SESSION_STORAGE_USER_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.name && parsed.color) {
-        if (!parsed.id) {
-          parsed.id = generateUserId();
-          localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(parsed));
-        }
+      if (parsed.id && parsed.name && parsed.color) {
         return parsed;
       }
     }
@@ -30,7 +27,7 @@ const getInitialUser = (): UserPresence => {
   }
   const user = getRandomCollaborator();
   try {
-    localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user));
+    sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(user));
   } catch {
     // Ignore storage write error
   }
@@ -62,25 +59,29 @@ export const useYjs = ({
   const [isSynced, setIsSynced] = useState<boolean>(false);
   const [users, setUsers] = useState<Collaborator[]>([]);
   const [currentUser, setCurrentUserState] = useState<UserPresence>(() => {
-    // If the lobby provided explicit credentials, use them (and persist).
+    // If the lobby provided explicit credentials, use them with a tab-unique ID
     if (initialName && initialColor) {
-      let existingId = generateUserId();
+      let id = generateUserId();
       try {
-        const saved = localStorage.getItem(LOCAL_STORAGE_USER_KEY);
+        const saved = sessionStorage.getItem(SESSION_STORAGE_USER_KEY);
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed.id) existingId = parsed.id;
+          if (parsed.id) id = parsed.id;
         }
       } catch {
         // ignore
       }
-      const user: UserPresence = { id: existingId, name: initialName, color: initialColor };
-      try { localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(user)); } catch { /* ignore */ }
+      const user: UserPresence = { id, name: initialName, color: initialColor };
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(user));
+        localStorage.setItem(LOCAL_STORAGE_PREF_KEY, initialName);
+      } catch {
+        // ignore
+      }
       return user;
     }
     return getInitialUser();
   });
-
 
   // Synchronize URL search params with roomId
   const setRoomId = useCallback((newRoomId: string) => {
@@ -92,13 +93,13 @@ export const useYjs = ({
     window.history.pushState({}, '', url.toString());
   }, []);
 
-  // Update user profile in awareness and localStorage
+  // Update user profile in awareness and sessionStorage
   const updateUser = useCallback(
     (updated: Partial<UserPresence>) => {
       setCurrentUserState((prev) => {
         const newUser = { ...prev, ...updated };
         try {
-          localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(newUser));
+          sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(newUser));
         } catch {
           // Ignore
         }
@@ -114,14 +115,12 @@ export const useYjs = ({
   // Alert user before closing tab / reloading and immediately remove awareness state if leaving
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      // Standard browser confirmation prompt when attempting to close tab or navigate away
       e.preventDefault();
       e.returnValue = '';
       return '';
     };
 
     const handlePageHide = () => {
-      // Immediately clear presence and disconnect WebSocket when leaving
       if (awareness) {
         awareness.setLocalState(null);
       }
@@ -204,7 +203,7 @@ export const useYjs = ({
           wsAwareness.setLocalStateField('user', updatedUser);
           setCurrentUserState(updatedUser);
           try {
-            localStorage.setItem(LOCAL_STORAGE_USER_KEY, JSON.stringify(updatedUser));
+            sessionStorage.setItem(SESSION_STORAGE_USER_KEY, JSON.stringify(updatedUser));
           } catch {
             // Ignore
           }
@@ -222,7 +221,6 @@ export const useYjs = ({
       wsProvider.off('status', handleStatus);
       wsProvider.off('sync', handleSync);
       wsAwareness.off('change', handleAwarenessChange);
-      // Immediately clear local awareness state before destroying
       wsAwareness.setLocalState(null);
       wsProvider.destroy();
       ydoc.destroy();

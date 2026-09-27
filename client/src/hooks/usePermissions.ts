@@ -92,11 +92,13 @@ export function usePermissions({
       });
 
       const creatorId = metaMap.get('creatorId') as string | undefined;
-      const isCreator = creatorId === currentUser.id;
+      const currentHostId = metaMap.get('currentHostId') as string | undefined;
+      const activeHostId = currentHostId || creatorId;
+      const isHost = activeHostId === currentUser.id;
 
       // If current user is not in permissions map yet, initialize them
-      if (!map.has(currentUser.id)) {
-        const initialPerms = isCreator
+      if (!permsMap.has(currentUser.id)) {
+        const initialPerms = isHost
           ? { ...DEFAULT_CREATOR_PERMISSIONS }
           : { ...DEFAULT_JOINER_PERMISSIONS };
 
@@ -133,7 +135,8 @@ export function usePermissions({
   // ─── 4. Current User Permissions & Role ───────────────────────────────────────
   const isOwner = useMemo(() => {
     if (!roomMeta) return false;
-    return roomMeta.creatorId === currentUser.id || roomMeta.currentHostId === currentUser.id;
+    const activeHostId = roomMeta.currentHostId || roomMeta.creatorId;
+    return activeHostId === currentUser.id;
   }, [roomMeta, currentUser.id]);
 
   const permissions: UserPermissions = useMemo(() => {
@@ -172,10 +175,13 @@ export function usePermissions({
 
   // ─── 5. Host Election & Failover (When Creator / Admins Leave) ────────────────
   useEffect(() => {
-    if (!doc || !isSynced || users.length === 0 || allUserPermissions.size === 0) return;
+    if (!doc || !isSynced || users.length === 0 || allUserPermissions.size === 0 || !roomMeta) return;
 
-    const permsMap = doc.getMap<UserPermissions>('user-permissions');
-    const metaMap = doc.getMap('room-meta');
+    const activeHostId = roomMeta.currentHostId || roomMeta.creatorId;
+    if (!activeHostId) return;
+
+    // Check if the current room host is currently online in the room
+    const isHostOnline = users.some((u) => u.id === activeHostId);
 
     // Check if any currently connected user has managePermissions === true
     const activeAdmins = users.filter((u) => {
@@ -183,15 +189,19 @@ export function usePermissions({
       return p?.managePermissions === true;
     });
 
-    if (activeAdmins.length === 0) {
+    // Only failover if the host is offline AND no active connected user has admin privileges
+    if (!isHostOnline && activeAdmins.length === 0) {
       // Deterministically pick the senior active user (lowest clientId as tie-breaker)
       const sortedUsers = [...users].sort((a, b) => a.clientId - b.clientId);
       const electedHost = sortedUsers[0];
 
-      if (electedHost) {
+      if (electedHost && electedHost.id === currentUser.id) {
         console.log(
-          `[Permissions Failover] No active admin present. Automatically elevating ${electedHost.name} (${electedHost.id}) to Room Host/Admin.`
+          `[Permissions Failover] Host is offline and no active admin present. Automatically elevating ${electedHost.name} (${electedHost.id}) to Room Host/Admin.`
         );
+
+        const permsMap = doc.getMap<UserPermissions>('user-permissions');
+        const metaMap = doc.getMap('room-meta');
 
         doc.transact(() => {
           metaMap.set('currentHostId', electedHost.id);
@@ -216,13 +226,11 @@ export function usePermissions({
           ]);
         });
 
-        if (electedHost.id === currentUser.id) {
-          setStatusMessage('You have been promoted to Room Admin as the previous host left.');
-          setTimeout(() => setStatusMessage(null), 6000);
-        }
+        setStatusMessage('You have been promoted to Room Admin as the previous host left.');
+        setTimeout(() => setStatusMessage(null), 6000);
       }
     }
-  }, [doc, isSynced, users, allUserPermissions, currentUser.id]);
+  }, [doc, isSynced, users, allUserPermissions, currentUser.id, roomMeta]);
 
   // ─── 6. Action Handlers ──────────────────────────────────────────────────────
 

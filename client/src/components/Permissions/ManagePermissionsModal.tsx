@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Shield,
@@ -13,6 +13,7 @@ import {
   Check,
   Sparkles,
   ArrowRightLeft,
+  CheckCircle2,
 } from 'lucide-react';
 import type { Collaborator } from '../../utils/collaborators';
 import type {
@@ -53,7 +54,9 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
     users.find((u) => u.id !== currentUserId) ||
     users[0];
 
-  const [selectedUserId, setSelectedUserId] = useState<string>(defaultUser?.id || '');
+  const [selectedUserId, setSelectedUserId] = useState<string>(
+    initialSelectedUserId || defaultUser?.id || ''
+  );
   const selectedCollaborator = users.find((u) => u.id === selectedUserId);
 
   const currentPermsForUser: UserPermissions =
@@ -61,7 +64,18 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
 
   const [editedPerms, setEditedPerms] = useState<UserPermissions>(currentPermsForUser);
   const [hasChanges, setHasChanges] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
+
+  useEffect(() => {
+    if (initialSelectedUserId) {
+      setSelectedUserId(initialSelectedUserId);
+      const perms = allUserPermissions.get(initialSelectedUserId) || ROLE_PRESETS.viewer;
+      setEditedPerms(perms);
+      setHasChanges(false);
+      setShowTransferConfirm(false);
+    }
+  }, [initialSelectedUserId]);
 
   // When user selection changes, reset draft permissions
   const handleSelectUser = (userId: string) => {
@@ -69,12 +83,14 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
     const perms = allUserPermissions.get(userId) || ROLE_PRESETS.viewer;
     setEditedPerms(perms);
     setHasChanges(false);
+    setSavedSuccess(false);
     setShowTransferConfirm(false);
   };
 
   const handlePresetSelect = (preset: Exclude<UserRole, 'custom' | 'owner'>) => {
     setEditedPerms(ROLE_PRESETS[preset]);
     setHasChanges(true);
+    setSavedSuccess(false);
   };
 
   const handleToggle = (key: keyof UserPermissions) => {
@@ -83,12 +99,15 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
       [key]: !prev[key],
     }));
     setHasChanges(true);
+    setSavedSuccess(false);
   };
 
   const handleSave = () => {
     if (!selectedCollaborator) return;
     onUpdatePermissions(selectedCollaborator.id, selectedCollaborator.name, editedPerms);
     setHasChanges(false);
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 2500);
   };
 
   const handleConfirmTransfer = () => {
@@ -198,7 +217,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                       <RoleBadge role={currentRole} size="md" />
                     </div>
                     <span className="perm-selected-client-id">
-                      User ID: {selectedCollaborator.id}
+                      Member: {selectedCollaborator.name}
                     </span>
                   </div>
                 </div>
@@ -315,6 +334,12 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
 
         {/* Footer */}
         <div className="modal-footer">
+          {savedSuccess && (
+            <span className="text-emerald-400 font-semibold text-xs flex items-center gap-1 mr-auto" style={{ color: '#34d399' }}>
+              <CheckCircle2 size={14} />
+              <span>Permissions applied successfully!</span>
+            </span>
+          )}
           <button type="button" className="btn-secondary" onClick={onClose}>
             Close
           </button>

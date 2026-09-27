@@ -230,7 +230,8 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
         <div className="collaborators-list">
           {users.map((user) => {
             const userPerms = allUserPermissions.get(user.id) || ROLE_PRESETS.viewer;
-            const isUserOwner = roomMeta?.creatorId === user.id || roomMeta?.currentHostId === user.id;
+            const activeHostId = roomMeta?.currentHostId || roomMeta?.creatorId;
+            const isUserOwner = Boolean(activeHostId && activeHostId === user.id);
             const userRole = getRoleFromPermissions(userPerms, isUserOwner);
 
             return (
