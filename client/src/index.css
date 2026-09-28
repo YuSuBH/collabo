@@ -4,50 +4,50 @@
 
 /* ─── 1. Design Tokens & Variables ───────────────────────────────────────── */
 :root {
-  --bg-darker: #18181b;
-  --bg-dark: #1e1e24;
-  --bg-editor: #1e1e1e;
-  --bg-surface: #27272a;
-  --bg-hover: #3f3f46;
-  --border-color: #3f3f46;
+  --bg-darker: #0a0a0a;
+  --bg-dark: #121212;
+  --bg-editor: #0a0a0a;
+  --bg-surface: #1e1e1e;
+  --bg-hover: #2d2d2d;
+  --border-color: #2d2d2d;
 
-  --text-main: #f4f4f5;
-  --text-muted: #a1a1aa;
-  --text-dim: #71717a;
+  --text-main: #f5f5f5;
+  --text-muted: #a3a3a3;
+  --text-dim: #737373;
 
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-glow: rgba(59, 130, 246, 0.4);
-  --primary-gradient: #3b82f6;
+  --accent-primary: #f4f4f5;
+  --accent-hover: #ffffff;
+  --accent-glow: rgba(244, 244, 245, 0.25);
+  --primary-gradient: #f4f4f5;
 
-  --color-success: #10b981;
-  --color-success-bg: rgba(16, 185, 129, 0.15);
-  --color-success-border: rgba(16, 185, 129, 0.35);
-  --color-success-text: #34d399;
+  --color-success: #84a59d;
+  --color-success-bg: rgba(132, 165, 157, 0.15);
+  --color-success-border: rgba(132, 165, 157, 0.35);
+  --color-success-text: #a8c3bd;
 
-  --color-error: #ef4444;
-  --color-error-bg: rgba(239, 68, 68, 0.15);
-  --color-error-border: rgba(239, 68, 68, 0.35);
-  --color-error-text: #f87171;
-  --color-error-dim: #fca5a5;
+  --color-error: #e5989b;
+  --color-error-bg: rgba(229, 152, 155, 0.15);
+  --color-error-border: rgba(229, 152, 155, 0.35);
+  --color-error-text: #ffb4a2;
+  --color-error-dim: #ffcdb2;
 
-  --color-warning: #f59e0b;
-  --color-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-warning-border: rgba(245, 158, 11, 0.3);
-  --color-warning-text: #fbbf24;
+  --color-warning: #e2b78c;
+  --color-warning-bg: rgba(226, 183, 140, 0.12);
+  --color-warning-border: rgba(226, 183, 140, 0.3);
+  --color-warning-text: #f5ccaa;
 
-  --color-ai: #a855f7;
-  --color-ai-bg: rgba(168, 85, 247, 0.15);
-  --color-ai-border: rgba(168, 85, 247, 0.35);
-  --color-ai-text: #c084fc;
-  --color-ai-gradient: #a855f7;
+  --color-ai: #d1d5db;
+  --color-ai-bg: rgba(209, 213, 219, 0.15);
+  --color-ai-border: rgba(209, 213, 219, 0.35);
+  --color-ai-text: #f3f4f6;
+  --color-ai-gradient: #d1d5db;
 
   --header-height: 42px;
   --status-bar-height: 24px;
-  --status-bar-bg: #18181b;
+  --status-bar-bg: #121212;
   --sidebar-width: 240px;
-  --tab-bg: #1e1e1e;
-  --tab-inactive-bg: #18181b;
+  --tab-bg: #0a0a0a;
+  --tab-inactive-bg: #121212;
 
   --radius-xs: 3px;
   --radius-sm: 4px;
@@ -289,6 +289,7 @@ html, body, #root {
 }
 .chat-badge-count {
   background-color: var(--accent-primary);
+  color: #0a0a0a;
 }
 
 .header-execute-btn {
@@ -458,6 +459,7 @@ html, body, #root {
 }
 .rcp-radio-dot-on {
   background: var(--accent-primary);
+  color: #0a0a0a;
 }
 .rcp-file-name {
   flex: 1;
@@ -963,10 +965,12 @@ html, body, #root {
   gap: 4px;
 }
 .fe-file-item:hover { background: var(--bg-surface); }
+.fe-file-item:hover .fe-btn-delete { opacity: 1; }
 .fe-file-active {
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(255, 255, 255, 0.06);
 }
-.fe-file-active:hover { background: rgba(59, 130, 246, 0.12); }
+.fe-file-active:hover { background: rgba(255, 255, 255, 0.1); }
+.fe-file-active .fe-btn-delete { opacity: 1; }
 .fe-file-info {
   display: flex;
   align-items: center;
@@ -1012,7 +1016,7 @@ html, body, #root {
 }
 .fe-btn-delete:hover {
   color: var(--color-error-text);
-  background: rgba(239, 68, 68, 0.12);
+  background: var(--color-error-bg);
 }
 
 .fe-delete-confirm {
@@ -1106,6 +1110,7 @@ html, body, #root {
   top: -140px;
   left: -140px;
   animation-duration: 14s;
+  color: #0a0a0a;
 }
 .lobby-blob-2 {
   width: 420px;
@@ -1248,7 +1253,7 @@ html, body, #root {
   padding: 14px 24px;
   border-radius: var(--radius-xl);
   background: var(--primary-gradient);
-  color: #ffffff;
+  color: #0a0a0a;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
@@ -1303,6 +1308,7 @@ html, body, #root {
 .chat-resize-handle:hover .chat-resize-line,
 .chat-resize-handle.active .chat-resize-line {
   background-color: var(--accent-primary);
+  color: #0a0a0a;
 }
 
 .chat-panel-header {
@@ -1692,7 +1698,7 @@ html, body, #root {
   width: 28px;
   height: 28px;
   background: var(--accent-primary);
-  color: #ffffff;
+  color: #0a0a0a;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: var(--transition-normal);
@@ -2009,7 +2015,7 @@ html, body, #root {
   padding: 7px 16px;
   border-radius: var(--radius-md);
   background: var(--accent-primary);
-  color: #ffffff;
+  color: #0a0a0a;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -2066,6 +2072,7 @@ html, body, #root {
 .output-resize-handle:hover,
 .output-resize-handle:active {
   background: var(--accent-primary);
+  color: #0a0a0a;
 }
 
 /* ── Header bar ──────────────────────────────────────────────── */
@@ -2245,6 +2252,7 @@ html, body, #root {
 }
 .output-runs-item-avatar.my-avatar {
   background: var(--accent-primary);
+  color: #0a0a0a;
 }
 .output-runs-item-details {
   flex: 1;
@@ -2328,7 +2336,7 @@ html, body, #root {
 }
 .output-toast-view-btn {
   background: var(--accent-primary);
-  color: #fff;
+  color: #0a0a0a;
   border-radius: var(--radius-sm);
   padding: 3px 8px;
   font-size: 10.5px;
@@ -2494,7 +2502,7 @@ html, body, #root {
   width: 28px;
   height: 28px;
   background: var(--accent-primary);
-  color: #fff;
+  color: #0a0a0a;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition-fast);
@@ -3252,6 +3260,7 @@ html, body, #root {
 }
 .perm-checkbox-active {
   background: var(--accent-primary);
+  color: #0a0a0a;
 }
 
 .perm-field-group {
