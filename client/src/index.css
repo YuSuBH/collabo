@@ -2729,25 +2729,14 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-.role-badge-owner {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-}
-.role-badge-admin {
-  background: rgba(99, 102, 241, 0.18);
-  color: #a5b4fc;
-}
-.role-badge-editor {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-}
-.role-badge-viewer {
-  background: rgba(148, 163, 184, 0.12);
-  color: #94a3b8;
-}
+.role-badge-owner,
+.role-badge-admin,
+.role-badge-editor,
+.role-badge-viewer,
 .role-badge-custom {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
 }
 
 /* ── Header Additions ────────────────────────────────────────── */
@@ -3647,17 +3636,18 @@ html, body, #root {
   gap: 3px;
   padding: 2.5px 6px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: transparent;
+  border: 1px dashed var(--bg-hover);
   color: var(--text-dim);
   font-size: 9.5px;
   opacity: 0.45;
   white-space: nowrap;
 }
 .perm-mini-pill-active {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
   opacity: 1;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .current-user-actions {
