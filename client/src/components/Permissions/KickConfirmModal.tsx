@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UserX, AlertTriangle, X, ShieldAlert } from 'lucide-react';
+import { UserX, AlertTriangle, X } from 'lucide-react';
 import { RoleBadge } from './PermissionBadges';
 import type { UserRole } from '../../types/permissions';
 
@@ -51,93 +51,91 @@ export const KickConfirmModal: React.FC<KickConfirmModalProps> = ({
   };
 
   return (
-    <div className="modal-backdrop kick-modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose}>
       <div
-        className="modal-container kick-modal-container"
+        className="modal-container kick-confirm-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="kick-modal-title"
       >
         {/* Header */}
-        <div className="kick-modal-header">
-          <div className="kick-icon-badge">
-            <UserX size={20} />
+        <div className="modal-header">
+          <div className="modal-header-title">
+            <div className="modal-icon-badge modal-icon-badge-danger">
+              <UserX size={18} />
+            </div>
+            <div>
+              <h3>Kick Member</h3>
+              <p className="modal-subtitle">
+                Remove collaborator from the current session
+              </p>
+            </div>
           </div>
-          <div className="kick-modal-title-group">
-            <h2 id="kick-modal-title" className="kick-modal-title">
-              Kick Member
-            </h2>
-            <p className="kick-modal-subtitle">
-              Remove collaborator from this room
-            </p>
-          </div>
-          <button
-            type="button"
-            className="modal-close-btn"
-            onClick={onClose}
-            aria-label="Close modal"
-          >
-            <X size={18} />
+          <button className="modal-close-btn" onClick={onClose} title="Close">
+            <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <form onSubmit={handleKick} className="kick-modal-body">
+        <form onSubmit={handleKick} className="modal-body">
           {/* Target User Info Card */}
-          <div className="kick-target-card">
+          <div className="perm-selected-user-card" style={{ padding: '10px 14px' }}>
             <div
-              className="collaborator-avatar kick-target-avatar"
+              className="collaborator-avatar"
               style={{ backgroundColor: targetUser.color }}
             >
               {targetUser.name.charAt(0).toUpperCase()}
             </div>
-            <div className="kick-target-details">
-              <span className="kick-target-name">{targetUser.name}</span>
-              {targetUser.role && <RoleBadge role={targetUser.role} size="sm" />}
+            <div className="perm-selected-info">
+              <div className="perm-selected-name-row">
+                <span className="perm-selected-name" style={{ fontSize: '13.5px' }}>
+                  {targetUser.name}
+                </span>
+                {targetUser.role && <RoleBadge role={targetUser.role} size="sm" />}
+              </div>
             </div>
           </div>
 
-          {/* Warning Banner */}
-          <div className="kick-warning-banner">
-            <AlertTriangle size={16} className="kick-warning-icon" />
-            <div className="kick-warning-text">
-              <strong>{targetUser.name}</strong> will be disconnected and removed from the active session immediately.
-            </div>
+          {/* Warning Notice Banner */}
+          <div className="modal-notice-banner modal-notice-danger">
+            <AlertTriangle size={15} className="notice-icon" />
+            <span>
+              <strong>{targetUser.name}</strong> will be disconnected and removed from this room immediately.
+            </span>
           </div>
 
           {/* Reason Input */}
-          <div className="kick-input-group">
-            <label htmlFor="kick-reason-input" className="kick-input-label">
+          <div className="perm-field-group">
+            <label htmlFor="kick-reason-input" className="perm-field-label">
               Reason (optional)
             </label>
             <input
               ref={inputRef}
               id="kick-reason-input"
               type="text"
-              className="kick-reason-input"
-              placeholder="e.g. Inactivity, spamming edits, disruption"
+              className="perm-input-text"
+              placeholder="e.g. Inactivity, disruption"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               maxLength={100}
             />
           </div>
 
-          {/* Footer Actions */}
-          <div className="kick-modal-footer">
+          {/* Footer */}
+          <div className="modal-footer" style={{ margin: '0 -20px -18px -20px' }}>
             <button
               type="button"
-              className="btn-secondary kick-btn-cancel"
+              className="btn-modal-secondary"
               onClick={onClose}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-kick-danger"
+              className="btn-modal-danger"
             >
-              <UserX size={15} />
-              <span>Kick {targetUser.name}</span>
+              <UserX size={14} />
+              <span>Kick Member</span>
             </button>
           </div>
         </form>

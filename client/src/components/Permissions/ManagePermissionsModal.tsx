@@ -278,23 +278,21 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                   !allUserPermissions.get(selectedCollaborator.id)?.managePermissions &&
                   !editedPerms.managePermissions &&
                   onKickUser && (
-                    <div className="perm-danger-zone">
-                      <div className="perm-danger-header">
-                        <span className="perm-danger-title">Danger Zone</span>
-                      </div>
-                      <div className="perm-danger-content">
-                        <div className="perm-danger-info">
-                          <span className="perm-danger-label">Kick Member from Room</span>
-                          <span className="perm-danger-desc">
-                            Disconnect {selectedCollaborator.name} and remove them from this collaborative session.
+                    <div className="perm-kick-section">
+                      <div className="perm-section-label">Danger Zone</div>
+                      <div className="perm-kick-card">
+                        <div className="perm-kick-info">
+                          <span className="perm-kick-title">Kick Member</span>
+                          <span className="perm-kick-desc">
+                            Remove {selectedCollaborator.name} from the active room session.
                           </span>
                         </div>
                         <button
                           type="button"
-                          className="btn-danger-kick-modal"
+                          className="btn-danger-sm"
                           onClick={() => setIsKickConfirmOpen(true)}
                         >
-                          <UserX size={14} />
+                          <UserX size={12} />
                           <span>Kick Member</span>
                         </button>
                       </div>

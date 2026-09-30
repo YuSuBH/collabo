@@ -3691,334 +3691,131 @@ html, body, #root {
 }
 .btn-link-cancel:hover { color: #ef4444; }
 
-/* ── Member Kick Action Button ──────────────────────────────── */
+/* ── Kick & Member Management Feature Styles ────────────────── */
 .btn-member-kick {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm);
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-xs);
   background: transparent;
   color: var(--text-dim);
-  border: 1px solid transparent;
   cursor: pointer;
   margin-left: auto;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
-  opacity: 0.6;
+  transition: var(--transition-fast);
+  opacity: 0;
 }
 .collaborator-item:hover .btn-member-kick {
-  opacity: 1;
-  color: #f87171;
+  opacity: 0.75;
 }
 .btn-member-kick:hover {
-  background: rgba(239, 68, 68, 0.15) !important;
-  color: #ef4444 !important;
-  border-color: rgba(239, 68, 68, 0.3) !important;
-  transform: scale(1.05);
+  opacity: 1 !important;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
 }
 
-/* ── Danger Zone in Manage Modal ────────────────────────────── */
-.perm-danger-zone {
-  margin-top: 14px;
-  padding: 12px 14px;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+.modal-container.kick-confirm-modal,
+.modal-container.kicked-modal-container {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--bg-dark);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-icon-badge-danger {
+  background: var(--color-error-bg) !important;
+  color: var(--color-error-text) !important;
+}
+
+.modal-notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.modal-notice-danger {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.btn-modal-danger {
+  padding: 7px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-error);
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-normal);
+}
+.btn-modal-danger:hover {
+  background: var(--color-error-dim);
+}
+
+.kicked-meta-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-darker);
   border-radius: var(--radius-md);
 }
-.perm-danger-header {
-  margin-bottom: 8px;
+.kicked-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
 }
-.perm-danger-title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #f87171;
+.kicked-meta-label {
+  color: var(--text-dim);
 }
-.perm-danger-content {
+.kicked-meta-val {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.perm-kick-section {
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.perm-kick-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  padding: 10px 12px;
+  background: var(--color-error-bg);
+  border-radius: var(--radius-md);
 }
-.perm-danger-info {
+.perm-kick-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.perm-danger-label {
-  font-size: 12.5px;
+.perm-kick-title {
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-main);
+  color: var(--color-error-text);
 }
-.perm-danger-desc {
+.perm-kick-desc {
   font-size: 11px;
   color: var(--text-dim);
   line-height: 1.35;
 }
-.btn-danger-kick-modal {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 13px;
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: var(--radius-sm);
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--transition-fast);
-}
-.btn-danger-kick-modal:hover {
-  background: #ef4444;
-  color: #ffffff;
-  border-color: #ef4444;
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
-}
 
-/* ── Kick Confirm Modal ─────────────────────────────────────── */
-.kick-modal-backdrop {
-  z-index: 1050;
-}
-.kick-modal-container {
-  width: 100%;
-  max-width: 440px;
-  background: var(--bg-card);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px rgba(239, 68, 68, 0.12);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: modal-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.kick-modal-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.kick-icon-badge {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.kick-modal-title-group {
-  flex: 1;
-}
-.kick-modal-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main);
-}
-.kick-modal-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-.kick-modal-body {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.kick-target-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: var(--bg-darker);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-}
-.kick-target-avatar {
-  width: 34px !important;
-  height: 34px !important;
-  font-size: 14px !important;
-}
-.kick-target-details {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.kick-target-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-.kick-warning-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: var(--radius-md);
-}
-.kick-warning-icon {
-  color: #f59e0b;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-.kick-warning-text {
-  font-size: 11.5px;
-  color: #fbbf24;
-  line-height: 1.4;
-}
-.kick-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.kick-input-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-.kick-reason-input {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-darker);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  font-size: 12px;
-  outline: none;
-  transition: all var(--transition-fast);
-}
-.kick-reason-input:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
-}
-.kick-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 6px;
-}
-.kick-btn-cancel {
-  padding: 7px 14px;
-}
-.btn-kick-danger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 16px;
-  background: #ef4444;
-  color: #ffffff;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.btn-kick-danger:hover {
-  background: #dc2626;
-  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.4);
-}
 
-/* ── Kicked Notification Overlay ────────────────────────────── */
-.kicked-overlay-backdrop {
-  z-index: 2000;
-  backdrop-filter: blur(8px);
-  background: rgba(10, 12, 18, 0.85);
-}
-.kicked-overlay-card {
-  width: 100%;
-  max-width: 420px;
-  background: var(--bg-card);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(239, 68, 68, 0.15);
-  padding: 28px 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  animation: modal-appear 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.kicked-overlay-icon-wrap {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-  animation: pulse-badge 2s infinite;
-}
-.kicked-overlay-title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-main);
-}
-.kicked-overlay-message {
-  margin: 0;
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
-.kicked-details-box {
-  width: 100%;
-  background: var(--bg-darker);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  text-align: left;
-  margin: 4px 0;
-}
-.kicked-detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-}
-.kicked-detail-label {
-  color: var(--text-dim);
-}
-.kicked-detail-val {
-  color: var(--text-main);
-}
-.kicked-leave-btn {
-  width: 100%;
-  margin-top: 6px;
-  padding: 9px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #ef4444 !important;
-  color: #ffffff !important;
-  font-weight: 600;
-  font-size: 13px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.kicked-leave-btn:hover {
-  background: #dc2626 !important;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
-}
 
 
 
