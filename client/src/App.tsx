@@ -8,6 +8,7 @@ import { OutputPanel } from './components/Output/OutputPanel';
 import { TabBar } from './components/IDE/TabBar';
 import { LeftSidebar } from './components/IDE/LeftSidebar';
 import { StatusBar } from './components/IDE/StatusBar';
+import { KickedNotificationModal } from './components/Permissions/KickedNotificationModal';
 import { Info, X } from 'lucide-react';
 import './index.css';
 
@@ -61,6 +62,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     allUserPermissions,
     pendingRequests,
     userPendingRequest,
+    isKicked,
+    kickedInfo,
     statusMessage,
     clearStatusMessage,
     requestPermissions,
@@ -68,6 +71,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     approveRequest,
     rejectRequest,
     updateUserPermissions,
+    kickUser,
     // Handlers
     handleFileSelect,
     handleToggleLeftSidebar,
@@ -79,6 +83,15 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
 
   return (
     <div className="ide-layout">
+      {/* Kicked Modal Overlay */}
+      {isKicked && (
+        <KickedNotificationModal
+          kickedInfo={kickedInfo}
+          roomId={roomId}
+          onLeave={onLeave}
+        />
+      )}
+
       {/* Global Status Message Toast */}
       {statusMessage && (
         <div className="global-status-toast">
@@ -138,6 +151,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             onApproveRequest={approveRequest}
             onRejectRequest={rejectRequest}
             onUpdateUserPermissions={updateUserPermissions}
+            onKickUser={kickUser}
           />
         )}
 

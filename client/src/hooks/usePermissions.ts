@@ -6,6 +6,7 @@ import {
   type UserRole,
   type PermissionRequest,
   type RoomMeta,
+  type KickedUserInfo,
   DEFAULT_CREATOR_PERMISSIONS,
   DEFAULT_JOINER_PERMISSIONS,
   ROLE_PRESETS,
@@ -31,6 +32,8 @@ export function usePermissions({
   );
   const [requests, setRequests] = useState<PermissionRequest[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [isKicked, setIsKicked] = useState<boolean>(false);
+  const [kickedInfo, setKickedInfo] = useState<KickedUserInfo | null>(null);
 
   // ─── 1. Synchronize Room Meta & Initial Creator ──────────────────────────────
   useEffect(() => {
@@ -123,6 +126,28 @@ export function usePermissions({
     requestsArray.observe(syncRequests);
     return () => requestsArray.unobserve(syncRequests);
   }, [doc, isSynced]);
+
+  // ─── 3b. Synchronize Kicked Users (Check if current user was kicked) ─────────
+  useEffect(() => {
+    if (!doc || !isSynced) return;
+
+    const kickedMap = doc.getMap<KickedUserInfo>('kicked-users');
+
+    const syncKicked = () => {
+      const myKickInfo = kickedMap.get(currentUser.id);
+      if (myKickInfo) {
+        setIsKicked(true);
+        setKickedInfo(myKickInfo);
+      } else {
+        setIsKicked(false);
+        setKickedInfo(null);
+      }
+    };
+
+    syncKicked();
+    kickedMap.observe(syncKicked);
+    return () => kickedMap.unobserve(syncKicked);
+  }, [doc, isSynced, currentUser.id]);
 
   // ─── 4. Current User Permissions & Role ───────────────────────────────────────
   const isCreator = useMemo(() => {
@@ -387,6 +412,70 @@ export function usePermissions({
     [doc, canManagePermissions, updateUserPermissions]
   );
 
+  /** Kick a non-admin user from the room */
+  const kickUser = useCallback(
+    (targetUserId: string, targetUserName: string, reason?: string) => {
+      if (!doc || !canManagePermissions) return;
+
+      // Cannot kick self
+      if (targetUserId === currentUser.id) return;
+
+      // Cannot kick other admins
+      const targetPerms = allUserPermissions.get(targetUserId);
+      if (targetPerms?.managePermissions) {
+        setStatusMessage('Cannot kick an administrator.');
+        setTimeout(() => setStatusMessage(null), 3000);
+        return;
+      }
+
+      const kickedMap = doc.getMap<KickedUserInfo>('kicked-users');
+      const permsMap = doc.getMap<UserPermissions>('user-permissions');
+      const requestsArray = doc.getArray<PermissionRequest>('permission-requests');
+
+      doc.transact(() => {
+        // 1. Record kicked status in Y.Map
+        const kickRecord: KickedUserInfo = {
+          userId: targetUserId,
+          userName: targetUserName,
+          kickedBy: currentUser.name,
+          kickedAt: Date.now(),
+          reason: reason?.trim() || undefined,
+        };
+        kickedMap.set(targetUserId, kickRecord);
+
+        // 2. Remove / revoke permissions
+        permsMap.delete(targetUserId);
+
+        // 3. Remove any pending requests for this user
+        const reqList = requestsArray.toArray();
+        for (let i = reqList.length - 1; i >= 0; i--) {
+          if (reqList[i].userId === targetUserId) {
+            requestsArray.delete(i, 1);
+          }
+        }
+
+        // 4. Post system notification to chat
+        const chatArray = doc.getArray('chat-messages');
+        const reasonSnippet = reason?.trim() ? ` (Reason: "${reason.trim()}")` : '';
+        chatArray.push([
+          {
+            id: `sys_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            senderId: 0,
+            senderName: 'System',
+            senderColor: '#ef4444',
+            text: `🚫 ${currentUser.name} removed ${targetUserName} from the room${reasonSnippet}.`,
+            timestamp: Date.now(),
+            fileRef: null,
+          },
+        ]);
+      });
+
+      setStatusMessage(`${targetUserName} was removed from the room.`);
+      setTimeout(() => setStatusMessage(null), 4000);
+    },
+    [doc, canManagePermissions, currentUser.id, currentUser.name, allUserPermissions]
+  );
+
   return {
     roomMeta,
     permissions,
@@ -401,6 +490,8 @@ export function usePermissions({
     allUserPermissions,
     pendingRequests,
     userPendingRequest,
+    isKicked,
+    kickedInfo,
     statusMessage,
     clearStatusMessage: () => setStatusMessage(null),
     requestPermissions,
@@ -409,5 +500,6 @@ export function usePermissions({
     rejectRequest,
     updateUserPermissions,
     setUserRole,
+    kickUser,
   };
 }

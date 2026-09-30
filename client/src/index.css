@@ -96,26 +96,27 @@ html, body, #root {
 
 /* ─── 4. Cross-Component Shared Patterns & Utilities ─────────────────────── */
 
-/* Universal Scrollbar */
-.custom-scrollbar::-webkit-scrollbar,
-.fe-file-list::-webkit-scrollbar,
-.chat-messages-container::-webkit-scrollbar,
-.zip-files-scroll-list::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Universal Scrollbar (All Webkit & Firefox elements) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb,
-.fe-file-list::-webkit-scrollbar-thumb,
-.chat-messages-container::-webkit-scrollbar-thumb,
-.zip-files-scroll-list::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: var(--radius-sm);
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover,
-.fe-file-list::-webkit-scrollbar-thumb:hover,
-.chat-messages-container::-webkit-scrollbar-thumb:hover,
-.zip-files-scroll-list::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Icon Buttons Base */
@@ -2001,7 +2002,8 @@ html, body, #root {
   justify-content: flex-end;
   gap: 10px;
 }
-.btn-modal-secondary {
+.btn-modal-secondary,
+.btn-secondary {
   padding: 7px 14px;
   border-radius: var(--radius-md);
   background: transparent;
@@ -2011,7 +2013,13 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-normal);
 }
-.btn-modal-primary {
+.btn-modal-secondary:hover,
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+.btn-modal-primary,
+.btn-primary {
   padding: 7px 16px;
   border-radius: var(--radius-md);
   background: var(--accent-primary);
@@ -2019,13 +2027,22 @@ html, body, #root {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   transition: var(--transition-normal);
 }
-.btn-modal-primary:hover {
+.btn-modal-primary:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+.btn-modal-primary:disabled,
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--bg-hover);
+  color: var(--text-dim);
 }
 
 /* ==========================================================================
@@ -3690,6 +3707,133 @@ html, body, #root {
   text-decoration: underline;
 }
 .btn-link-cancel:hover { color: #ef4444; }
+
+/* ── Kick & Member Management Feature Styles ────────────────── */
+.btn-member-kick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: var(--transition-fast);
+  opacity: 0;
+}
+.collaborator-item:hover .btn-member-kick {
+  opacity: 0.75;
+}
+.btn-member-kick:hover {
+  opacity: 1 !important;
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.modal-container.kick-confirm-modal,
+.modal-container.kicked-modal-container {
+  width: 100%;
+  max-width: 440px;
+  background-color: var(--bg-dark);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-icon-badge-danger {
+  background: var(--color-error-bg) !important;
+  color: var(--color-error-text) !important;
+}
+
+.modal-notice-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.modal-notice-danger {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+.btn-modal-danger {
+  padding: 7px 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-error);
+  color: #0a0a0a;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-normal);
+}
+.btn-modal-danger:hover {
+  background: var(--color-error-dim);
+}
+
+.kicked-meta-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-darker);
+  border-radius: var(--radius-md);
+}
+.kicked-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+}
+.kicked-meta-label {
+  color: var(--text-dim);
+}
+.kicked-meta-val {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.perm-kick-section {
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.perm-kick-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--color-error-bg);
+  border-radius: var(--radius-md);
+}
+.perm-kick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.perm-kick-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-error-text);
+}
+.perm-kick-desc {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+
+
 
 
 

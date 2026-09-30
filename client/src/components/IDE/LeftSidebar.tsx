@@ -34,6 +34,7 @@ interface LeftSidebarProps {
   onApproveRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
   onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
+  onKickUser: (targetUserId: string, targetUserName: string, reason?: string) => void;
 }
 
 export function LeftSidebar({
@@ -57,6 +58,7 @@ export function LeftSidebar({
   onApproveRequest,
   onRejectRequest,
   onUpdateUserPermissions,
+  onKickUser,
 }: LeftSidebarProps) {
   return (
     <div className="sidebar-container left-sidebar">
@@ -114,6 +116,7 @@ export function LeftSidebar({
             onApproveRequest={onApproveRequest}
             onRejectRequest={onRejectRequest}
             onUpdateUserPermissions={onUpdateUserPermissions}
+            onKickUser={onKickUser}
           />
         )}
       </div>
