@@ -12,6 +12,7 @@ import {
   Check,
   Sparkles,
   CheckCircle2,
+  UserX,
 } from 'lucide-react';
 import type { Collaborator } from '../../utils/collaborators';
 import type {
@@ -24,12 +25,14 @@ import {
   getRoleFromPermissions,
 } from '../../types/permissions';
 import { RoleBadge } from './PermissionBadges';
+import { KickConfirmModal } from './KickConfirmModal';
 
 interface ManagePermissionsModalProps {
   users: Collaborator[];
   allUserPermissions: Map<string, UserPermissions>;
   currentUserId: string;
   onUpdatePermissions: (targetUserId: string, targetUserName: string, permissions: UserPermissions) => void;
+  onKickUser?: (targetUserId: string, targetUserName: string, reason?: string) => void;
   onClose: () => void;
   initialSelectedUserId?: string;
 }
@@ -39,6 +42,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
   allUserPermissions,
   currentUserId,
   onUpdatePermissions,
+  onKickUser,
   onClose,
   initialSelectedUserId,
 }) => {
@@ -59,6 +63,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
   const [editedPerms, setEditedPerms] = useState<UserPermissions>(currentPermsForUser);
   const [hasChanges, setHasChanges] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [isKickConfirmOpen, setIsKickConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (initialSelectedUserId) {
@@ -267,6 +272,34 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                     }
                   )}
                 </div>
+
+                {/* Danger Zone: Kick Member (Only visible for non-admin collaborators) */}
+                {selectedCollaborator.id !== currentUserId &&
+                  !allUserPermissions.get(selectedCollaborator.id)?.managePermissions &&
+                  !editedPerms.managePermissions &&
+                  onKickUser && (
+                    <div className="perm-danger-zone">
+                      <div className="perm-danger-header">
+                        <span className="perm-danger-title">Danger Zone</span>
+                      </div>
+                      <div className="perm-danger-content">
+                        <div className="perm-danger-info">
+                          <span className="perm-danger-label">Kick Member from Room</span>
+                          <span className="perm-danger-desc">
+                            Disconnect {selectedCollaborator.name} and remove them from this collaborative session.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn-danger-kick-modal"
+                          onClick={() => setIsKickConfirmOpen(true)}
+                        >
+                          <UserX size={14} />
+                          <span>Kick Member</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
               </>
             ) : (
               <div className="perm-no-selection">
@@ -299,6 +332,25 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Kick Confirmation Modal */}
+      {isKickConfirmOpen && selectedCollaborator && onKickUser && (
+        <KickConfirmModal
+          isOpen={isKickConfirmOpen}
+          targetUser={{
+            id: selectedCollaborator.id,
+            name: selectedCollaborator.name,
+            color: selectedCollaborator.color,
+            role: currentRole,
+          }}
+          onConfirm={(targetId, targetName, reason) => {
+            onKickUser(targetId, targetName, reason);
+            setIsKickConfirmOpen(false);
+            onClose();
+          }}
+          onClose={() => setIsKickConfirmOpen(false)}
+        />
+      )}
     </div>
   );
 };

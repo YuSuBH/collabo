@@ -80,6 +80,14 @@ export interface RoomMeta {
   createdAt: number;
 }
 
+export interface KickedUserInfo {
+  userId: string;
+  userName: string;
+  kickedBy: string;
+  kickedAt: number;
+  reason?: string;
+}
+
 export const getRoleFromPermissions = (permissions: UserPermissions): UserRole => {
   if (permissions.managePermissions) {
     return 'admin';

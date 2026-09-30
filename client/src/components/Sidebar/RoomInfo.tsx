@@ -18,6 +18,7 @@ import {
   Download,
   Send,
   X,
+  UserX,
 } from 'lucide-react';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
 import type {
@@ -28,6 +29,7 @@ import type {
 import { getRoleFromPermissions, ROLE_PRESETS } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
 import { ManagePermissionsModal } from '../Permissions/ManagePermissionsModal';
+import { KickConfirmModal } from '../Permissions/KickConfirmModal';
 
 interface RoomInfoProps {
   roomId: string;
@@ -44,6 +46,7 @@ interface RoomInfoProps {
   onApproveRequest: (requestId: string) => void;
   onRejectRequest: (requestId: string) => void;
   onUpdateUserPermissions: (targetUserId: string, targetUserName: string, perms: UserPermissions) => void;
+  onKickUser: (targetUserId: string, targetUserName: string, reason?: string) => void;
 }
 
 export const RoomInfo: React.FC<RoomInfoProps> = ({
@@ -61,6 +64,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
   onApproveRequest,
   onRejectRequest,
   onUpdateUserPermissions,
+  onKickUser,
 }) => {
   const [copiedId, setCopiedId] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -68,6 +72,12 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
   const [isRequesting, setIsRequesting] = useState(false);
   const [requestNote, setRequestNote] = useState('');
   const [targetUserIdToEdit, setTargetUserIdToEdit] = useState<string | undefined>(undefined);
+  const [userToKick, setUserToKick] = useState<{
+    id: string;
+    name: string;
+    color: string;
+    role?: UserRole;
+  } | null>(null);
 
   const handleCopyRoomId = () => {
     navigator.clipboard.writeText(roomId);
@@ -226,6 +236,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           {users.map((user) => {
             const userPerms = allUserPermissions.get(user.id) || ROLE_PRESETS.viewer;
             const userRole = getRoleFromPermissions(userPerms);
+            const canBeKicked = canManagePermissions && !user.isCurrentUser && !userPerms.managePermissions;
 
             return (
               <div
@@ -259,6 +270,26 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                     Online
                   </span>
                 </div>
+
+                {/* Quick Kick Action Button for Admins on Non-Admin Members */}
+                {canBeKicked && (
+                  <button
+                    type="button"
+                    className="btn-member-kick"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setUserToKick({
+                        id: user.id,
+                        name: user.name,
+                        color: user.color,
+                        role: userRole,
+                      });
+                    }}
+                    title={`Kick ${user.name} from room`}
+                  >
+                    <UserX size={13} />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -389,8 +420,22 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           allUserPermissions={allUserPermissions}
           currentUserId={currentUser.id}
           onUpdatePermissions={onUpdateUserPermissions}
+          onKickUser={onKickUser}
           onClose={() => setIsManageModalOpen(false)}
           initialSelectedUserId={targetUserIdToEdit}
+        />
+      )}
+
+      {/* Direct Member Kick Confirm Modal */}
+      {userToKick && (
+        <KickConfirmModal
+          isOpen={Boolean(userToKick)}
+          targetUser={userToKick}
+          onConfirm={(targetId, targetName, reason) => {
+            onKickUser(targetId, targetName, reason);
+            setUserToKick(null);
+          }}
+          onClose={() => setUserToKick(null)}
         />
       )}
     </div>

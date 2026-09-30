@@ -74,6 +74,8 @@ export function useIDEState(joinInfo: JoinInfo) {
     allUserPermissions,
     pendingRequests,
     userPendingRequest,
+    isKicked,
+    kickedInfo,
     statusMessage,
     clearStatusMessage,
     requestPermissions,
@@ -82,6 +84,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     rejectRequest,
     updateUserPermissions,
     setUserRole,
+    kickUser,
   } = usePermissions({
     doc,
     currentUser,
@@ -197,6 +200,13 @@ export function useIDEState(joinInfo: JoinInfo) {
     }
   }, [awareness, activeFile]);
 
+  // Clean up awareness state if current user gets kicked
+  useEffect(() => {
+    if (isKicked && awareness) {
+      awareness.setLocalState(null);
+    }
+  }, [isKicked, awareness]);
+
   // ─── Handlers ───────────────────────────────────────────────────────────────
 
   const handleFileSelect = useCallback((fileName: string) => {
@@ -271,6 +281,8 @@ export function useIDEState(joinInfo: JoinInfo) {
     allUserPermissions,
     pendingRequests,
     userPendingRequest,
+    isKicked,
+    kickedInfo,
     statusMessage,
     clearStatusMessage,
     requestPermissions,
@@ -279,6 +291,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     rejectRequest,
     updateUserPermissions,
     setUserRole,
+    kickUser,
 
     // Project files
     projectFiles,
