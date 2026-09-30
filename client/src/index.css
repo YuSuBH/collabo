@@ -96,26 +96,27 @@ html, body, #root {
 
 /* ─── 4. Cross-Component Shared Patterns & Utilities ─────────────────────── */
 
-/* Universal Scrollbar */
-.custom-scrollbar::-webkit-scrollbar,
-.fe-file-list::-webkit-scrollbar,
-.chat-messages-container::-webkit-scrollbar,
-.zip-files-scroll-list::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Universal Scrollbar (All Webkit & Firefox elements) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb,
-.fe-file-list::-webkit-scrollbar-thumb,
-.chat-messages-container::-webkit-scrollbar-thumb,
-.zip-files-scroll-list::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: var(--radius-sm);
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover,
-.fe-file-list::-webkit-scrollbar-thumb:hover,
-.chat-messages-container::-webkit-scrollbar-thumb:hover,
-.zip-files-scroll-list::-webkit-scrollbar-thumb:hover {
-  background: var(--text-dim);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* Icon Buttons Base */
@@ -2001,7 +2002,8 @@ html, body, #root {
   justify-content: flex-end;
   gap: 10px;
 }
-.btn-modal-secondary {
+.btn-modal-secondary,
+.btn-secondary {
   padding: 7px 14px;
   border-radius: var(--radius-md);
   background: transparent;
@@ -2011,7 +2013,13 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-normal);
 }
-.btn-modal-primary {
+.btn-modal-secondary:hover,
+.btn-secondary:hover {
+  background: var(--bg-hover);
+}
+
+.btn-modal-primary,
+.btn-primary {
   padding: 7px 16px;
   border-radius: var(--radius-md);
   background: var(--accent-primary);
@@ -2019,13 +2027,22 @@ html, body, #root {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   transition: var(--transition-normal);
 }
-.btn-modal-primary:hover {
+.btn-modal-primary:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+.btn-modal-primary:disabled,
+.btn-primary:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background: var(--bg-hover);
+  color: var(--text-dim);
 }
 
 /* ==========================================================================

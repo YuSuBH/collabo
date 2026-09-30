@@ -316,12 +316,12 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
               <span>Permissions applied successfully!</span>
             </span>
           )}
-          <button type="button" className="btn-secondary" onClick={onClose}>
+          <button type="button" className="btn-modal-secondary" onClick={onClose}>
             Close
           </button>
           <button
             type="button"
-            className="btn-primary"
+            className="btn-modal-primary"
             onClick={handleSave}
             disabled={!hasChanges}
           >
