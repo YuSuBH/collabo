@@ -19,6 +19,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
     "ws": "^8.21.3",
     "y-websocket": "^3.1.0",
     "yjs": "^13.6.32"

@@ -1,6 +1,19 @@
 import { Router, type Request, type Response } from 'express';
+import rateLimit from 'express-rate-limit';
 
 export const executeRouter = Router();
+
+// ─── Per-User Rate Limiter ───────────────────────────────────────────────────
+// Restrict each individual IP/user to 4 code execution requests per minute.
+const executionRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 4, // Max 4 executions per minute per user/IP
+  standardHeaders: 'draft-7', // Draft-7 standard RateLimit headers
+  legacyHeaders: false,
+  message: {
+    error: 'Execution limit exceeded. You can only run code 4 times per minute. Please wait a moment.',
+  },
+});
 
 // ─── Allowed Compilers ───────────────────────────────────────────────────────
 // Guard against arbitrary compiler injection from the client.
@@ -50,6 +63,7 @@ function isEsmCode(text: string): boolean {
 // ─── POST /api/execute ────────────────────────────────────────────────────────
 executeRouter.post(
   '/',
+  executionRateLimiter,
   async (req: Request<{}, {}, ExecuteRequestBody>, res: Response) => {
     const { compiler, code, codes, stdin } = req.body;
 
