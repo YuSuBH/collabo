@@ -47,9 +47,11 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     // Determine an unused color in this room
     let assignedColor = getRandomColor();
     try {
-      const serverUrl = import.meta.env.VITE_WS_URL
-        ? import.meta.env.VITE_WS_URL.replace(/^ws/, 'http')
-        : 'http://localhost:5000';
+      const serverUrl =
+        import.meta.env.VITE_API_URL ||
+        (import.meta.env.VITE_WS_URL
+          ? import.meta.env.VITE_WS_URL.replace(/^ws/, 'http')
+          : 'http://localhost:5000');
       const res = await fetch(`${serverUrl}/api/rooms/${encodeURIComponent(cleanRoom)}/colors`, {
         signal: AbortSignal.timeout(1200),
       });

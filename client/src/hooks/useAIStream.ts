@@ -142,7 +142,8 @@ export function useAIStream({
     abortControllerRef.current = controller;
 
     try {
-      const response = await fetch('/api/ai/stream', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/ai/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
