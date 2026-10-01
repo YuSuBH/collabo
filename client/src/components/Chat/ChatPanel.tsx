@@ -229,7 +229,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 const isSelf = msg.senderId
                   ? msg.senderId === doc?.clientID
                   : msg.senderName === currentUser.name;
-                const senderColor = msg.senderColor || (isSelf ? currentUser.color : '#3b82f6');
+                const senderColor = msg.senderColor || (isSelf ? currentUser.color : undefined);
                 const isAI =
                   msg.senderName === 'CodeSync AI' ||
                   msg.senderName.includes('[Shared from AI]');
@@ -314,7 +314,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   key={msg.id}
                   id={msg.id}
                   senderName={msg.senderName}
-                  senderColor={msg.isSelf ? currentUser.color : '#c084fc'}
+                  senderColor={msg.isSelf ? currentUser.color : undefined}
                   isSelf={msg.isSelf}
                   isAI={msg.isAI}
                   text={msg.text}

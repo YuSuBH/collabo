@@ -267,8 +267,8 @@ html, body, #root {
   color: var(--accent-primary);
 }
 .header-icon-btn.ai-toggle-btn.header-icon-btn-active {
-  color: var(--color-ai);
-  background: rgba(168, 85, 247, 0.1);
+  color: var(--accent-primary);
+  background: var(--bg-surface);
 }
 
 .header-badge-count {
@@ -1153,11 +1153,11 @@ html, body, #root {
   width: 52px;
   height: 52px;
   border-radius: 14px;
-  background: #8b5cf6;
+  background: var(--accent-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
+  color: #0a0a0a;
   flex-shrink: 0;
 }
 .lobby-brand-title {
@@ -1298,7 +1298,7 @@ html, body, #root {
 }
 .chat-resize-handle:hover,
 .chat-resize-handle.active {
-  background-color: rgba(59, 130, 246, 0.15);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 .chat-resize-line {
   width: 2px;
@@ -1340,7 +1340,7 @@ html, body, #root {
   background: var(--bg-surface);
   color: var(--text-main);
 }
-.sparkle-icon { color: var(--color-ai); }
+.sparkle-icon { color: var(--text-main); }
 
 .chat-close-btn {
   width: 26px;
@@ -1384,8 +1384,8 @@ html, body, #root {
   flex-shrink: 0;
 }
 .ai-avatar {
-  background: var(--color-ai-gradient);
-  color: #ffffff;
+  background: var(--accent-primary);
+  color: #0a0a0a;
 }
 
 .chat-bubble-wrapper {
@@ -1413,13 +1413,18 @@ html, body, #root {
   color: var(--text-dim);
 }
 
+.ai-sender-name {
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
 .chat-shared-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   padding: 1px 5px;
-  background: var(--color-ai-bg);
-  color: var(--color-ai-text);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
   border-radius: var(--radius-sm);
   font-size: 9px;
   font-weight: 700;
@@ -1468,7 +1473,7 @@ html, body, #root {
   min-width: 0;
 }
 .ai-context-icon {
-  color: var(--color-ai);
+  color: var(--accent-primary);
   flex-shrink: 0;
 }
 .ai-context-text strong {
@@ -1492,7 +1497,7 @@ html, body, #root {
   color: var(--text-main);
 }
 .ai-context-toggle input {
-  accent-color: var(--color-ai);
+  accent-color: var(--accent-primary);
   cursor: pointer;
 }
 
@@ -1570,16 +1575,17 @@ html, body, #root {
 }
 .ai-markdown-content li { font-size: 12px; }
 .ai-markdown-content strong {
-  color: #f3e8ff;
+  color: var(--text-main);
   font-weight: 600;
 }
 .ai-inline-code {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
   font-family: 'Fira Code', Consolas, Monaco, monospace;
   font-size: 11.5px;
-  color: #e9d5ff;
+  color: var(--accent-primary);
 }
 
 .ai-code-block-container {
@@ -1598,7 +1604,7 @@ html, body, #root {
 .ai-code-lang {
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-ai);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -1669,7 +1675,7 @@ html, body, #root {
   display: inline-block;
   width: 6px;
   height: 13px;
-  background-color: var(--color-ai-text);
+  background-color: var(--accent-primary);
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: cursor-pulse 0.8s infinite;
@@ -1710,9 +1716,12 @@ html, body, #root {
   cursor: not-allowed;
 }
 
-.ai-send-btn { background: var(--color-ai-gradient); }
+.ai-send-btn { 
+  background: var(--accent-primary);
+  color: #0a0a0a;
+}
 .ai-send-btn:hover:not(:disabled) {
-  background: #9333ea;
+  background: var(--accent-hover);
 }
 .ai-stop-btn {
   background: var(--color-error);

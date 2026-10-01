@@ -46,7 +46,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
           className={`chat-avatar ${isAI && !isSharedAI ? 'ai-avatar' : ''}`}
           style={
             !isAI || isSharedAI
-              ? { backgroundColor: senderColor || '#3b82f6', color: avatarTextColor }
+              ? { backgroundColor: senderColor || 'var(--bg-surface)', color: avatarTextColor }
               : undefined
           }
         >
@@ -61,8 +61,16 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
       <div className="chat-bubble-wrapper">
         <div className="chat-sender-info">
           <span
-            className="chat-sender-name"
-            style={{ color: senderColor || (isSelf ? '#60a5fa' : '#a1a1aa') }}
+            className={`chat-sender-name ${isAI && !isSharedAI ? 'ai-sender-name' : ''}`}
+            style={
+              senderColor
+                ? { color: senderColor }
+                : isAI && !isSharedAI
+                ? { color: 'var(--accent-primary)' }
+                : isSelf
+                ? { color: 'var(--accent-primary)' }
+                : { color: 'var(--text-muted)' }
+            }
           >
             {cleanSenderName}
           </span>
