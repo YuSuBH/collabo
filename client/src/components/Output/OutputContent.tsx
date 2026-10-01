@@ -13,7 +13,7 @@ interface OutputContentProps {
   isEofError: boolean;
   showStdin: boolean;
   stdin: string;
-  stdinInputRef: React.RefObject<HTMLTextAreaElement>;
+  stdinInputRef: React.RefObject<HTMLTextAreaElement | null>;
   displayedRun: SharedExecutionRun | null;
   latestPeerRun: SharedExecutionRun | null;
   onRunWithStdin?: (stdin: string) => void;

@@ -8,7 +8,7 @@ interface UseResizableResult {
   height: number;
   isCollapsed: boolean;
   setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
-  panelRef: React.RefObject<HTMLDivElement>;
+  panelRef: React.RefObject<HTMLDivElement | null>;
   handleResizeMouseDown: (e: React.MouseEvent) => void;
 }
 

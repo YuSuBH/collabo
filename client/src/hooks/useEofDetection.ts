@@ -13,7 +13,7 @@ interface UseEofDetectionResult {
   setShowStdin: React.Dispatch<React.SetStateAction<boolean>>;
   stdin: string;
   setStdin: React.Dispatch<React.SetStateAction<string>>;
-  stdinInputRef: React.RefObject<HTMLTextAreaElement>;
+  stdinInputRef: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function useEofDetection({
