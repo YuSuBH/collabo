@@ -231,6 +231,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   : msg.senderName === currentUser.name;
                 const senderColor = msg.senderColor || (isSelf ? currentUser.color : undefined);
                 const isAI =
+                  msg.senderName === 'Collabo AI' ||
                   msg.senderName === 'CodeSync AI' ||
                   msg.senderName.includes('[Shared from AI]');
 
@@ -336,7 +337,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               type="text"
               className="chat-input"
               placeholder={
-                isStreaming ? 'CodeSync AI is generating...' : `Ask AI about ${activeFile}...`
+                isStreaming ? 'Collabo AI is generating...' : `Ask AI about ${activeFile}...`
               }
               value={aiInput}
               onChange={(e) => setAiInput(e.target.value)}

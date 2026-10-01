@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as Y from 'yjs';
 import type { UserPresence } from '../utils/collaborators';
 import {
@@ -38,15 +38,34 @@ export function useAIStream({
   const [aiMessages, setAiMessages] = useState<AIChatMessage[]>([
     {
       id: 'ai-init',
-      senderName: 'CodeSync AI',
+      senderName: 'Collabo AI',
       isSelf: false,
       isAI: true,
-      text: `👋 Hello ${currentUser.name}! I am **CodeSync AI**, your real-time collaborative coding companion.\n\nI can analyze **\`${activeFile}\`**, explain logic, debug syntax issues, write unit tests, and apply code directly into the editor for all collaborators to see.`,
+      text: `👋 Hello ${currentUser.name}! I am **Collabo AI**, your real-time collaborative coding companion.\n\nI can analyze **\`${activeFile}\`**, explain logic, debug syntax issues, write unit tests, and apply code directly into the editor for all collaborators to see.`,
       timestamp: formatTimestamp(),
     },
   ]);
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setAiMessages((prev) => {
+      return prev.map((m) => {
+        if (m.id === 'ai-init') {
+          return {
+            ...m,
+            senderName: 'Collabo AI',
+            text: `👋 Hello ${currentUser.name}! I am **Collabo AI**, your real-time collaborative coding companion.\n\nI can analyze **\`${activeFile}\`**, explain logic, debug syntax issues, write unit tests, and apply code directly into the editor for all collaborators to see.`,
+          };
+        }
+        return {
+          ...m,
+          senderName: m.senderName === 'CodeSync AI' ? 'Collabo AI' : m.senderName,
+          text: (m.text || '').replace(/CodeSync/g, 'Collabo'),
+        };
+      });
+    });
+  }, [currentUser.name, activeFile]);
 
   /** Read the current text of the active file from the shared Yjs doc. */
   const getActiveFileContent = (): string => {
@@ -97,7 +116,7 @@ export function useAIStream({
 
     const initialAiMsg: AIChatMessage = {
       id: aiMessageId,
-      senderName: 'CodeSync AI',
+      senderName: 'Collabo AI',
       isSelf: false,
       isAI: true,
       text: '',
@@ -224,7 +243,7 @@ export function useAIStream({
     setAiMessages([
       {
         id: 'ai-init',
-        senderName: 'CodeSync AI',
+        senderName: 'Collabo AI',
         isSelf: false,
         isAI: true,
         text: `Conversation cleared. Ready for your questions about **\`${activeFile}\`**!`,

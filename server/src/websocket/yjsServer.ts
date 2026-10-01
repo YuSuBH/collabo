@@ -11,7 +11,7 @@ const MESSAGE_AWARENESS = 1;
 const MESSAGE_AUTH = 2;
 const MESSAGE_QUERY_AWARENESS = 3;
 
-const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
+const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative Collabo!
 // Open this same URL in another browser tab to experience real-time sync & remote cursors.
 
 function greetCollaborator(user) {

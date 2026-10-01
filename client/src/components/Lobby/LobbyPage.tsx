@@ -78,7 +78,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             <Code2 size={28} />
           </div>
           <div>
-            <h1 className="lobby-brand-title">CodeSync</h1>
+            <h1 className="lobby-brand-title">Collabo</h1>
             <p className="lobby-brand-sub">Real-time collaborative code editor</p>
           </div>
         </div>

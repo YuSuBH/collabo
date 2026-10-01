@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 const DEFAULT_CHAT_WIDTH = 340;
 const MIN_CHAT_WIDTH = 260;
 const MAX_CHAT_WIDTH = 800;
-const STORAGE_KEY = 'codesync_chat_width';
+const STORAGE_KEY = 'collabo_chat_width';
 
 function saveWidthToStorage(width: number) {
   try {

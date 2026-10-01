@@ -80,7 +80,7 @@ export const exportProjectToZip = async (
   });
 
   const cleanProjectName = sanitizeFileName(projectName).replace(/\.zip$/i, '');
-  const zipFileName = `${cleanProjectName || 'codesync-project'}.zip`;
+  const zipFileName = `${cleanProjectName || 'collabo-project'}.zip`;
 
   // Trigger browser download via file-saver
   saveAs(blob, zipFileName);

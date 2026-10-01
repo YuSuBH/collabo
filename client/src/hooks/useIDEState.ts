@@ -6,7 +6,7 @@ import { usePermissions } from './usePermissions';
 import { type ChatTab, type YChatMessage } from '../components/Chat/ChatPanel';
 import { getLanguageLabel } from '../utils/languageDetection';
 
-const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative CodeSync!
+const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative Collabo!
 // Open this same URL in another browser tab to experience real-time sync & remote cursors.
 
 function greetCollaborator(user) {

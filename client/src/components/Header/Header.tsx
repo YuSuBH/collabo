@@ -108,7 +108,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header-clean">
       {/* Left: Logo, Role Badge & Left Sidebar Toggles */}
       <div className="header-group-left">
-        <div className="brand-logo-only" title="CodeSync Collaborative IDE">
+        <div className="brand-logo-only" title="Collabo Collaborative IDE">
           <Code2 size={20} className="brand-icon" />
         </div>
 

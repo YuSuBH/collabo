@@ -37,7 +37,7 @@ interface AIChatRequestBody {
 function buildPromptWithContext(body: AIChatRequestBody): { systemInstruction: string; userMessage: string } {
   const { prompt, activeFile, selectedCode, allFiles, history } = body;
 
-  const systemInstruction = `You are CodeSync AI, a concise, expert collaborative programming assistant inside a real-time web IDE.
+  const systemInstruction = `You are Collabo AI, a concise, expert collaborative programming assistant inside a real-time web IDE.
 Your primary directive is to provide short, precise, and high-impact answers with zero unnecessary fluff.
 
 Strict Guidelines:
@@ -69,7 +69,7 @@ Strict Guidelines:
   let historyContext = '';
   if (history && history.length > 0) {
     historyContext = '\n--- PREVIOUS CONVERSATION HISTORY ---\n' + 
-      history.slice(-6).map(turn => `${turn.role === 'user' ? 'User' : 'CodeSync AI'}: ${turn.text}`).join('\n\n') + '\n';
+      history.slice(-6).map(turn => `${turn.role === 'user' ? 'User' : 'Collabo AI'}: ${turn.text}`).join('\n\n') + '\n';
   }
 
   const userMessage = `${contextSummary}${historyContext}\n--- USER PROMPT ---\n${prompt}`;

@@ -48,7 +48,7 @@ export function StatusBar({
             size={12}
             style={{ color: status === 'connected' ? 'var(--color-success)' : 'var(--color-warning)' }}
           />
-          <span>CodeSync Relay</span>
+          <span>Collabo Relay</span>
         </div>
         <div className="status-item">
           <span>Room: {roomId}</span>

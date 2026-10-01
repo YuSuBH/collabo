@@ -35,9 +35,17 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 }) => {
   const avatarTextColor = getContrastTextColor(senderColor);
   const isSharedAI = senderName.includes('[Shared from AI]');
-  const cleanSenderName = isSelf
+  let cleanSenderName = isSelf
     ? 'You'
     : senderName.replace(' 🤖 [Shared from AI]', '').replace(' [Shared from AI]', '');
+
+  if (cleanSenderName === 'CodeSync AI') {
+    cleanSenderName = 'Collabo AI';
+  } else if (cleanSenderName.includes('CodeSync')) {
+    cleanSenderName = cleanSenderName.replace(/CodeSync/g, 'Collabo');
+  }
+
+  const displayText = (text || '').replace(/CodeSync/g, 'Collabo');
 
   return (
     <div className={`chat-message ${isSelf ? 'chat-message-self' : ''}`}>
@@ -118,19 +126,19 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                 },
               }}
             >
-              {text || (isStreaming ? 'Thinking...' : '')}
+              {displayText || (isStreaming ? 'Thinking...' : '')}
             </ReactMarkdown>
 
             {isStreaming && <span className="ai-streaming-cursor" />}
           </div>
         </div>
 
-        {onShareToRoom && !error && text.trim() && (
+        {onShareToRoom && !error && displayText.trim() && (
           <div className="ai-message-footer">
             <button
               type="button"
               className="ai-footer-action-btn"
-              onClick={() => onShareToRoom(text)}
+              onClick={() => onShareToRoom(displayText)}
               title="Share this response to the collaborative room chat"
             >
               <Share2 size={11} />
