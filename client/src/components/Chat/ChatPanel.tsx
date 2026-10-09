@@ -17,6 +17,7 @@ import {
   sendYChatMessage,
 } from '../../utils/chatUtils';
 import { ChatMessageItem } from './ChatMessageItem';
+import { Button } from '../common';
 import { useChatResize } from '../../hooks/useChatResize';
 import { useAIStream } from '../../hooks/useAIStream';
 
@@ -176,37 +177,53 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {/* Tab Switcher Header */}
       <div className="chat-panel-header">
         <div className="chat-tabs">
-          <button
-            className={`chat-tab-btn ${activeTab === 'group' ? 'chat-tab-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="chat-tab-btn"
+            active={activeTab === 'group'}
             onClick={() => onTabChange('group')}
             title="Group Room Chat"
+            icon={<MessageSquare size={14} />}
           >
-            <MessageSquare size={14} />
             <span>Group Chat</span>
-          </button>
-          <button
-            className={`chat-tab-btn ${activeTab === 'ai' ? 'chat-tab-active' : ''}`}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="chat-tab-btn"
+            active={activeTab === 'ai'}
             onClick={() => onTabChange('ai')}
             title="AI Coding Assistant"
+            icon={<Sparkles size={14} className="sparkle-icon" />}
           >
-            <Sparkles size={14} className="sparkle-icon" />
             <span>AI Assistant</span>
-          </button>
+          </Button>
         </div>
 
         <div className="chat-header-actions">
           {activeTab === 'ai' && (
-            <button
+            <Button
+              variant="ghost"
+              size="xs"
+              iconOnly
               className="chat-header-btn"
               onClick={clearHistory}
               title="Clear conversation history"
-            >
-              <Trash2 size={13} />
-            </button>
+              aria-label="Clear conversation history"
+              icon={<Trash2 size={13} />}
+            />
           )}
-          <button className="chat-close-btn" onClick={onClose} title="Close panel">
-            <X size={15} />
-          </button>
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
+            className="chat-close-btn"
+            onClick={onClose}
+            title="Close panel"
+            aria-label="Close panel"
+            icon={<X size={15} />}
+          />
         </div>
       </div>
 
@@ -263,14 +280,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               onChange={(e) => setGroupInput(e.target.value)}
               disabled={!doc}
             />
-            <button
+            <Button
               type="submit"
+              variant="primary"
+              size="sm"
+              iconOnly
               className="chat-send-btn"
               disabled={!groupInput.trim() || !doc}
               title="Send message"
-            >
-              <Send size={14} />
-            </button>
+              aria-label="Send message"
+              icon={<Send size={14} />}
+            />
           </form>
         </div>
       )}
@@ -344,23 +364,29 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               disabled={isStreaming}
             />
             {isStreaming ? (
-              <button
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
+                iconOnly
                 className="chat-send-btn ai-stop-btn"
                 onClick={stopStreaming}
                 title="Stop generation"
-              >
-                <Square size={13} fill="currentColor" />
-              </button>
+                aria-label="Stop generation"
+                icon={<Square size={13} fill="currentColor" />}
+              />
             ) : (
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
+                iconOnly
                 className="chat-send-btn ai-send-btn"
                 disabled={!aiInput.trim()}
                 title="Ask AI"
-              >
-                <Sparkles size={14} />
-              </button>
+                aria-label="Ask AI"
+                icon={<Sparkles size={14} />}
+              />
             )}
           </form>
         </div>

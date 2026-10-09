@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from '../common';
 import type { SharedExecutionRun } from '../../types/execution';
 import { formatTime } from '../../utils/outputUtils';
 
@@ -40,10 +41,15 @@ export const PeerRunBanner: React.FC<PeerRunBannerProps> = ({
           stdin: <code>{displayedRun.stdin.replace(/\n/g, ' ')}</code>
         </div>
       )}
-      <button className="output-peer-back-btn" onClick={onBackToMyOutput}>
-        <ArrowLeft size={12} />
-        <span>My Output</span>
-      </button>
+      <Button
+        variant="secondary"
+        size="xs"
+        className="output-peer-back-btn"
+        onClick={onBackToMyOutput}
+        icon={<ArrowLeft size={12} />}
+      >
+        My Output
+      </Button>
     </div>
   </div>
 );

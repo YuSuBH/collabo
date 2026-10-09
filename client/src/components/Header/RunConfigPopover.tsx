@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { FileCode, Play, X } from 'lucide-react';
+import { Button } from '../common';
 import {
   getExecutableLanguage,
   getLanguageLabel,
@@ -47,9 +48,14 @@ export const RunConfigPopover: React.FC<RunConfigPopoverProps> = ({
     <div className="run-config-popover" ref={popoverRef} role="dialog" aria-label="Run configuration">
       <div className="rcp-header">
         <span className="rcp-title">Run Configuration</span>
-        <button className="rcp-close" onClick={onClose} aria-label="Close">
-          <X size={13} />
-        </button>
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
+          onClick={onClose}
+          aria-label="Close"
+          icon={<X size={13} />}
+        />
       </div>
 
       <div className="rcp-section">
@@ -72,15 +78,13 @@ export const RunConfigPopover: React.FC<RunConfigPopoverProps> = ({
               const iconColor = FILE_ICON_CSS_COLORS[getFileIconColor(file)];
 
               return (
-                <button
+                <Button
                   key={file}
+                  variant="ghost"
                   className={`rcp-file-item ${isSelected ? 'rcp-file-selected' : ''}`}
                   onClick={() => onEntryFileChange(file)}
                   title={`Use "${file}" as entry point`}
                 >
-                  <span className="rcp-file-radio">
-                    <span className={`rcp-radio-dot ${isSelected ? 'rcp-radio-dot-on' : ''}`} />
-                  </span>
                   <FileCode size={13} style={{ color: iconColor, flexShrink: 0 }} />
                   <span className="rcp-file-name">{file}</span>
                   <span className="rcp-file-badges">
@@ -91,7 +95,7 @@ export const RunConfigPopover: React.FC<RunConfigPopoverProps> = ({
                       </span>
                     )}
                   </span>
-                </button>
+                </Button>
               );
             })}
 
@@ -100,7 +104,6 @@ export const RunConfigPopover: React.FC<RunConfigPopoverProps> = ({
                 <div className="rcp-separator-label">Not executable</div>
                 {nonExecutableFiles.map((file) => (
                   <div key={file} className="rcp-file-item rcp-file-disabled" title="Not an executable file type">
-                    <span className="rcp-file-radio"><span className="rcp-radio-dot" /></span>
                     <FileCode size={13} style={{ color: FILE_ICON_CSS_COLORS.muted, flexShrink: 0 }} />
                     <span className="rcp-file-name rcp-muted">{file}</span>
                   </div>
@@ -119,14 +122,16 @@ export const RunConfigPopover: React.FC<RunConfigPopoverProps> = ({
       )}
 
       <div className="rcp-footer">
-        <button
-          className="rcp-run-btn"
+        <Button
+          variant="primary"
+          size="sm"
+          fullWidth
+          icon={<Play size={12} fill="currentColor" />}
           onClick={() => { onRun(); onClose(); }}
           disabled={executableFiles.length === 0}
         >
-          <Play size={12} fill="currentColor" />
           Run {entryFile ? `"${entryFile}"` : ''}
-        </button>
+        </Button>
       </div>
     </div>
   );

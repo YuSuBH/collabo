@@ -26,6 +26,7 @@ import {
 } from '../../types/permissions';
 import { RoleBadge } from './PermissionBadges';
 import { KickConfirmModal } from './KickConfirmModal';
+import { Button } from '../common';
 
 interface ManagePermissionsModalProps {
   users: Collaborator[];
@@ -146,9 +147,14 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose} aria-label="Close">
-            <X size={18} />
-          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            onClick={onClose}
+            aria-label="Close"
+            icon={<X size={18} />}
+          />
         </div>
 
         <div className="perm-manage-layout">
@@ -162,9 +168,10 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                 const userRole = getRoleFromPermissions(userPerms);
 
                 return (
-                  <button
+                  <Button
                     key={user.clientId}
                     type="button"
+                    variant="ghost"
                     className={`perm-member-item ${isSelected ? 'perm-member-item-active' : ''}`}
                     onClick={() => handleSelectUser(user.id)}
                   >
@@ -183,7 +190,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                       </div>
                       <RoleBadge role={userRole} size="sm" />
                     </div>
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -214,30 +221,39 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                 {/* Preset Roles Row */}
                 <div className="perm-section-label">Quick Role Preset</div>
                 <div className="perm-role-presets">
-                  <button
+                  <Button
                     type="button"
-                    className={`perm-role-btn ${currentRole === 'admin' ? 'perm-role-btn-active' : ''}`}
+                    variant={currentRole === 'admin' ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="perm-role-btn"
+                    active={currentRole === 'admin'}
                     onClick={() => handlePresetSelect('admin')}
+                    icon={<Shield size={14} />}
                   >
-                    <Shield size={14} />
-                    <span>Admin</span>
-                  </button>
-                  <button
+                    Admin
+                  </Button>
+                  <Button
                     type="button"
-                    className={`perm-role-btn ${currentRole === 'editor' ? 'perm-role-btn-active' : ''}`}
+                    variant={currentRole === 'editor' ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="perm-role-btn"
+                    active={currentRole === 'editor'}
                     onClick={() => handlePresetSelect('editor')}
+                    icon={<Sparkles size={14} />}
                   >
-                    <Sparkles size={14} />
-                    <span>Editor</span>
-                  </button>
-                  <button
+                    Editor
+                  </Button>
+                  <Button
                     type="button"
-                    className={`perm-role-btn ${currentRole === 'viewer' ? 'perm-role-btn-active' : ''}`}
+                    variant={currentRole === 'viewer' ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="perm-role-btn"
+                    active={currentRole === 'viewer'}
                     onClick={() => handlePresetSelect('viewer')}
+                    icon={<Users size={14} />}
                   >
-                    <Users size={14} />
-                    <span>Viewer</span>
-                  </button>
+                    Viewer
+                  </Button>
                 </div>
 
                 {/* Granular Permission Toggles */}
@@ -287,14 +303,15 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
                             Remove {selectedCollaborator.name} from the active room session.
                           </span>
                         </div>
-                        <button
+                        <Button
                           type="button"
-                          className="btn-danger-sm"
+                          variant="danger"
+                          size="xs"
                           onClick={() => setIsKickConfirmOpen(true)}
+                          icon={<UserX size={12} />}
                         >
-                          <UserX size={12} />
-                          <span>Kick Member</span>
-                        </button>
+                          Kick Member
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -316,18 +333,19 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
               <span>Permissions applied successfully!</span>
             </span>
           )}
-          <button type="button" className="btn-modal-secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" size="md" onClick={onClose}>
             Close
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn-modal-primary"
+            variant="primary"
+            size="md"
             onClick={handleSave}
             disabled={!hasChanges}
+            icon={<Check size={14} />}
           >
-            <Check size={14} />
-            <span>Apply Changes</span>
-          </button>
+            Apply Changes
+          </Button>
         </div>
       </div>
 

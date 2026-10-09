@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Button } from '../common';
 import type { SharedExecutionRun } from '../../types/execution';
 
 interface PeerRunToastProps {
@@ -33,19 +34,24 @@ export const PeerRunToast: React.FC<PeerRunToastProps> = ({
         <code>{latestPeerRun.entryFile}</code>
         {exitLabel}
       </span>
-      <button
+      <Button
+        variant="primary"
+        size="xs"
         className="output-toast-view-btn"
         onClick={() => onView(latestPeerRun.id)}
       >
         View Output
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ghost"
+        size="xs"
+        iconOnly
         className="output-toast-dismiss-btn"
         onClick={onDismiss}
         title="Dismiss"
-      >
-        <X size={12} />
-      </button>
+        aria-label="Dismiss"
+        icon={<X size={12} />}
+      />
     </div>
   );
 };

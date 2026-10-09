@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { ExecutionResult, SharedExecutionRun } from '../../types/execution';
 import { PeerRunsDropdown } from './PeerRunsDropdown';
+import { Button } from '../common';
 import { formatDuration } from '../../utils/outputUtils';
 
 interface OutputHeaderProps {
@@ -101,36 +102,52 @@ export const OutputHeader: React.FC<OutputHeaderProps> = ({
         )}
 
         {onRunWithStdin && !isViewingPeerRun && (
-          <button
-            className={`output-action-btn ${showStdin ? 'output-action-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="xs"
+            active={showStdin}
+            className="output-action-btn"
             onClick={onToggleStdin}
             title="Toggle stdin input"
+            icon={<ChevronRight size={13} />}
           >
-            <ChevronRight size={13} />
             <span>stdin</span>
-          </button>
+          </Button>
         )}
 
-        <button
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
           className="output-action-btn"
           onClick={onClear}
           title="Clear output"
+          aria-label="Clear output"
           disabled={isRunning}
-        >
-          <Trash2 size={13} />
-        </button>
+          icon={<Trash2 size={13} />}
+        />
 
-        <button
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
           className="output-action-btn"
           onClick={onToggleCollapse}
           title={isCollapsed ? 'Expand panel' : 'Collapse panel'}
-        >
-          {isCollapsed ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-        </button>
+          aria-label={isCollapsed ? 'Expand panel' : 'Collapse panel'}
+          icon={isCollapsed ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        />
 
-        <button className="output-action-btn" onClick={onClose} title="Close output panel">
-          <X size={13} />
-        </button>
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
+          className="output-action-btn"
+          onClick={onClose}
+          title="Close output panel"
+          aria-label="Close output panel"
+          icon={<X size={13} />}
+        />
       </div>
     </div>
   );

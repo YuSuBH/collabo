@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Lock, Clock, Sparkles, X, Send } from 'lucide-react';
+import { Button } from '../common';
 import type { PermissionRequest, UserPermissions } from '../../types/permissions';
 import { ROLE_PRESETS } from '../../types/permissions';
 
@@ -89,31 +90,32 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
 
       <div className="banner-actions-wrapper">
         {userPendingRequest ? (
-          <button
-            type="button"
-            className="banner-btn banner-btn-cancel"
+          <Button
+            variant="secondary"
+            size="xs"
+            icon={<X size={12} />}
             onClick={() => onCancelRequest()}
             title="Withdraw request"
           >
-            <X size={12} />
-            <span>Cancel</span>
-          </button>
+            Cancel
+          </Button>
         ) : (
           <div className="banner-btn-dropdown-anchor">
-            <button
+            <Button
               ref={buttonRef}
-              type="button"
-              className={`banner-btn banner-btn-request ${isDropdownOpen ? 'banner-btn-active' : ''}`}
+              variant="primary"
+              size="xs"
+              active={isDropdownOpen}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsDropdownOpen((prev) => !prev);
               }}
               title="Request Editor Access"
+              icon={<Sparkles size={12} />}
             >
-              <Sparkles size={12} />
-              <span>Request Edit</span>
-            </button>
+              Request Edit
+            </Button>
 
             {/* Small Dropdown Popover */}
             {isDropdownOpen && (
@@ -125,16 +127,16 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
               >
                 <div className="perm-dropdown-header">
                   <span className="perm-dropdown-title">Request Editor Access</span>
-                  <button
-                    type="button"
-                    className="perm-dropdown-close"
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    iconOnly
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsDropdownOpen(false);
                     }}
-                  >
-                    <X size={12} />
-                  </button>
+                    icon={<X size={12} />}
+                  />
                 </div>
 
                 <form onSubmit={handleSend} className="perm-dropdown-body">
@@ -149,20 +151,24 @@ export const PermissionBanner: React.FC<PermissionBannerProps> = ({
                   />
 
                   <div className="perm-dropdown-actions">
-                    <button
-                      type="button"
-                      className="btn-dropdown-cancel"
+                    <Button
+                      variant="secondary"
+                      size="xs"
                       onClick={(e) => {
                         e.stopPropagation();
                         setIsDropdownOpen(false);
                       }}
                     >
                       Cancel
-                    </button>
-                    <button type="submit" className="btn-dropdown-send">
-                      <Send size={11} />
-                      <span>Send Request</span>
-                    </button>
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="xs"
+                      icon={<Send size={11} />}
+                    >
+                      Send Request
+                    </Button>
                   </div>
                 </form>
               </div>

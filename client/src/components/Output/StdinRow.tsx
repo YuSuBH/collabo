@@ -1,5 +1,6 @@
 import React from 'react';
 import { Send } from 'lucide-react';
+import { Button } from '../common';
 
 interface StdinRowProps {
   stdin: string;
@@ -36,14 +37,17 @@ export const StdinRow: React.FC<StdinRowProps> = ({
           }
         }}
       />
-      <button
+      <Button
+        variant="primary"
+        size="xs"
+        iconOnly
         className="output-stdin-run"
         onClick={onRun}
         disabled={isRunning}
         title="Run with this stdin (Ctrl+Enter)"
-      >
-        <Send size={12} />
-      </button>
+        aria-label="Run with stdin"
+        icon={<Send size={12} />}
+      />
     </div>
   );
 };

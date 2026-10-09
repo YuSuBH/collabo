@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, Check, ArrowRightCircle } from 'lucide-react';
+import { Button } from '../common';
 
 export interface CodeBlockProps {
   language?: string;
@@ -36,24 +37,28 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
       <div className="ai-code-block-header">
         <span className="ai-code-lang">{language || 'code'}</span>
         <div className="ai-code-actions">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="xs"
             className="ai-code-btn"
             onClick={handleCopy}
             title="Copy code snippet"
+            icon={copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
           >
-            {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
+            {copied ? 'Copied' : 'Copy'}
+          </Button>
+          <Button
             type="button"
-            className={`ai-code-btn ai-code-apply-btn ${applied ? 'ai-code-applied' : ''}`}
+            variant={applied ? 'success' : 'secondary'}
+            size="xs"
+            className="ai-code-btn"
             onClick={handleApply}
             title={`Apply snippet directly to ${activeFile}`}
+            icon={applied ? <Check size={12} /> : <ArrowRightCircle size={12} />}
           >
-            {applied ? <Check size={12} className="text-success" /> : <ArrowRightCircle size={12} />}
-            <span>{applied ? `Applied to ${activeFile}` : `Apply to ${activeFile}`}</span>
-          </button>
+            {applied ? `Applied to ${activeFile}` : `Apply to ${activeFile}`}
+          </Button>
         </div>
       </div>
       <pre className="ai-code-pre">

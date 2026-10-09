@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Users, History, ChevronDown, ArrowLeft } from 'lucide-react';
+import { Button } from '../common';
 import type { SharedExecutionRun } from '../../types/execution';
 
 interface PeerRunsDropdownProps {
@@ -42,20 +43,21 @@ export const PeerRunsDropdown: React.FC<PeerRunsDropdownProps> = ({
 
   return (
     <div className="output-runs-dropdown-container" ref={dropdownRef}>
-      <button
-        className={`output-action-btn output-runs-dropdown-btn ${
-          isViewingPeerRun ? 'output-action-btn-active' : ''
-        }`}
+      <Button
+        variant="ghost"
+        size="xs"
+        active={isViewingPeerRun}
+        className="output-action-btn output-runs-dropdown-btn"
         onClick={() => setShowDropdown((v) => !v)}
         title="View executions by collaborators"
+        icon={<Users size={12} />}
+        iconRight={<ChevronDown size={11} />}
       >
-        <Users size={12} />
         <span>{isViewingPeerRun ? displayedRun!.executorName : 'Peer Outputs'}</span>
         {peerRuns.length > 0 && (
           <span className="output-runs-count-badge">{peerRuns.length}</span>
         )}
-        <ChevronDown size={11} />
-      </button>
+      </Button>
 
       {showDropdown && (
         <div className="output-runs-dropdown-menu">

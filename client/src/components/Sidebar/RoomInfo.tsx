@@ -30,6 +30,7 @@ import { getRoleFromPermissions, ROLE_PRESETS } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
 import { ManagePermissionsModal } from '../Permissions/ManagePermissionsModal';
 import { KickConfirmModal } from '../Permissions/KickConfirmModal';
+import { Button } from '../common';
 
 interface RoomInfoProps {
   roomId: string;
@@ -105,16 +106,19 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
       <div className="fe-header">
         <span className="fe-title">ROOM INFO</span>
         {canManagePermissions && (
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
             className="fe-btn-icon"
             onClick={() => {
               setTargetUserIdToEdit(undefined);
               setIsManageModalOpen(true);
             }}
             title="Manage Permissions & Roles"
-          >
-            <SlidersHorizontal size={13} />
-          </button>
+            aria-label="Manage Permissions & Roles"
+            icon={<SlidersHorizontal size={13} />}
+          />
         )}
       </div>
 
@@ -130,23 +134,27 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           </div>
 
           <div className="room-card-actions">
-            <button
+            <Button
+              variant={copiedId ? 'success' : 'secondary'}
+              size="sm"
+              className="btn-room-action"
               onClick={handleCopyRoomId}
-              className={`btn-room-action ${copiedId ? 'btn-room-action-success' : ''}`}
               title="Copy Room ID"
+              icon={copiedId ? <Check size={13} /> : <Copy size={13} />}
             >
-              {copiedId ? <Check size={13} /> : <Copy size={13} />}
-              <span>{copiedId ? 'Copied ID' : 'Copy ID'}</span>
-            </button>
+              {copiedId ? 'Copied ID' : 'Copy ID'}
+            </Button>
 
-            <button
+            <Button
+              variant={copiedLink ? 'success' : 'secondary'}
+              size="sm"
+              className="btn-room-action"
               onClick={handleCopyInviteLink}
-              className={`btn-room-action ${copiedLink ? 'btn-room-action-success' : ''}`}
               title="Copy Invite Link"
+              icon={copiedLink ? <Check size={13} /> : <Share2 size={13} />}
             >
-              {copiedLink ? <Check size={13} /> : <Share2 size={13} />}
-              <span>{copiedLink ? 'Copied Link' : 'Share Link'}</span>
-            </button>
+              {copiedLink ? 'Copied Link' : 'Share Link'}
+            </Button>
           </div>
         </div>
 
@@ -196,22 +204,24 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                   </div>
 
                   <div className="perm-request-actions">
-                    <button
-                      className="btn-approve-request"
+                    <Button
+                      variant="success"
+                      size="xs"
                       onClick={() => onApproveRequest(req.id)}
                       title="Approve permissions"
+                      icon={<CheckCircle2 size={13} />}
                     >
-                      <CheckCircle2 size={13} />
-                      <span>Approve</span>
-                    </button>
-                    <button
-                      className="btn-reject-request"
+                      Approve
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="xs"
                       onClick={() => onRejectRequest(req.id)}
                       title="Decline request"
+                      icon={<XCircle size={13} />}
                     >
-                      <XCircle size={13} />
-                      <span>Decline</span>
-                    </button>
+                      Decline
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -223,12 +233,14 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
         <div className="sidebar-section-header">
           <span className="sidebar-section-title">MEMBERS ({users.length})</span>
           {canManagePermissions && (
-            <button
+            <Button
+              variant="ghost"
+              size="xs"
               className="sidebar-link-btn"
               onClick={() => setIsManageModalOpen(true)}
             >
               Manage
-            </button>
+            </Button>
           )}
         </div>
 
@@ -273,8 +285,11 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
 
                 {/* Quick Kick Action Button for Admins on Non-Admin Members */}
                 {canBeKicked && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="xs"
+                    iconOnly
                     className="btn-member-kick"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -286,9 +301,9 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                       });
                     }}
                     title={`Kick ${user.name} from room`}
-                  >
-                    <UserX size={13} />
-                  </button>
+                    aria-label={`Kick ${user.name}`}
+                    icon={<UserX size={13} />}
+                  />
                 )}
               </div>
             );
@@ -353,14 +368,16 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                 <div className="perm-pending-box">
                   <Clock size={12} className="text-amber-400" />
                   <span>Request Pending...</span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="xs"
                     className="btn-link-cancel"
                     onClick={() => onCancelRequest()}
                     title="Cancel request"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               ) : isRequesting ? (
                 <div className="perm-sidebar-inline-form">
@@ -374,39 +391,43 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
                     autoFocus
                   />
                   <div className="perm-sidebar-actions">
-                    <button
+                    <Button
                       type="button"
-                      className="btn-sidebar-cancel"
+                      variant="secondary"
+                      size="xs"
                       onClick={() => {
                         setIsRequesting(false);
                         setRequestNote('');
                       }}
+                      icon={<X size={11} />}
                     >
-                      <X size={11} />
-                      <span>Cancel</span>
-                    </button>
-                    <button
+                      Cancel
+                    </Button>
+                    <Button
                       type="button"
-                      className="btn-sidebar-send"
+                      variant="primary"
+                      size="xs"
                       onClick={() => {
                         onRequestPermissions(ROLE_PRESETS.editor, requestNote.trim() || undefined);
                         setIsRequesting(false);
                         setRequestNote('');
                       }}
+                      icon={<Send size={11} />}
                     >
-                      <Send size={11} />
-                      <span>Send Request</span>
-                    </button>
+                      Send Request
+                    </Button>
                   </div>
                 </div>
               ) : (
-                <button
-                  className="btn-request-perms-sidebar"
+                <Button
+                  variant="primary"
+                  size="sm"
+                  fullWidth
                   onClick={() => setIsRequesting(true)}
+                  icon={<Sparkles size={13} />}
                 >
-                  <Sparkles size={13} />
-                  <span>Request Edit Access</span>
-                </button>
+                  Request Edit Access
+                </Button>
               )}
             </div>
           )}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { LogOut, ShieldAlert } from 'lucide-react';
+import { Button } from '../common';
 import type { KickedUserInfo } from '../../types/permissions';
 
 interface KickedNotificationModalProps {
@@ -66,15 +67,16 @@ export const KickedNotificationModal: React.FC<KickedNotificationModalProps> = (
 
         {/* Footer */}
         <div className="modal-footer">
-          <button
+          <Button
             type="button"
-            className="btn-modal-primary"
+            variant="primary"
+            size="md"
+            fullWidth
             onClick={onLeave}
-            style={{ width: '100%', justifyContent: 'center' }}
+            icon={<LogOut size={14} />}
           >
-            <LogOut size={14} />
-            <span>Return to Lobby</span>
-          </button>
+            Return to Lobby
+          </Button>
         </div>
       </div>
     </div>

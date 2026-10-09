@@ -17,6 +17,7 @@ import type { ConnectionStatus } from '../../hooks/useYjs';
 import type { Collaborator } from '../../utils/collaborators';
 import type { UserRole } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
+import { Button } from '../common';
 import { RunConfigPopover } from './RunConfigPopover';
 import { ExecutionInfoModal } from './ExecutionInfoModal';
 
@@ -119,22 +120,27 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="header-divider" />
 
         <div className="header-nav-buttons">
-          <button
-            className={`header-icon-btn ${isLeftSidebarOpen && leftSidebarTab === 'files' ? 'header-icon-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={isLeftSidebarOpen && leftSidebarTab === 'files'}
             onClick={() => onToggleLeftSidebar('files')}
             title="File Explorer"
             aria-label="File Explorer"
-          >
-            <FolderTree size={17} />
-          </button>
+            icon={<FolderTree size={16} />}
+          />
 
-          <button
-            className={`header-icon-btn ${isLeftSidebarOpen && leftSidebarTab === 'room' ? 'header-icon-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={isLeftSidebarOpen && leftSidebarTab === 'room'}
             onClick={() => onToggleLeftSidebar('room')}
             title={`Room & Collaborators (${users.length} active)${pendingRequestsCount > 0 ? ` — ${pendingRequestsCount} pending request(s)` : ''}`}
             aria-label="Room & Collaborators"
+            icon={<Users size={16} />}
           >
-            <Users size={17} />
             {users.length > 0 && (
               <span className="header-badge-count">{users.length}</span>
             )}
@@ -143,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {pendingRequestsCount}
               </span>
             )}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -151,8 +157,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="header-group-center">
         <div className="header-run-group">
           {/* Main Run button */}
-          <button
-            className={`header-execute-btn ${isRunning ? 'header-execute-btn-running' : ''} ${!canExecute ? 'header-execute-btn-disabled' : ''}`}
+          <Button
+            variant="primary"
+            size="sm"
+            className={`header-execute-btn ${isRunning ? 'header-execute-btn-running' : ''}`}
             onClick={() => {
               if (!canExecute) return;
               onExecute?.();
@@ -160,30 +168,35 @@ export const Header: React.FC<HeaderProps> = ({
             title={!canExecute ? 'Execution permission required' : isRunning ? 'Executing…' : 'Execute Code (Run)'}
             aria-label="Execute Code"
             disabled={isRunning || !canExecute}
+            icon={
+              !canExecute ? (
+                <Lock size={13} />
+              ) : isRunning ? (
+                <Loader2 size={14} className="spin" />
+              ) : (
+                <Play size={14} fill="currentColor" />
+              )
+            }
           >
-            {!canExecute ? (
-              <Lock size={13} />
-            ) : isRunning ? (
-              <Loader2 size={14} className="spin" />
-            ) : (
-              <Play size={14} fill="currentColor" />
-            )}
             <span className="execute-btn-text">
               {!canExecute ? 'No Exec Perm' : isRunning ? 'Running…' : 'Run'}
             </span>
-          </button>
+          </Button>
 
           {/* Chevron — opens Run Config Popover */}
           <div className="header-run-chevron-wrapper">
-            <button
-              className={`header-run-chevron ${isPopoverOpen ? 'header-run-chevron-active' : ''}`}
+            <Button
+              variant="ghost"
+              size="xs"
+              iconOnly
+              className="header-run-chevron"
+              active={isPopoverOpen}
               onClick={() => setIsPopoverOpen((v) => !v)}
               title="Run configuration"
               aria-label="Run configuration"
               disabled={isRunning || !canExecute}
-            >
-              <ChevronDown size={12} />
-            </button>
+              icon={<ChevronDown size={12} />}
+            />
 
             {isPopoverOpen && (
               <RunConfigPopover
@@ -200,14 +213,17 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Info / Guide button (?) with dropdown popover */}
         <div className="header-run-info-wrapper">
-          <button
-            className={`header-run-info-btn ${isInfoModalOpen ? 'header-run-info-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
+            className="header-run-info-btn"
+            active={isInfoModalOpen}
             onClick={() => setIsInfoModalOpen((v) => !v)}
             title="How code execution works (Guide & multi-file setup)"
             aria-label="How code execution works"
-          >
-            <HelpCircle size={15} />
-          </button>
+            icon={<HelpCircle size={15} />}
+          />
 
           {isInfoModalOpen && (
             <ExecutionInfoModal
@@ -220,28 +236,33 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Right: Chat Toggles, Status, Leave */}
       <div className="header-group-right">
         <div className="header-nav-buttons">
-          <button
-            className={`header-icon-btn ${isRightSidebarOpen && rightSidebarTab === 'group' ? 'header-icon-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={isRightSidebarOpen && rightSidebarTab === 'group'}
             onClick={() => onToggleRightSidebar('group')}
             title={`Group Chat${unreadChatCount > 0 ? ` (${unreadChatCount} unread)` : ''}`}
             aria-label="Group Chat"
+            icon={<MessageSquare size={16} />}
           >
-            <MessageSquare size={17} />
             {unreadChatCount > 0 && (
               <span className="header-badge-count chat-badge-count">
                 {unreadChatCount > 99 ? '99+' : unreadChatCount}
               </span>
             )}
-          </button>
+          </Button>
 
-          <button
-            className={`header-icon-btn ai-toggle-btn ${isRightSidebarOpen && rightSidebarTab === 'ai' ? 'header-icon-btn-active' : ''}`}
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={isRightSidebarOpen && rightSidebarTab === 'ai'}
             onClick={() => onToggleRightSidebar('ai')}
             title="AI Assistant"
             aria-label="AI Assistant"
-          >
-            <Sparkles size={17} />
-          </button>
+            icon={<Sparkles size={16} />}
+          />
         </div>
 
         <div className="header-divider" />
@@ -265,14 +286,16 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Leave Room Button */}
         {onLeaveRoom && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            className="header-btn-leave"
             onClick={handleLeave}
-            className="header-icon-btn header-btn-leave"
             title="Leave room"
             aria-label="Leave room"
-          >
-            <LogOut size={16} />
-          </button>
+            icon={<LogOut size={16} />}
+          />
         )}
       </div>
     </header>

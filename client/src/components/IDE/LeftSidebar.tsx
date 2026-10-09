@@ -1,6 +1,7 @@
 import * as Y from 'yjs';
 import type { Awareness } from 'y-protocols/awareness';
 import { FolderTree, Users } from 'lucide-react';
+import { Button } from '../common';
 import { FileExplorer } from '../FileExplorer/FileExplorer';
 import { RoomInfo } from '../Sidebar/RoomInfo';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
@@ -63,25 +64,31 @@ export function LeftSidebar({
   return (
     <div className="sidebar-container left-sidebar">
       <div className="sidebar-tab-switcher">
-        <button
-          className={`sidebar-tab-btn ${leftSidebarTab === 'files' ? 'sidebar-tab-btn-active' : ''}`}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="sidebar-tab-btn"
+          active={leftSidebarTab === 'files'}
           onClick={() => onTabChange('files')}
           title="File Explorer"
+          icon={<FolderTree size={14} />}
         >
-          <FolderTree size={14} />
           <span>Files</span>
-        </button>
-        <button
-          className={`sidebar-tab-btn ${leftSidebarTab === 'room' ? 'sidebar-tab-btn-active' : ''}`}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="sidebar-tab-btn"
+          active={leftSidebarTab === 'room'}
           onClick={() => onTabChange('room')}
           title={`Room & Members${pendingRequests.length > 0 ? ` (${pendingRequests.length} requests)` : ''}`}
+          icon={<Users size={14} />}
         >
-          <Users size={14} />
           <span>Room</span>
           {pendingRequests.length > 0 && (
             <span className="tab-badge-dot" />
           )}
-        </button>
+        </Button>
       </div>
 
       <div className="sidebar-content-view">

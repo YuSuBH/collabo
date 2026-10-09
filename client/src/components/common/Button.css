@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Collabo Unified Button Component Styles
+   ========================================================================== */
+
+.collabo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  font-family: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  outline: none;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.collabo-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 1px;
+}
+
+.collabo-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.collabo-btn-full {
+  width: 100%;
+}
+
+.collabo-btn:disabled,
+.collabo-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── Sizes ─────────────────────────────────────────────────────────────── */
+.collabo-btn-xs {
+  height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
+  border-radius: var(--radius-xs);
+  gap: 4px;
+}
+.collabo-btn-xs.collabo-btn-icon-only {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+
+.collabo-btn-sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  gap: 5px;
+}
+.collabo-btn-sm.collabo-btn-icon-only {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.collabo-btn-md {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+  gap: 6px;
+}
+.collabo-btn-md.collabo-btn-icon-only {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+}
+
+.collabo-btn-lg {
+  height: 42px;
+  padding: 0 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-lg);
+  gap: 8px;
+}
+.collabo-btn-lg.collabo-btn-icon-only {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+}
+
+/* ─── Icon / Text elements ────────────────────────────────────────────────── */
+.collabo-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.collabo-btn-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+.collabo-btn-spinner {
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─── Variant: Primary ───────────────────────────────────────────────────── */
+.collabo-btn-primary {
+  background-color: var(--accent-primary);
+  color: #0a0a0a;
+  font-weight: 600;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.collabo-btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+  color: #000000;
+  box-shadow: 0 0 12px var(--accent-glow), 0 2px 5px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Variant: Secondary ─────────────────────────────────────────────────── */
+.collabo-btn-secondary {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+.collabo-btn-secondary:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-main);
+}
+
+/* ─── Variant: Ghost ─────────────────────────────────────────────────────── */
+.collabo-btn-ghost {
+  background-color: transparent;
+  color: var(--text-muted);
+  border-color: transparent;
+}
+
+.collabo-btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+}
+
+.collabo-btn-ghost.collabo-btn-active {
+  background-color: var(--bg-hover);
+  color: var(--text-main);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ─── Variant: Outline ───────────────────────────────────────────────────── */
+.collabo-btn-outline {
+  background-color: transparent;
+  color: var(--text-main);
+  border-color: var(--border-color);
+}
+
+.collabo-btn-outline:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ─── Variant: Danger ────────────────────────────────────────────────────── */
+.collabo-btn-danger {
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
+  border-color: var(--color-error-border);
+}
+
+.collabo-btn-danger:hover:not(:disabled) {
+  background-color: rgba(229, 152, 155, 0.28);
+  color: #ffccd5;
+  border-color: var(--color-error);
+  box-shadow: 0 0 10px rgba(229, 152, 155, 0.2);
+}
+
+/* ─── Variant: Success ───────────────────────────────────────────────────── */
+.collabo-btn-success {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border-color: var(--color-success-border);
+}
+
+.collabo-btn-success:hover:not(:disabled) {
+  background-color: rgba(132, 165, 157, 0.28);
+  border-color: var(--color-success);
+  box-shadow: 0 0 10px rgba(132, 165, 157, 0.2);
+}
+
+/* ─── Variant: AI ────────────────────────────────────────────────────────── */
+.collabo-btn-ai {
+  background: linear-gradient(135deg, rgba(209, 213, 219, 0.15), rgba(244, 244, 245, 0.08));
+  color: var(--color-ai-text);
+  border-color: var(--color-ai-border);
+}
+
+.collabo-btn-ai:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(209, 213, 219, 0.25), rgba(244, 244, 245, 0.15));
+  border-color: var(--color-ai);
+  box-shadow: 0 0 12px rgba(209, 213, 219, 0.22);
+}

@@ -9,6 +9,7 @@ import { TabBar } from './components/IDE/TabBar';
 import { LeftSidebar } from './components/IDE/LeftSidebar';
 import { StatusBar } from './components/IDE/StatusBar';
 import { KickedNotificationModal } from './components/Permissions/KickedNotificationModal';
+import { Button } from './components/common';
 import { Info, X } from 'lucide-react';
 import './index.css';
 
@@ -97,9 +98,15 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         <div className="global-status-toast">
           <Info size={15} />
           <span>{statusMessage}</span>
-          <button className="toast-close-btn" onClick={clearStatusMessage}>
-            <X size={13} />
-          </button>
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
+            icon={<X size={13} />}
+            onClick={clearStatusMessage}
+            title="Dismiss notification"
+            aria-label="Dismiss notification"
+          />
         </div>
       )}
 

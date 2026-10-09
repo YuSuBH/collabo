@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   FolderInput,
 } from "lucide-react";
+import { Button } from "../common";
 import type { ZipParseResult } from "../../utils/zipUtils";
 import {
   getFileIconColor,
@@ -56,9 +57,15 @@ export const ImportZipModal: React.FC<ImportZipModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onCancel} title="Close">
-            <X size={16} />
-          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            onClick={onCancel}
+            title="Close"
+            aria-label="Close"
+            icon={<X size={16} />}
+          />
         </div>
 
         {/* Info notice if paths were flattened or skipped */}
@@ -173,19 +180,18 @@ export const ImportZipModal: React.FC<ImportZipModalProps> = ({
 
         {/* Modal Footer */}
         <div className="modal-footer">
-          <button className="btn-modal-secondary" onClick={onCancel}>
+          <Button variant="secondary" size="md" onClick={onCancel}>
             Cancel
-          </button>
-          <button
-            className="btn-modal-primary"
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Archive size={15} />}
             onClick={() => onConfirm(importMode)}
           >
-            <Archive size={15} />
-            <span>
-              Import {parseResult.files.length} File
-              {parseResult.files.length !== 1 ? "s" : ""}
-            </span>
-          </button>
+            Import {parseResult.files.length} File
+            {parseResult.files.length !== 1 ? "s" : ""}
+          </Button>
         </div>
       </div>
     </div>

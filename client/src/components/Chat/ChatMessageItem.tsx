@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Bot, Sparkles, Share2 } from 'lucide-react';
 import { CodeBlock } from './CodeBlock';
+import { Button } from '../common';
 import { getContrastTextColor } from '../../utils/chatUtils';
 
 export interface ChatMessageItemProps {
@@ -135,15 +136,17 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
 
         {onShareToRoom && !error && displayText.trim() && (
           <div className="ai-message-footer">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="xs"
               className="ai-footer-action-btn"
               onClick={() => onShareToRoom(displayText)}
               title="Share this response to the collaborative room chat"
+              icon={<Share2 size={11} />}
             >
-              <Share2 size={11} />
-              <span>Share to Room</span>
-            </button>
+              Share to Room
+            </Button>
           </div>
         )}
       </div>

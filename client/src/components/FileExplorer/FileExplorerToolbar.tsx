@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Upload, Download, Lock, Loader2 } from 'lucide-react';
+import { Button } from '../common';
 
 interface FileExplorerToolbarProps {
   canCreate: boolean;
@@ -29,45 +30,59 @@ export const FileExplorerToolbar: React.FC<FileExplorerToolbarProps> = ({
   return (
     <div className="fe-header-actions">
       {/* New File */}
-      <button
-        className={`fe-btn-icon ${!canCreate ? 'fe-btn-icon-disabled' : ''}`}
+      <Button
+        variant="ghost"
+        size="xs"
+        iconOnly
+        className="fe-btn-icon"
         onClick={onNewFile}
         title={canCreate ? 'New File' : 'File creation permission required'}
-      >
-        {canCreate ? <Plus size={14} /> : <Lock size={12} />}
-      </button>
+        aria-label="New File"
+        icon={canCreate ? <Plus size={14} /> : <Lock size={12} />}
+      />
 
       {/* Import Single/Multi Files or ZIP */}
-      <button
-        className={`fe-btn-icon ${!canImport ? 'fe-btn-icon-disabled' : ''}`}
+      <Button
+        variant="ghost"
+        size="xs"
+        iconOnly
+        className="fe-btn-icon"
         onClick={onImport}
         title={canImport ? 'Import File(s) or ZIP Archive' : 'Import permission required'}
+        aria-label="Import Files"
         disabled={isProcessingFiles}
-      >
-        {isProcessingFiles ? (
-          <Loader2 size={13} className="spin" />
-        ) : canImport ? (
-          <Upload size={13} />
-        ) : (
-          <Lock size={12} />
-        )}
-      </button>
+        icon={
+          isProcessingFiles ? (
+            <Loader2 size={13} className="spin" />
+          ) : canImport ? (
+            <Upload size={13} />
+          ) : (
+            <Lock size={12} />
+          )
+        }
+      />
 
       {/* Export ZIP */}
-      <button
-        className={`fe-btn-icon ${!canExport ? 'fe-btn-icon-disabled' : ''}`}
+      <Button
+        variant="ghost"
+        size="xs"
+        iconOnly
+        className="fe-btn-icon"
         onClick={onExport}
         title={canExport ? 'Export Project as ZIP' : 'Export permission required'}
+        aria-label="Export Project"
         disabled={isExporting || !hasFiles}
-      >
-        {isExporting ? (
-          <Loader2 size={13} className="spin" />
-        ) : canExport ? (
-          <Download size={13} />
-        ) : (
-          <Lock size={12} />
-        )}
-      </button>
+        icon={
+          isExporting ? (
+            <Loader2 size={13} className="spin" />
+          ) : canExport ? (
+            <Download size={13} />
+          ) : (
+            <Lock size={12} />
+          )
+        }
+      />
     </div>
   );
 };
+

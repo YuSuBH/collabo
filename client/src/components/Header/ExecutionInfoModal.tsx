@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { Button } from '../common';
 
 interface ExecutionInfoModalProps {
   isOpen?: boolean;
@@ -36,9 +37,14 @@ export const ExecutionInfoModal: React.FC<ExecutionInfoModalProps> = ({ onClose 
       {/* Header */}
       <div className="exec-info-header">
         <h3 className="exec-info-plain-title">How Execution Works</h3>
-        <button className="exec-info-close-btn" onClick={onClose} aria-label="Close">
-          <X size={14} />
-        </button>
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
+          onClick={onClose}
+          aria-label="Close"
+          icon={<X size={14} />}
+        />
       </div>
 
       {/* Body */}

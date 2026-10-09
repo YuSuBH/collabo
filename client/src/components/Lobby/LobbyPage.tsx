@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Code2, Users, Shuffle, ArrowRight, Radio } from 'lucide-react';
+import { Button } from '../common';
 import { CURSOR_COLORS, getAvailableColor } from '../../utils/collaborators';
 
 const getRandomColor = (): string =>
@@ -104,10 +105,16 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <button type="button" className="lobby-btn-generate" onClick={handleGenerateRoom} title="Generate random room ID">
-                <Shuffle size={15} />
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                onClick={handleGenerateRoom}
+                title="Generate random room ID"
+                icon={<Shuffle size={14} />}
+              >
                 Generate
-              </button>
+              </Button>
             </div>
             {roomError && <span className="lobby-error">{roomError}</span>}
             <p className="lobby-hint">Enter an existing room ID to join, or use a new one to create a room.</p>
@@ -131,11 +138,16 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             {nameError && <span className="lobby-error">{nameError}</span>}
           </div>
 
-
-          <button type="submit" className="lobby-btn-join" id="lobby-join-btn">
-            <span>Join Room</span>
-            <ArrowRight size={17} />
-          </button>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            id="lobby-join-btn"
+            fullWidth
+            iconRight={<ArrowRight size={17} />}
+          >
+            Join Room
+          </Button>
         </form>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { FileCode, Check, X } from 'lucide-react';
+import { Button } from '../common';
 
 interface NewFileInputProps {
   fileName: string;
@@ -44,12 +45,26 @@ export const NewFileInput: React.FC<NewFileInputProps> = ({
           placeholder="filename.ext"
           spellCheck={false}
         />
-        <button className="fe-btn-create" onClick={onCreate} title="Create">
-          <Check size={13} />
-        </button>
-        <button className="fe-btn-cancel" onClick={onCancel} title="Cancel">
-          <X size={13} />
-        </button>
+        <Button
+          variant="primary"
+          size="xs"
+          iconOnly
+          className="fe-btn-create"
+          onClick={onCreate}
+          title="Create"
+          aria-label="Create"
+          icon={<Check size={13} />}
+        />
+        <Button
+          variant="ghost"
+          size="xs"
+          iconOnly
+          className="fe-btn-cancel"
+          onClick={onCancel}
+          title="Cancel"
+          aria-label="Cancel"
+          icon={<X size={13} />}
+        />
       </div>
       {createError && <span className="fe-create-error">{createError}</span>}
     </div>

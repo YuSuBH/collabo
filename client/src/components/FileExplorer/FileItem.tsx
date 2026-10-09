@@ -1,5 +1,6 @@
 import React from 'react';
 import { FileCode, Check, X, Trash2 } from 'lucide-react';
+import { Button } from '../common';
 import type { Collaborator } from '../../utils/collaborators';
 
 interface FileItemProps {
@@ -62,30 +63,39 @@ export const FileItem: React.FC<FileItemProps> = ({
       {/* Delete controls */}
       {isDeleting ? (
         <div className="fe-delete-confirm" onClick={(e) => e.stopPropagation()}>
-          <button
+          <Button
+            variant="danger"
+            size="xs"
+            iconOnly
             className="fe-btn-confirm-yes"
             onClick={(e) => { e.stopPropagation(); onDeleteConfirm(); }}
             title="Confirm delete"
-          >
-            <Check size={12} />
-          </button>
-          <button
+            aria-label="Confirm delete"
+            icon={<Check size={12} />}
+          />
+          <Button
+            variant="secondary"
+            size="xs"
+            iconOnly
             className="fe-btn-confirm-no"
             onClick={(e) => { e.stopPropagation(); onDeleteCancel(); }}
             title="Cancel"
-          >
-            <X size={12} />
-          </button>
+            aria-label="Cancel delete"
+            icon={<X size={12} />}
+          />
         </div>
       ) : (
         canDelete && (
-          <button
+          <Button
+            variant="ghost"
+            size="xs"
+            iconOnly
             className="fe-btn-delete"
             onClick={(e) => { e.stopPropagation(); onDeleteStart(); }}
             title="Delete file"
-          >
-            <Trash2 size={12} />
-          </button>
+            aria-label="Delete file"
+            icon={<Trash2 size={12} />}
+          />
         )
       )}
     </div>

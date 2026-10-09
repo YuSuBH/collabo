@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UserX, AlertTriangle, X } from 'lucide-react';
 import { RoleBadge } from './PermissionBadges';
+import { Button } from '../common';
 import type { UserRole } from '../../types/permissions';
 
 interface KickConfirmModalProps {
@@ -71,9 +72,15 @@ export const KickConfirmModal: React.FC<KickConfirmModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="modal-close-btn" onClick={onClose} title="Close">
-            <X size={16} />
-          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            onClick={onClose}
+            title="Close"
+            aria-label="Close"
+            icon={<X size={16} />}
+          />
         </div>
 
         {/* Body */}
@@ -123,20 +130,22 @@ export const KickConfirmModal: React.FC<KickConfirmModalProps> = ({
 
           {/* Footer */}
           <div className="modal-footer" style={{ margin: '0 -20px -18px -20px' }}>
-            <button
+            <Button
               type="button"
-              className="btn-modal-secondary"
+              variant="secondary"
+              size="md"
               onClick={onClose}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="btn-modal-danger"
+              variant="danger"
+              size="md"
+              icon={<UserX size={14} />}
             >
-              <UserX size={14} />
-              <span>Kick Member</span>
-            </button>
+              Kick Member
+            </Button>
           </div>
         </form>
       </div>

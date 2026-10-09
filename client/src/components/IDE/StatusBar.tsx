@@ -1,4 +1,5 @@
 import { Terminal, Radio, Loader2 } from 'lucide-react';
+import { Button } from '../common';
 
 interface CursorPos {
   line: number;
@@ -27,21 +28,26 @@ export function StatusBar({
   return (
     <footer className="status-bar">
       <div className="status-bar-left">
-        <button
+        <Button
           type="button"
-          className={`status-bar-btn ${isOutputPanelOpen ? 'status-bar-btn-active' : ''}`}
+          variant="ghost"
+          size="xs"
+          className="status-bar-btn"
+          active={isOutputPanelOpen}
           onClick={onToggleOutput}
           title={isOutputPanelOpen ? 'Hide Output Panel' : 'Show Output Panel'}
           aria-label="Toggle Output Panel"
+          icon={
+            isRunning ? (
+              <Loader2 size={12} className="spin-icon" />
+            ) : (
+              <Terminal size={12} />
+            )
+          }
         >
-          {isRunning ? (
-            <Loader2 size={12} className="spin-icon" />
-          ) : (
-            <Terminal size={12} />
-          )}
           <span>Output</span>
           {isRunning && <span className="status-bar-running-badge">Running...</span>}
-        </button>
+        </Button>
 
         <div className="status-item">
           <Radio

@@ -122,15 +122,9 @@ html, body, #root {
 /* Icon Buttons Base */
 .header-icon-btn,
 .fe-btn-icon,
-.fe-btn-delete,
-.fe-btn-confirm-yes,
-.fe-btn-confirm-no,
-.fe-btn-create,
-.fe-btn-cancel,
 .chat-close-btn,
 .chat-header-btn,
-.modal-close-btn,
-.fe-toast-close {
+.modal-close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -139,20 +133,6 @@ html, body, #root {
   border-radius: var(--radius-sm);
   transition: var(--transition-normal);
   flex-shrink: 0;
-}
-
-/* Common Ghost / Hover Highlight */
-.header-icon-btn:hover,
-.sidebar-tab-btn:hover,
-.chat-tab-btn:hover,
-.chat-close-btn:hover,
-.chat-header-btn:hover,
-.btn-room-action:hover,
-.fe-btn-icon:hover:not(:disabled),
-.ai-footer-action-btn:hover,
-.btn-modal-secondary:hover {
-  background: var(--bg-hover);
-  color: var(--text-main);
 }
 
 /* Common Card & Surface styling */
@@ -184,18 +164,6 @@ html, body, #root {
   letter-spacing: 1.2px;
   color: var(--text-dim);
   text-transform: uppercase;
-}
-
-/* Subtle Secondary / Cancel Buttons */
-.fe-btn-confirm-no,
-.fe-btn-cancel {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-muted);
-}
-.fe-btn-confirm-no:hover,
-.fe-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-main);
 }
 
 /* Simple Animation Utilities */
@@ -449,19 +417,6 @@ html, body, #root {
 }
 .rcp-file-disabled { cursor: default; opacity: 0.5; }
 
-.rcp-file-radio { display: flex; align-items: center; }
-.rcp-radio-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: transparent;
-  transition: var(--transition-fast);
-  flex-shrink: 0;
-}
-.rcp-radio-dot-on {
-  background: var(--accent-primary);
-  color: #0a0a0a;
-}
 .rcp-file-name {
   flex: 1;
   font-family: monospace;
@@ -806,21 +761,6 @@ html, body, #root {
 }
 .btn-room-action {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 5px 8px;
-  background: var(--bg-dark);
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  font-size: 11px;
-  cursor: pointer;
-  transition: var(--transition-normal);
-}
-.btn-room-action-success {
-  background: var(--color-success-bg);
-  color: var(--color-success);
 }
 
 .sidebar-section-header { margin-top: 4px; }
@@ -1226,44 +1166,8 @@ html, body, #root {
   line-height: 1.5;
 }
 
-.lobby-btn-generate {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-muted);
-  border-radius: 10px;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: var(--transition-normal);
-  flex-shrink: 0;
-}
-.lobby-btn-generate:hover {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--text-main);
-}
-
-.lobby-btn-join {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 14px 24px;
-  border-radius: var(--radius-xl);
-  background: var(--primary-gradient);
-  color: #0a0a0a;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.2px;
-  transition: opacity var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-smooth);
-  margin-top: 4px;
-}
-.lobby-btn-join:active {
-  opacity: 1;
+#lobby-join-btn {
+  margin-top: 6px;
 }
 
 /* ─── 10. Right Chat Panel (Group & AI Assistant) ─────────────────────────── */
@@ -2011,48 +1915,7 @@ html, body, #root {
   justify-content: flex-end;
   gap: 10px;
 }
-.btn-modal-secondary,
-.btn-secondary {
-  padding: 7px 14px;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-main);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--transition-normal);
-}
-.btn-modal-secondary:hover,
-.btn-secondary:hover {
-  background: var(--bg-hover);
-}
 
-.btn-modal-primary,
-.btn-primary {
-  padding: 7px 16px;
-  border-radius: var(--radius-md);
-  background: var(--accent-primary);
-  color: #0a0a0a;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: var(--transition-normal);
-}
-.btn-modal-primary:hover:not(:disabled),
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-.btn-modal-primary:disabled,
-.btn-primary:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  background: var(--bg-hover);
-  color: var(--text-dim);
-}
 
 /* ==========================================================================
    Output Panel (VS Code-style bottom terminal panel)
@@ -2968,27 +2831,6 @@ html, body, #root {
   justify-content: flex-end;
   gap: 6px;
 }
-.btn-dropdown-cancel {
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
-}
-.btn-dropdown-cancel:hover { background: var(--bg-hover); color: var(--text-main); }
-.btn-dropdown-send {
-  background: #6366f1;
-  color: #fff;
-  border-radius: var(--radius-sm);
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-}
 
 /* ── Sidebar Inline Request Form ─────────────────────────────── */
 .perm-sidebar-inline-form {
@@ -3011,32 +2853,6 @@ html, body, #root {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-}
-.btn-sidebar-cancel {
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all var(--transition-fast);
-}
-.btn-sidebar-cancel:hover { background: var(--bg-hover); color: var(--text-main); }
-.btn-sidebar-send {
-  background: #6366f1;
-  color: #fff;
-  border-radius: 4px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: opacity var(--transition-fast);
 }
 
 
