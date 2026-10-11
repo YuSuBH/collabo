@@ -28,10 +28,6 @@
   outline-offset: 1px;
 }
 
-.collabo-btn:active:not(:disabled) {
-  transform: scale(0.97);
-}
-
 .collabo-btn-full {
   width: 100%;
 }

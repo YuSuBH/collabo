@@ -1,26 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- Background Gradient matching Project Theme (--bg-darker #0a0a0a to #18181b) -->
+    <!-- Background Gradient matching Project Theme (#0a0a0a to #18181b) -->
     <linearGradient id="themeBg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#18181b" />
       <stop offset="50%" stop-color="#0f0f11" />
       <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
 
-    <!-- Border Gradient matching Project Theme (--border-color #2d2d2d) -->
+    <!-- Border Gradient matching Project Theme (#2d2d2d) -->
     <linearGradient id="themeBorder" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#52525b" />
       <stop offset="50%" stop-color="#27272a" />
       <stop offset="100%" stop-color="#3f3f46" />
     </linearGradient>
 
-    <!-- Glyph Gradient matching --accent-primary (#f4f4f5 / #ffffff) -->
+    <!-- Glyph Gradient matching primary accent (#f4f4f5 / #ffffff) -->
     <linearGradient id="glyphWhite" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#ffffff" />
       <stop offset="100%" stop-color="#e4e4e7" />
     </linearGradient>
 
-    <!-- Slash Gradient matching --text-muted (#a3a3a3 / #737373) -->
+    <!-- Slash Gradient matching text muted (#a3a3a3 / #737373) -->
     <linearGradient id="glyphMuted" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#e4e4e7" />
       <stop offset="100%" stop-color="#a1a1aa" />
@@ -75,7 +75,7 @@
     stroke-linecap="round"
   />
 
-  <!-- Real-time Connected Sync Indicator Dot in Theme Sage Accent (--color-success #84a59d) -->
+  <!-- Real-time Connected Sync Indicator Dot in Theme Sage Accent (#84a59d) -->
   <circle cx="392" cy="124" r="24" fill="#84a59d" />
   <circle cx="392" cy="124" r="11" fill="#ffffff" />
 </svg>
