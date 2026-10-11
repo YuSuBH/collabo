@@ -69,30 +69,85 @@
   padding: 0;
 }
 
-button, input, textarea, select {
+button,
+input,
+textarea,
+select {
   border: none;
   outline: none;
   font-family: inherit;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   background-color: var(--bg-darker);
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
 }
 
 /* ─── 3. Consolidated Keyframes ──────────────────────────────────────────── */
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-@keyframes cursor-pulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
-@keyframes badge-pop { 0% { opacity: 0; } 100% { opacity: 1; } }
-@keyframes slideInDown { from { opacity: 0; } to { opacity: 1; } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes scaleUp { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes cursor-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+@keyframes badge-pop {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
 /* ─── 4. Cross-Component Shared Patterns & Utilities ─────────────────────── */
 
@@ -167,9 +222,16 @@ html, body, #root {
 }
 
 /* Simple Animation Utilities */
-.spin, .spinner { animation: spin 0.8s linear infinite; }
-.pulse-anim { animation: pulse 1.5s infinite; }
-.text-success { color: var(--color-success); }
+.spin,
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+.pulse-anim {
+  animation: pulse 1.5s infinite;
+}
+.text-success {
+  color: var(--color-success);
+}
 
 /* ─── 5. App Main Layout & Header ────────────────────────────────────────── */
 .ide-layout {
@@ -188,7 +250,7 @@ html, body, #root {
   justify-content: space-between;
   padding: 0 12px;
   user-select: none;
-  z-index: 20;
+  z-index: 100;
 }
 
 .header-group-left,
@@ -279,12 +341,17 @@ html, body, #root {
 .header-execute-btn:hover:not(:disabled) {
   background: #059669;
 }
-.header-execute-btn:disabled { opacity: 0.75; cursor: not-allowed; }
+.header-execute-btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
 .header-execute-btn-running {
   background: #059669 !important;
   animation: btn-pulse 1.5s ease-in-out infinite;
 }
-.execute-btn-text { letter-spacing: 0.3px; }
+.execute-btn-text {
+  letter-spacing: 0.3px;
+}
 
 /* ── Run Button Group (main + chevron) ──────────────────────────── */
 .header-run-group {
@@ -312,8 +379,13 @@ html, body, #root {
 .header-run-chevron:hover:not(:disabled) {
   background: #047857;
 }
-.header-run-chevron-active { background: #047857 !important; }
-.header-run-chevron:disabled { opacity: 0.6; cursor: not-allowed; }
+.header-run-chevron-active {
+  background: #047857 !important;
+}
+.header-run-chevron:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 /* ── Run Config Popover ─────────────────────────────────────────── */
 .run-config-popover {
@@ -328,8 +400,12 @@ html, body, #root {
   overflow: hidden;
 }
 @keyframes popover-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .rcp-header {
   display: flex;
@@ -355,9 +431,14 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-fast);
 }
-.rcp-close:hover { background: var(--bg-hover); color: var(--text-main); }
+.rcp-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
 
-.rcp-section { padding: 10px 12px; }
+.rcp-section {
+  padding: 10px 12px;
+}
 .rcp-label {
   font-size: 10px;
   font-weight: 700;
@@ -415,7 +496,10 @@ html, body, #root {
   background: rgba(59, 130, 246, 0.1) !important;
   color: var(--text-main) !important;
 }
-.rcp-file-disabled { cursor: default; opacity: 0.5; }
+.rcp-file-disabled {
+  cursor: default;
+  opacity: 0.5;
+}
 
 .rcp-file-name {
   flex: 1;
@@ -425,8 +509,15 @@ html, body, #root {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.rcp-muted { color: var(--text-dim); }
-.rcp-file-badges { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.rcp-muted {
+  color: var(--text-dim);
+}
+.rcp-file-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
 .rcp-lang-badge {
   font-size: 9px;
   font-weight: 600;
@@ -478,7 +569,10 @@ html, body, #root {
 .rcp-run-btn:hover:not(:disabled) {
   background: #059669;
 }
-.rcp-run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.rcp-run-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .header-status-indicator {
   display: flex;
@@ -501,7 +595,9 @@ html, body, #root {
   border-radius: 50%;
 }
 
-.header-btn-leave { color: var(--text-dim); }
+.header-btn-leave {
+  color: var(--text-dim);
+}
 .header-btn-leave:hover {
   background: var(--color-error-bg);
   color: var(--color-error-dim);
@@ -527,15 +623,20 @@ html, body, #root {
   background: var(--tab-bg);
   color: var(--text-main);
 }
-.tab-icon { color: var(--accent-primary); }
-.tab-title { font-weight: 500; }
+.tab-icon {
+  color: var(--accent-primary);
+}
+.tab-title {
+  font-weight: 500;
+}
 .tab-sync-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background-color: var(--color-success);
 }
-.tab-actions, .tab-hint {
+.tab-actions,
+.tab-hint {
   display: flex;
   align-items: center;
 }
@@ -600,7 +701,8 @@ html, body, #root {
   color: var(--text-muted);
   user-select: none;
 }
-.status-bar-left, .status-bar-right {
+.status-bar-left,
+.status-bar-right {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -745,7 +847,9 @@ html, body, #root {
   letter-spacing: 0.5px;
   font-weight: 600;
 }
-.room-card-icon { color: var(--accent-primary); }
+.room-card-icon {
+  color: var(--accent-primary);
+}
 .room-card-id {
   font-family: monospace;
   font-size: 13px;
@@ -763,7 +867,9 @@ html, body, #root {
   flex: 1;
 }
 
-.sidebar-section-header { margin-top: 4px; }
+.sidebar-section-header {
+  margin-top: 4px;
+}
 .collaborators-list {
   display: flex;
   flex-direction: column;
@@ -902,16 +1008,26 @@ html, body, #root {
   justify-content: space-between;
   padding: 5px 14px 5px 12px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
   gap: 4px;
 }
-.fe-file-item:hover { background: var(--bg-surface); }
-.fe-file-item:hover .fe-btn-delete { opacity: 1; }
+.fe-file-item:hover {
+  background: var(--bg-surface);
+}
+.fe-file-item:hover .fe-btn-delete {
+  opacity: 1;
+}
 .fe-file-active {
   background: rgba(255, 255, 255, 0.06);
 }
-.fe-file-active:hover { background: rgba(255, 255, 255, 0.1); }
-.fe-file-active .fe-btn-delete { opacity: 1; }
+.fe-file-active:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.fe-file-active .fe-btn-delete {
+  opacity: 1;
+}
 .fe-file-info {
   display: flex;
   align-items: center;
@@ -919,7 +1035,9 @@ html, body, #root {
   min-width: 0;
   flex: 1;
 }
-.fe-file-icon { flex-shrink: 0; }
+.fe-file-icon {
+  flex-shrink: 0;
+}
 .fe-file-name {
   font-size: 13px;
   color: var(--text-main);
@@ -953,7 +1071,10 @@ html, body, #root {
   height: 20px;
   color: var(--text-dim);
   opacity: 0;
-  transition: opacity 0.12s, color 0.12s, background 0.12s;
+  transition:
+    opacity 0.12s,
+    color 0.12s,
+    background 0.12s;
 }
 .fe-btn-delete:hover {
   color: var(--color-error-text);
@@ -1000,8 +1121,10 @@ html, body, #root {
   color: var(--text-main);
   font-size: 12px;
   padding: 4px 8px;
-  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+  font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
+  transition:
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal);
 }
 .fe-btn-create,
 .fe-btn-cancel {
@@ -1149,8 +1272,11 @@ html, body, #root {
   color: var(--text-main);
   font-size: 14px;
   padding: 10px 14px;
-  transition: border-color var(--transition-smooth), background var(--transition-smooth), box-shadow var(--transition-smooth);
-  font-family: 'Courier New', Courier, monospace;
+  transition:
+    border-color var(--transition-smooth),
+    background var(--transition-smooth),
+    box-shadow var(--transition-smooth);
+  font-family: "Courier New", Courier, monospace;
   letter-spacing: 0.5px;
 }
 .lobby-input:focus {
@@ -1183,7 +1309,9 @@ html, body, #root {
   z-index: 10;
   flex-shrink: 0;
 }
-.chat-panel.is-resizing { user-select: none; }
+.chat-panel.is-resizing {
+  user-select: none;
+}
 
 .chat-resize-handle {
   position: absolute;
@@ -1208,7 +1336,9 @@ html, body, #root {
   width: 2px;
   height: 100%;
   background-color: transparent;
-  transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+  transition:
+    background-color var(--transition-normal),
+    box-shadow var(--transition-normal);
 }
 .chat-resize-handle:hover .chat-resize-line,
 .chat-resize-handle.active .chat-resize-line {
@@ -1244,7 +1374,9 @@ html, body, #root {
   background: var(--bg-surface);
   color: var(--text-main);
 }
-.sparkle-icon { color: var(--text-main); }
+.sparkle-icon {
+  color: var(--text-main);
+}
 
 .chat-close-btn {
   width: 26px;
@@ -1273,7 +1405,9 @@ html, body, #root {
   gap: 8px;
   align-items: flex-start;
 }
-.chat-message-self { flex-direction: row-reverse; }
+.chat-message-self {
+  flex-direction: row-reverse;
+}
 
 .chat-avatar {
   width: 26px;
@@ -1299,7 +1433,9 @@ html, body, #root {
   max-width: 90%;
   min-width: 0;
 }
-.chat-message-self .chat-bubble-wrapper { align-items: flex-end; }
+.chat-message-self .chat-bubble-wrapper {
+  align-items: flex-end;
+}
 
 .chat-sender-info {
   display: flex;
@@ -1450,7 +1586,6 @@ html, body, #root {
   max-width: 220px;
 }
 
-
 .ai-markdown-content {
   font-size: 12.5px;
   line-height: 1.5;
@@ -1460,7 +1595,9 @@ html, body, #root {
   gap: 8px;
   word-break: break-word;
 }
-.ai-markdown-content p { margin: 0; }
+.ai-markdown-content p {
+  margin: 0;
+}
 .ai-markdown-content h1,
 .ai-markdown-content h2,
 .ai-markdown-content h3 {
@@ -1477,7 +1614,9 @@ html, body, #root {
   flex-direction: column;
   gap: 3px;
 }
-.ai-markdown-content li { font-size: 12px; }
+.ai-markdown-content li {
+  font-size: 12px;
+}
 .ai-markdown-content strong {
   color: var(--text-main);
   font-weight: 600;
@@ -1487,7 +1626,7 @@ html, body, #root {
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 1px 5px;
   border-radius: var(--radius-sm);
-  font-family: 'Fira Code', Consolas, Monaco, monospace;
+  font-family: "Fira Code", Consolas, Monaco, monospace;
   font-size: 11.5px;
   color: var(--accent-primary);
 }
@@ -1549,12 +1688,14 @@ html, body, #root {
   margin: 0;
   padding: 8px 10px;
   overflow-x: auto;
-  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-family: "Fira Code", "Cascadia Code", Consolas, monospace;
   font-size: 11px;
   line-height: 1.45;
   color: #e4e4e7;
 }
-.ai-code-pre code { font-family: inherit; }
+.ai-code-pre code {
+  font-family: inherit;
+}
 
 .ai-message-footer {
   display: flex;
@@ -1614,13 +1755,15 @@ html, body, #root {
   cursor: pointer;
   transition: var(--transition-normal);
 }
-.chat-send-btn:hover:not(:disabled) { background: var(--accent-hover); }
+.chat-send-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
 .chat-send-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.ai-send-btn { 
+.ai-send-btn {
   background: var(--accent-primary);
   color: #0a0a0a;
 }
@@ -1631,7 +1774,9 @@ html, body, #root {
   background: var(--color-error);
   color: #ffffff;
 }
-.ai-stop-btn:hover { background: #dc2626; }
+.ai-stop-btn:hover {
+  background: #dc2626;
+}
 
 /* ─── 11. File Explorer Toast Notifications ───────────────────────────────── */
 .fe-toast {
@@ -1793,7 +1938,9 @@ html, body, #root {
   align-items: center;
   gap: 8px;
 }
-.notice-icon { flex-shrink: 0; }
+.notice-icon {
+  flex-shrink: 0;
+}
 
 .zip-files-preview-section {
   padding: 14px 20px 0;
@@ -1823,7 +1970,9 @@ html, body, #root {
   font-size: 12px;
   transition: background 0.1s;
 }
-.zip-file-row:hover { background: rgba(255, 255, 255, 0.04); }
+.zip-file-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
 
 .zip-file-left {
   display: flex;
@@ -1832,7 +1981,9 @@ html, body, #root {
   min-width: 0;
   flex: 1;
 }
-.zip-file-icon { flex-shrink: 0; }
+.zip-file-icon {
+  flex-shrink: 0;
+}
 .zip-file-name-container {
   display: flex;
   align-items: baseline;
@@ -1873,7 +2024,9 @@ html, body, #root {
   transition: var(--transition-normal);
   position: relative;
 }
-.zip-mode-card input[type="radio"] { display: none; }
+.zip-mode-card input[type="radio"] {
+  display: none;
+}
 .zip-mode-card:hover {
   background: rgba(255, 255, 255, 0.05);
 }
@@ -1915,7 +2068,6 @@ html, body, #root {
   justify-content: flex-end;
   gap: 10px;
 }
-
 
 /* ==========================================================================
    Output Panel (VS Code-style bottom terminal panel)
@@ -1981,7 +2133,10 @@ html, body, #root {
   gap: 8px;
   min-width: 0;
 }
-.output-header-icon { color: var(--text-dim); flex-shrink: 0; }
+.output-header-icon {
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
 .output-header-title {
   font-size: 11px;
   font-weight: 700;
@@ -2047,7 +2202,10 @@ html, body, #root {
   background: var(--bg-hover);
   color: var(--text-main);
 }
-.output-action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.output-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 .output-action-btn-active {
   background: rgba(59, 130, 246, 0.12) !important;
   color: var(--accent-primary) !important;
@@ -2084,8 +2242,12 @@ html, body, #root {
   animation: dropdownFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes dropdownFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .output-runs-menu-header {
   display: flex;
@@ -2177,8 +2339,12 @@ html, body, #root {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.status-dot-ok { background: #22c55e; }
-.status-dot-err { background: #ef4444; }
+.status-dot-ok {
+  background: #22c55e;
+}
+.status-dot-err {
+  background: #ef4444;
+}
 .output-runs-stdin-tag {
   background: var(--bg-dark);
   padding: 0 4px;
@@ -2204,8 +2370,12 @@ html, body, #root {
   animation: toastSlideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes toastSlideDown {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .output-live-peer-dot {
   width: 8px;
@@ -2398,8 +2568,13 @@ html, body, #root {
   flex-shrink: 0;
   margin-top: 1px;
 }
-.output-stdin-run:hover:not(:disabled) { background: var(--accent-hover); }
-.output-stdin-run:disabled { opacity: 0.5; cursor: not-allowed; }
+.output-stdin-run:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.output-stdin-run:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ── EOF / Stdin hint ────────────────────────────────────────── */
 .output-eof-hint {
@@ -2436,8 +2611,13 @@ html, body, #root {
   padding: 24px;
   color: var(--text-dim);
 }
-.output-loading-icon { color: var(--accent-primary); }
-.output-loading-text { font-size: 13px; color: var(--text-muted); }
+.output-loading-icon {
+  color: var(--accent-primary);
+}
+.output-loading-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
 
 /* ── Empty state ─────────────────────────────────────────────── */
 .output-empty {
@@ -2450,7 +2630,10 @@ html, body, #root {
   padding: 24px;
   color: var(--text-dim);
 }
-.output-empty-icon { color: var(--text-dim); opacity: 0.4; }
+.output-empty-icon {
+  color: var(--text-dim);
+  opacity: 0.4;
+}
 .output-empty-text {
   font-size: 13px;
   color: var(--text-muted);
@@ -2474,15 +2657,19 @@ html, body, #root {
   text-transform: uppercase;
   padding: 5px 10px 3px;
 }
-.output-section-stdout .output-section-label  { color: var(--color-success-text); }
+.output-section-stdout .output-section-label {
+  color: var(--color-success-text);
+}
 .output-section-stderr .output-section-label,
 .output-section-error .output-section-label,
-.output-section-compiler-error .output-section-label { color: var(--color-error); }
+.output-section-compiler-error .output-section-label {
+  color: var(--color-error);
+}
 
 .output-pre {
   margin: 0;
   padding: 6px 14px 10px;
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 12px;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -2490,8 +2677,12 @@ html, body, #root {
   overflow-x: auto;
   tab-size: 2;
 }
-.output-pre-stdout { color: #86efac; }
-.output-pre-error  { color: #fca5a5; }
+.output-pre-stdout {
+  color: #86efac;
+}
+.output-pre-error {
+  color: #fca5a5;
+}
 
 /* ==========================================================================
    Header Run Info Button & Execution Info Modal
@@ -2685,8 +2876,12 @@ html, body, #root {
   animation: toast-slide-down 0.2s ease forwards;
 }
 @keyframes toast-slide-down {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .toast-close-btn {
   background: transparent;
@@ -2697,7 +2892,9 @@ html, body, #root {
   padding: 2px;
   border-radius: 4px;
 }
-.toast-close-btn:hover { color: var(--text-main); }
+.toast-close-btn:hover {
+  color: var(--text-main);
+}
 
 /* ── Read-Only Permission Banner (Above/In Editor) ───────────── */
 .permission-read-only-banner {
@@ -2708,12 +2905,16 @@ html, body, #root {
   padding: 6px 14px;
   background: rgba(30, 41, 59, 0.98);
   flex-shrink: 0;
-  z-index: 50;
+  z-index: 10;
   animation: banner-fade-in 0.2s ease forwards;
 }
 @keyframes banner-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 .banner-left-content {
   display: flex;
@@ -2760,7 +2961,7 @@ html, body, #root {
 .banner-btn-dropdown-anchor {
   position: relative;
   display: inline-block;
-  z-index: 60;
+  z-index: 12;
 }
 .banner-btn-active {
   background: #4338ca !important;
@@ -2774,7 +2975,7 @@ html, body, #root {
   width: 280px;
   background: #27272a;
   border-radius: var(--radius-md);
-  z-index: 9999;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -2810,7 +3011,9 @@ html, body, #root {
   display: flex;
   align-items: center;
 }
-.perm-dropdown-close:hover { color: var(--text-main); }
+.perm-dropdown-close:hover {
+  color: var(--text-main);
+}
 .perm-dropdown-body {
   padding: 10px;
   display: flex;
@@ -2855,7 +3058,6 @@ html, body, #root {
   gap: 6px;
 }
 
-
 /* ── Modal Common Styles ─────────────────────────────────────── */
 .perm-modal-container {
   max-width: 540px;
@@ -2868,8 +3070,12 @@ html, body, #root {
   animation: modal-zoom-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes modal-zoom-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal-header {
@@ -2968,7 +3174,9 @@ html, body, #root {
   font-weight: 600;
   text-decoration: underline;
 }
-.btn-text-danger:hover { color: #ef4444; }
+.btn-text-danger:hover {
+  color: #ef4444;
+}
 
 .perm-presets-row {
   display: grid;
@@ -3302,7 +3510,9 @@ html, body, #root {
   font-weight: 600;
   cursor: pointer;
 }
-.btn-danger-sm:hover { background: #dc2626; }
+.btn-danger-sm:hover {
+  background: #dc2626;
+}
 .btn-secondary-sm {
   padding: 4px 10px;
   background: var(--bg-hover);
@@ -3342,7 +3552,9 @@ html, body, #root {
   cursor: pointer;
   padding: 0 4px;
 }
-.sidebar-link-btn:hover { text-decoration: underline; }
+.sidebar-link-btn:hover {
+  text-decoration: underline;
+}
 
 .collaborator-item-clickable {
   cursor: pointer;
@@ -3531,7 +3743,9 @@ html, body, #root {
   cursor: pointer;
   text-decoration: underline;
 }
-.btn-link-cancel:hover { color: #ef4444; }
+.btn-link-cancel:hover {
+  color: #ef4444;
+}
 
 /* ── Kick & Member Management Feature Styles ────────────────── */
 .btn-member-kick {
@@ -3656,10 +3870,3 @@ html, body, #root {
   color: var(--text-dim);
   line-height: 1.35;
 }
-
-
-
-
-
-
-
