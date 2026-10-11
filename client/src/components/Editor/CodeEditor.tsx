@@ -13,6 +13,8 @@ interface CodeEditorProps {
   doc: Y.Doc | null;
   awareness: Awareness | null;
   activeFile: string;
+  isSynced?: boolean;
+  roomId?: string;
   canEdit?: boolean;
   userPendingRequest?: PermissionRequest | null;
   onRequestPermissions?: (permissions: Partial<UserPermissions>, note?: string) => void;
@@ -24,6 +26,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   doc,
   awareness,
   activeFile,
+  isSynced = false,
+  roomId = 'default',
   canEdit = true,
   userPendingRequest = null,
   onRequestPermissions,
@@ -31,6 +35,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onCursorChange,
 }) => {
   const [editor, setEditor] = useState<any>(null);
+  const [currentYText, setCurrentYText] = useState<Y.Text | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const observerCleanupRef = useRef<(() => void) | null>(null);
 
@@ -43,47 +48,51 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     });
   };
 
-  // Re-bind whenever activeFile, editor, doc, or awareness change
+  // 1. Observe filesMap for activeFile to ensure currentYText is always valid and up-to-date
   useEffect(() => {
-    if (!editor || !doc || !awareness || !activeFile) return;
+    if (!doc || !activeFile) {
+      setCurrentYText(null);
+      return;
+    }
+
+    const filesMap = doc.getMap('files');
+
+    const updateYText = () => {
+      const text = filesMap.get(activeFile) as Y.Text | undefined;
+      setCurrentYText(text || null);
+    };
+
+    updateYText();
+    filesMap.observe(updateYText);
+    return () => {
+      filesMap.unobserve(updateYText);
+    };
+  }, [doc, activeFile]);
+
+  // 2. Re-bind whenever activeFile, editor, doc, awareness, currentYText, or roomId change
+  useEffect(() => {
+    if (!editor || !doc || !awareness || !activeFile || !currentYText) return;
 
     injectCursorStyles();
 
-    // Get the Y.Text for the active file from the files map
-    const filesMap = doc.getMap('files');
-    let yText = filesMap.get(activeFile) as Y.Text | undefined;
-
-    // If the file doesn't exist in the map yet (shouldn't happen, but be safe)
-    if (!yText) {
-      doc.transact(() => {
-        yText = new Y.Text();
-        filesMap.set(activeFile, yText);
-      });
-      yText = filesMap.get(activeFile) as Y.Text;
-    }
-
-    if (!yText) return;
-
     const language = getLanguageFromFileName(activeFile);
-
-    // Get the Monaco instance and create a fresh model for this file
     const monacoApi = (window as any).monaco || monaco;
     if (!monacoApi) return;
 
-    // Create a new model with the correct language
-    const uri = monacoApi.Uri.parse(`file:///${activeFile}`);
+    // Use a unique URI scoped by roomId and activeFile
+    const uri = monacoApi.Uri.parse(`inmemory://room/${roomId}/${activeFile}`);
     let model = monacoApi.editor.getModel(uri);
     if (!model) {
-      model = monacoApi.editor.createModel('', language, uri);
+      model = monacoApi.editor.createModel(currentYText.toString(), language, uri);
     } else {
       monacoApi.editor.setModelLanguage(model, language);
     }
 
     editor.setModel(model);
 
-    // Create the MonacoBinding between Y.Text and the new model with activeFile passed
+    // Create the MonacoBinding between Y.Text and the model
     const binding = new MonacoBinding(
-      yText,
+      currentYText,
       model,
       new Set([editor]),
       awareness,
@@ -91,7 +100,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     );
     bindingRef.current = binding;
 
-    // Start the cursor color observer
+    // Start cursor color observer
     const editorDom = editor.getDomNode();
     let stopObserver: (() => void) | undefined;
     if (editorDom) {
@@ -108,7 +117,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
         awareness.setLocalStateField('selection', null);
       }
     };
-  }, [editor, doc, awareness, activeFile]);
+  }, [editor, doc, awareness, activeFile, currentYText, roomId]);
 
   // Dynamically toggle readOnly mode in Monaco editor instance
   useEffect(() => {
@@ -122,8 +131,8 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
   return (
     <div className="editor-container">
-      {/* Read-Only Status & Request Action Banner */}
-      {!canEdit && (
+      {/* Read-Only Status & Request Action Banner - only show once synced */}
+      {isSynced && !canEdit && (
         <PermissionBanner
           canEdit={canEdit}
           userPendingRequest={userPendingRequest}
@@ -133,6 +142,13 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       )}
 
       <div className="monaco-editor-wrapper">
+        {(!isSynced || !currentYText) && (
+          <div className="editor-loading-overlay">
+            <div className="spinner"></div>
+            <span>{!isSynced ? 'Connecting to room...' : 'Loading file...'}</span>
+          </div>
+        )}
+
         <Editor
           height="100%"
           language={getLanguageFromFileName(activeFile)}

@@ -7,7 +7,7 @@ const getRandomColor = (): string =>
   CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
 
 interface LobbyPageProps {
-  onJoin: (roomId: string, username: string, color: string) => void;
+  onJoin: (roomId: string, username: string, color: string, isCreator?: boolean) => void;
 }
 
 const generateRoomId = (): string => {
@@ -18,17 +18,23 @@ const generateRoomId = (): string => {
 };
 
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
+  const [hasSharedRoom] = useState<boolean>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return Boolean(params.get('room'));
+  });
   const [roomId, setRoomId] = useState<string>(() => {
     // Pre-fill room ID only when arriving via a shared ?room= link
     const params = new URLSearchParams(window.location.search);
     return params.get('room') || '';
   });
+  const [isCreatedLocally, setIsCreatedLocally] = useState<boolean>(!hasSharedRoom);
   const [username, setUsername] = useState('');
   const [roomError, setRoomError] = useState('');
   const [nameError, setNameError] = useState('');
 
   const handleGenerateRoom = () => {
     setRoomId(generateRoomId());
+    setIsCreatedLocally(true);
     setRoomError('');
   };
 
@@ -45,8 +51,9 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
 
     if (!valid) return;
 
-    // Determine an unused color in this room
+    // Determine an unused color in this room and determine creator role
     let assignedColor = getRandomColor();
+    let isCreator = isCreatedLocally;
     try {
       const serverUrl =
         import.meta.env.VITE_API_URL ||
@@ -59,14 +66,19 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.colors)) {
+          if (data.colors.length === 0) {
+            isCreator = true;
+          } else {
+            isCreator = false;
+          }
           assignedColor = getAvailableColor(data.colors);
         }
       }
     } catch {
-      // Fall back to random if server query fails or times out
+      // Fall back to local hint
     }
 
-    onJoin(cleanRoom, cleanName, assignedColor);
+    onJoin(cleanRoom, cleanName, assignedColor, isCreator);
   };
 
   return (
@@ -146,7 +158,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             fullWidth
             iconRight={<ArrowRight size={17} />}
           >
-            Join Room
+            {isCreatedLocally ? 'Create & Enter Room' : 'Join Room'}
           </Button>
         </form>
       </div>

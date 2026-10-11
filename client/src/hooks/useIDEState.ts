@@ -22,6 +22,7 @@ interface JoinInfo {
   roomId: string;
   username: string;
   color: string;
+  isCreator?: boolean;
 }
 
 export function useIDEState(joinInfo: JoinInfo) {
@@ -90,6 +91,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     currentUser,
     users,
     isSynced,
+    isCreatorHint: joinInfo.isCreator,
   });
 
   const {

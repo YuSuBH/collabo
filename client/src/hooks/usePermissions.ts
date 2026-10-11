@@ -18,6 +18,7 @@ interface UsePermissionsProps {
   currentUser: UserPresence;
   users: Collaborator[];
   isSynced: boolean;
+  isCreatorHint?: boolean;
 }
 
 export function usePermissions({
@@ -25,6 +26,7 @@ export function usePermissions({
   currentUser,
   users,
   isSynced,
+  isCreatorHint = false,
 }: UsePermissionsProps) {
   const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(null);
   const [allUserPermissions, setAllUserPermissions] = useState<Map<string, UserPermissions>>(
@@ -151,8 +153,11 @@ export function usePermissions({
 
   // ─── 4. Current User Permissions & Role ───────────────────────────────────────
   const isCreator = useMemo(() => {
-    return roomMeta?.creatorId === currentUser.id;
-  }, [roomMeta, currentUser.id]);
+    if (roomMeta?.creatorId) {
+      return roomMeta.creatorId === currentUser.id;
+    }
+    return isCreatorHint === true;
+  }, [roomMeta, currentUser.id, isCreatorHint]);
 
   const permissions: UserPermissions = useMemo(() => {
     const userPerms = allUserPermissions.get(currentUser.id);

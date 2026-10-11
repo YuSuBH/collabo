@@ -17,6 +17,7 @@ interface JoinInfo {
   roomId: string;
   username: string;
   color: string;
+  isCreator?: boolean;
 }
 
 // ─── IDE View ────────────────────────────────────────────────────────────────
@@ -167,6 +168,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             doc={doc}
             awareness={awareness}
             activeFile={activeFile}
+            isSynced={isSynced}
+            roomId={roomId}
             canEdit={canEdit}
             userPendingRequest={userPendingRequest}
             onRequestPermissions={requestPermissions}
@@ -224,11 +227,11 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
 function App() {
   const [joinInfo, setJoinInfo] = useState<JoinInfo | null>(null);
 
-  const handleJoin = (roomId: string, username: string, color: string) => {
+  const handleJoin = (roomId: string, username: string, color: string, isCreator?: boolean) => {
     const url = new URL(window.location.href);
     url.searchParams.set('room', roomId);
     window.history.pushState({}, '', url.toString());
-    setJoinInfo({ roomId, username, color });
+    setJoinInfo({ roomId, username, color, isCreator });
   };
 
   const handleLeave = () => {
