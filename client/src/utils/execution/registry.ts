@@ -6,6 +6,7 @@
 import type { Runner, ExecRequest } from './types';
 import { ServerRunner } from './ServerRunner';
 import { JsRunner, UnsupportedLocallyError } from './JsRunner';
+import { PyodideRunner } from './PyodideRunner';
 
 type Language = 'javascript' | 'typescript' | 'python' | 'other';
 
@@ -56,18 +57,22 @@ class FallbackRunner implements Runner {
 
 /**
  * Runner registry that manages execution backends.
- * Phase 3: JS/TS run locally with JsRunner, with server fallback.
- * Python still goes to server (Phase 4 will add PyodideRunner).
+ * Phase 4: JS/TS run locally with JsRunner, Python with PyodideRunner.
+ * All have server fallback for unsupported features.
  */
 export class RunnerRegistry {
   private serverRunner: ServerRunner;
   private jsRunner: JsRunner;
+  private pyodideRunner: PyodideRunner;
   private jsFallbackRunner: FallbackRunner;
+  private pyFallbackRunner: FallbackRunner;
 
   constructor() {
     this.serverRunner = new ServerRunner();
     this.jsRunner = new JsRunner();
+    this.pyodideRunner = new PyodideRunner();
     this.jsFallbackRunner = new FallbackRunner(this.jsRunner, this.serverRunner);
+    this.pyFallbackRunner = new FallbackRunner(this.pyodideRunner, this.serverRunner);
   }
 
   /**
@@ -81,9 +86,20 @@ export class RunnerRegistry {
       return this.jsFallbackRunner;
     }
     
-    // Python and other languages: go to server
-    // Phase 4 will add PyodideRunner for Python
+    // Python: try Pyodide first, fall back to server
+    if (lang === 'python') {
+      return this.pyFallbackRunner;
+    }
+    
+    // Other languages: go to server
     return this.serverRunner;
+  }
+
+  /**
+   * Get the PyodideRunner for loading state management.
+   */
+  getPyodideRunner(): PyodideRunner {
+    return this.pyodideRunner;
   }
 
   /**
@@ -92,5 +108,6 @@ export class RunnerRegistry {
   dispose(): void {
     this.serverRunner.dispose();
     this.jsRunner.dispose();
+    this.pyodideRunner.dispose();
   }
 }
