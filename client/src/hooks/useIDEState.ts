@@ -5,6 +5,7 @@ import { useCodeExecution, autoDetectEntryFile } from './useCodeExecution';
 import { usePermissions } from './usePermissions';
 import { type ChatTab, type YChatMessage } from '../components/Chat/ChatPanel';
 import { getLanguageLabel } from '../utils/languageDetection';
+import { pingServerWarmup, subscribeServerHealth } from '../utils/serverHealth';
 
 const DEFAULT_STARTER_CODE = `// 🚀 Welcome to Collaborative Collabo!
 // Open this same URL in another browser tab to experience real-time sync & remote cursors.
@@ -60,6 +61,36 @@ export function useIDEState(joinInfo: JoinInfo) {
     initialName: joinInfo.username,
     initialColor: joinInfo.color,
   });
+
+  const [isServerWakingUp, setIsServerWakingUp] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (isSynced) {
+      setIsServerWakingUp(false);
+      return;
+    }
+
+    // Proactively warm up backend in case room was reached directly
+    pingServerWarmup();
+
+    const unsub = subscribeServerHealth((health) => {
+      if (health === 'waking' && !isSynced) {
+        setIsServerWakingUp(true);
+      }
+    });
+
+    // If room takes longer than 2.5s to sync, backend is waking from sleep
+    const timer = setTimeout(() => {
+      if (!isSynced) {
+        setIsServerWakingUp(true);
+      }
+    }, 2500);
+
+    return () => {
+      unsub();
+      clearTimeout(timer);
+    };
+  }, [isSynced]);
 
   const {
     roomMeta,
@@ -306,6 +337,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     awareness,
     status,
     isSynced,
+    isServerWakingUp,
     users,
     currentUser,
     roomId,

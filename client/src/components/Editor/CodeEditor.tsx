@@ -2,18 +2,21 @@ import React, { useEffect, useState, useRef } from 'react';
 import Editor, { type OnMount } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor';
 import * as Y from 'yjs';
+import { CloudLightning } from 'lucide-react';
 import { MonacoBinding } from '../../utils/yMonacoBinding';
 import type { Awareness } from 'y-protocols/awareness';
 import { injectCursorStyles, startCursorColorObserver } from '../../utils/cursorStyles';
 import { getLanguageFromFileName } from '../../utils/languageDetection';
 import { PermissionBanner } from '../Permissions/PermissionBanner';
 import type { PermissionRequest, UserPermissions } from '../../types/permissions';
+import { subscribeServerHealth } from '../../utils/serverHealth';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
   awareness: Awareness | null;
   activeFile: string;
   isSynced?: boolean;
+  isServerWakingUp?: boolean;
   roomId?: string;
   canEdit?: boolean;
   userPendingRequest?: PermissionRequest | null;
@@ -27,6 +30,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   awareness,
   activeFile,
   isSynced = false,
+  isServerWakingUp = false,
   roomId = 'default',
   canEdit = true,
   userPendingRequest = null,
@@ -36,8 +40,30 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 }) => {
   const [editor, setEditor] = useState<any>(null);
   const [currentYText, setCurrentYText] = useState<Y.Text | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [healthStatus, setHealthStatus] = useState<string>('unknown');
   const bindingRef = useRef<MonacoBinding | null>(null);
   const observerCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (isSynced) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const unsub = subscribeServerHealth(setHealthStatus);
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+
+    return () => {
+      unsub();
+      clearInterval(interval);
+    };
+  }, [isSynced]);
+
+  const isColdStarting = !isSynced && (isServerWakingUp || healthStatus === 'waking' || elapsedSeconds >= 3);
 
   const handleEditorMount: OnMount = (editorInstance, monacoInstance) => {
     (window as any).monaco = monacoInstance || monaco;
@@ -143,10 +169,47 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 
       <div className="monaco-editor-wrapper">
         {(!isSynced || !currentYText) && (
-          <div className="editor-loading-overlay">
-            <div className="spinner"></div>
-            <span>{!isSynced ? 'Connecting to room...' : 'Loading file...'}</span>
-          </div>
+          !isSynced ? (
+            isColdStarting ? (
+              <div className="editor-loading-overlay editor-waking-overlay">
+                <div className="waking-badge">
+                  <CloudLightning size={12} />
+                  <span>Free-Tier Cold Start</span>
+                </div>
+                <div className="waking-spinner-wrap">
+                  <div className="spinner waking-spinner" />
+                </div>
+                <h3 className="waking-title">Waking up backend server from free-tier sleep...</h3>
+                <p className="waking-desc">
+                  Render free-tier instances pause during inactivity.
+                  This cold start typically takes <strong>30–50 seconds</strong>.
+                </p>
+                <div className="waking-timer">
+                  <span className="waking-timer-dot" />
+                  <span>Elapsed: {elapsedSeconds}s</span>
+                </div>
+                <div className="waking-progress-bar">
+                  <div
+                    className="waking-progress-fill"
+                    style={{ width: `${Math.min(95, Math.max(8, (elapsedSeconds / 45) * 100))}%` }}
+                  />
+                </div>
+                <span className="waking-hint">
+                  Your session and real-time sync will resume automatically once the container responds.
+                </span>
+              </div>
+            ) : (
+              <div className="editor-loading-overlay">
+                <div className="spinner"></div>
+                <span>Connecting to room...</span>
+              </div>
+            )
+          ) : (
+            <div className="editor-loading-overlay">
+              <div className="spinner"></div>
+              <span>Loading file...</span>
+            </div>
+          )
         )}
 
         <Editor

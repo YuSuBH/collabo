@@ -696,11 +696,145 @@ body,
   color: var(--text-muted);
   font-size: 14px;
   z-index: 10;
+  text-align: center;
+  padding: 24px;
 }
 .spinner {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--color-primary, #6366f1);
+  animation: spin 0.8s linear infinite;
+}
+
+/* Cold-Start / Free-tier Inactivity Waking Overlay */
+.editor-waking-overlay {
+  background: radial-gradient(circle at 50% 40%, rgba(99, 102, 241, 0.09) 0%, var(--bg-primary) 70%);
+  animation: fadeIn 0.35s ease-out;
+  gap: 16px;
+}
+.waking-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full, 9999px);
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border: 1px solid rgba(245, 158, 11, 0.28);
+}
+.waking-spinner-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px 0;
+}
+.waking-spinner {
+  width: 42px;
+  height: 42px;
+  border-width: 3px;
+  border-color: rgba(255, 255, 255, 0.1);
+  border-top-color: #6366f1;
+  border-right-color: #fbbf24;
+}
+.waking-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-bright, #f1f5f9);
+  margin: 0;
+  max-width: 500px;
+  line-height: 1.4;
+}
+.waking-desc {
+  font-size: 13px;
+  color: var(--text-muted, #94a3b8);
+  max-width: 460px;
+  margin: 0;
+  line-height: 1.55;
+}
+.waking-desc strong {
+  color: #fbbf24;
+  font-weight: 600;
+}
+.waking-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-family: 'Fira Code', monospace;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 5px 14px;
+  border-radius: var(--radius-full, 9999px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.waking-timer-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+  animation: pulse-anim 1.5s infinite;
+}
+.waking-progress-bar {
+  width: min(320px, 85vw);
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+.waking-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #fbbf24, #10b981);
+  border-radius: 9999px;
+  transition: width 1s linear;
+}
+.waking-hint {
+  font-size: 11.5px;
+  color: var(--text-dim, #64748b);
+  max-width: 440px;
+}
+
+/* Lobby Server Status Indicator */
+.lobby-server-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin-top: 6px;
+  transition: all 0.25s ease;
+}
+.lobby-server-status-pill.waking {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.lobby-server-status-pill.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.lobby-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.lobby-status-dot.waking {
+  background-color: #fbbf24;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
+  animation: pulse-anim 1.5s infinite;
+}
+.lobby-status-dot.online {
+  background-color: #10b981;
 }
 
 .status-bar {

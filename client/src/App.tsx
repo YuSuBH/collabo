@@ -43,6 +43,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     awareness,
     status,
     isSynced,
+    isServerWakingUp,
     users,
     currentUser,
     roomId,
@@ -169,6 +170,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
             awareness={awareness}
             activeFile={activeFile}
             isSynced={isSynced}
+            isServerWakingUp={isServerWakingUp}
             roomId={roomId}
             canEdit={canEdit}
             userPendingRequest={userPendingRequest}
