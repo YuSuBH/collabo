@@ -1,5 +1,5 @@
 /**
- * Python runner using Pyodide 314.x (Python 3.14).
+ * Python runner using Pyodide 314.0.7 (Python 3.14.2).
  * Runs code in a module worker with lazy loading and warm worker reuse.
  * 
  * IMPORTANT: Pyodide 314.x no longer supports classic (non-module) workers.
@@ -12,6 +12,10 @@
  */
 
 import type { Runner, ExecRequest, ExecResult, StreamChunk } from './types';
+
+// Pyodide version - keep npm package and CDN in sync
+const PYODIDE_VERSION = '314.0.7';
+const PYODIDE_CDN_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 
 // Output cap utilities
 const MAX_OUTPUT_SIZE = 100 * 1024; // 100 KB
@@ -83,7 +87,7 @@ export class PyodideRunner implements Runner {
       // Create the Pyodide worker code
       // CRITICAL: Must use { type: 'module' } - classic workers are not supported in Pyodide 314.x
       const workerCode = `
-import { loadPyodide } from 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.mjs';
+import { loadPyodide } from '${PYODIDE_CDN_URL}pyodide.mjs';
 
 let pyodide = null;
 let outputBuffer = { out: '', err: '' };
@@ -113,7 +117,7 @@ async function init() {
     self.postMessage({ type: 'loading', progress: 'Loading Pyodide runtime...' });
     
     pyodide = await loadPyodide({
-      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/',
+      indexURL: '${PYODIDE_CDN_URL}',
       stdout: (text) => {
         outputBuffer.out += text;
         scheduleFlush();

@@ -16,7 +16,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^1.33.0",
     "monaco-editor": "^0.56.0",
-    "pyodide": "^0.26.4",
+    "pyodide": "^314.0.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-markdown": "^10.1.0",
