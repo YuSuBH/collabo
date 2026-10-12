@@ -2,12 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Code2, Users, Shuffle, ArrowRight, Radio } from 'lucide-react';
 import { Button } from '../common';
 import { CURSOR_COLORS, getAvailableColor } from '../../utils/collaborators';
-import {
-  pingServerWarmup,
-  subscribeServerHealth,
-  getServerHttpUrl,
-  type ServerHealthState,
-} from '../../utils/serverHealth';
+import { pingServerWarmup, getServerHttpUrl } from '../../utils/serverHealth';
 
 const getRandomColor = (): string =>
   CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
@@ -24,13 +19,9 @@ const generateRoomId = (): string => {
 };
 
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
-  const [serverHealth, setServerHealth] = useState<ServerHealthState>('unknown');
-
   useEffect(() => {
     // Proactively warm up free-tier backend as soon as user reaches lobby
     pingServerWarmup();
-    const unsubscribe = subscribeServerHealth(setServerHealth);
-    return unsubscribe;
   }, []);
   const [hasSharedRoom] = useState<boolean>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -105,18 +96,6 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
           <div>
             <h1 className="lobby-brand-title">Collabo</h1>
             <p className="lobby-brand-sub">Real-time collaborative code editor</p>
-            {serverHealth === 'waking' && (
-              <div className="lobby-server-status-pill waking">
-                <span className="lobby-status-dot waking" />
-                <span>Free-tier server waking up...</span>
-              </div>
-            )}
-            {serverHealth === 'online' && (
-              <div className="lobby-server-status-pill online">
-                <span className="lobby-status-dot online" />
-                <span>Backend ready</span>
-              </div>
-            )}
           </div>
         </div>
 
