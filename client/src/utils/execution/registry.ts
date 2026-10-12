@@ -56,9 +56,19 @@ class FallbackRunner implements Runner {
 }
 
 /**
+ * Feature flag for local execution.
+ * Default OFF for security - local runners currently execute on the app's own origin,
+ * allowing collaborator code to access this app's cookies and API endpoints.
+ * Only turn this on after sandbox isolation (item 2) is verified.
+ */
+const LOCAL_EXEC_ENABLED = import.meta.env.VITE_LOCAL_EXEC === 'true';
+
+/**
  * Runner registry that manages execution backends.
  * Phase 4: JS/TS run locally with JsRunner, Python with PyodideRunner.
  * All have server fallback for unsupported features.
+ * 
+ * SECURITY: Local execution is gated by VITE_LOCAL_EXEC flag (default off).
  */
 export class RunnerRegistry {
   private serverRunner: ServerRunner;
@@ -77,8 +87,14 @@ export class RunnerRegistry {
 
   /**
    * Get the appropriate runner for a given entry file.
+   * When LOCAL_EXEC_ENABLED is false, all execution routes to ServerRunner.
    */
   getRunner(entry: string): Runner {
+    // Security gate: local execution disabled by default
+    if (!LOCAL_EXEC_ENABLED) {
+      return this.serverRunner;
+    }
+
     const lang = getLanguageFromEntry(entry);
     
     // JavaScript and TypeScript: try local first, fall back to server
