@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "esbuild-wasm": "^0.24.2",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
     "lucide-react": "^1.33.0",

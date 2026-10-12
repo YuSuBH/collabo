@@ -3,14 +3,14 @@
  * based on file type and capabilities.
  */
 
-import type { Runner } from './types';
+import type { Runner, ExecRequest } from './types';
 import { ServerRunner } from './ServerRunner';
+import { JsRunner, UnsupportedLocallyError } from './JsRunner';
 
 type Language = 'javascript' | 'typescript' | 'python' | 'other';
 
 /**
  * Returns the language category for a given entry file.
- * Will be used in later phases when local runners are added.
  */
 function getLanguageFromEntry(entry: string): Language {
   const ext = entry.slice(entry.lastIndexOf('.')).toLowerCase();
@@ -21,27 +21,68 @@ function getLanguageFromEntry(entry: string): Language {
 }
 
 /**
+ * Wrapper runner that tries local execution and falls back to server.
+ */
+class FallbackRunner implements Runner {
+  private localRunner: Runner;
+  private serverRunner: Runner;
+
+  constructor(localRunner: Runner, serverRunner: Runner) {
+    this.localRunner = localRunner;
+    this.serverRunner = serverRunner;
+  }
+
+  async run(
+    req: ExecRequest,
+    onOutput?: (chunk: { stream: 'out' | 'err'; text: string }) => void,
+    signal?: AbortSignal
+  ) {
+    try {
+      return await this.localRunner.run(req, onOutput, signal);
+    } catch (err) {
+      if (err instanceof UnsupportedLocallyError) {
+        console.log('[RunnerRegistry] Falling back to server:', err.message);
+        return await this.serverRunner.run(req, onOutput, signal);
+      }
+      throw err;
+    }
+  }
+
+  dispose(): void {
+    this.localRunner.dispose();
+    this.serverRunner.dispose();
+  }
+}
+
+/**
  * Runner registry that manages execution backends.
- * In Phase 1, all executions go through ServerRunner.
- * Later phases will add local runners for JS/TS/Python.
+ * Phase 3: JS/TS run locally with JsRunner, with server fallback.
+ * Python still goes to server (Phase 4 will add PyodideRunner).
  */
 export class RunnerRegistry {
   private serverRunner: ServerRunner;
+  private jsRunner: JsRunner;
+  private jsFallbackRunner: FallbackRunner;
 
   constructor() {
     this.serverRunner = new ServerRunner();
+    this.jsRunner = new JsRunner();
+    this.jsFallbackRunner = new FallbackRunner(this.jsRunner, this.serverRunner);
   }
 
   /**
    * Get the appropriate runner for a given entry file.
-   * Currently returns ServerRunner for all languages.
    */
-  getRunner(_entry: string): Runner {
-    // const lang = getLanguageFromEntry(entry); // Will be used in Phase 3+
-    // Phase 1: All executions go through server
-    // Later phases will add:
-    // - JsRunner for javascript/typescript (getLanguageFromEntry === 'javascript'/'typescript')
-    // - PyodideRunner for python (getLanguageFromEntry === 'python')
+  getRunner(entry: string): Runner {
+    const lang = getLanguageFromEntry(entry);
+    
+    // JavaScript and TypeScript: try local first, fall back to server
+    if (lang === 'javascript' || lang === 'typescript') {
+      return this.jsFallbackRunner;
+    }
+    
+    // Python and other languages: go to server
+    // Phase 4 will add PyodideRunner for Python
     return this.serverRunner;
   }
 
@@ -50,8 +91,6 @@ export class RunnerRegistry {
    */
   dispose(): void {
     this.serverRunner.dispose();
+    this.jsRunner.dispose();
   }
 }
-
-// Keep function for future use but mark as export to avoid unused warning
-export { getLanguageFromEntry };
