@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import {
   getWandboxCompiler,
@@ -8,13 +8,13 @@ import {
 } from '../utils/languageDetection';
 import type { UserPresence } from '../utils/collaborators';
 import type { ExecutionResult, SharedExecutionRun } from '../types/execution';
+import { RunnerRegistry } from '../utils/execution';
+import type { ExecRequest } from '../utils/execution';
 
 export type { ExecutionResult, SharedExecutionRun };
 
-const EXECUTE_API_URL =
-  (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/execute';
-
 const MAX_SHARED_RUNS = 25;
+const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -91,6 +91,12 @@ export function useCodeExecution({
   const [sharedRuns, setSharedRuns] = useState<SharedExecutionRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [latestPeerRun, setLatestPeerRun] = useState<SharedExecutionRun | null>(null);
+
+  // Runner registry for execution backends
+  const registryRef = useRef<RunnerRegistry | null>(null);
+  if (!registryRef.current) {
+    registryRef.current = new RunnerRegistry();
+  }
 
   // ── Sync shared-executions Y.Array ──────────────────────────────────────────
   useEffect(() => {
@@ -191,30 +197,31 @@ export function useCodeExecution({
       const startMs = Date.now();
 
       try {
-        const res = await fetch(EXECUTE_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            compiler,
-            code,
-            codes: codes.length > 0 ? codes : undefined,
-            stdin: stdin ?? '',
-          }),
-        });
+        const registry = registryRef.current!;
+        const runner = registry.getRunner(entryFile);
 
+        // Build execution request
+        const execReq: ExecRequest = {
+          entry: entryFile,
+          files: [{ file: entryFile, code }, ...codes],
+          stdin: stdin ?? '',
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+        };
+
+        const execResult = await runner.run(execReq);
         const durationMs = Date.now() - startMs;
-        const data = await res.json();
 
-        if (!res.ok) {
-          setError(data.error ?? `Execution failed (HTTP ${res.status})`);
+        // Check for execution error
+        if (execResult.status !== '0' && execResult.program_error) {
+          setError(execResult.program_error);
           return;
         }
 
         const runResult: ExecutionResult = {
-          stdout: data.program_output ?? '',
-          stderr: data.program_error ?? '',
-          compilerError: data.compiler_error ?? '',
-          exitCode: data.status ?? '-1',
+          stdout: execResult.program_output,
+          stderr: execResult.program_error,
+          compilerError: execResult.compiler_error,
+          exitCode: execResult.status,
           durationMs,
           entryFile,
           compiler,
@@ -241,13 +248,20 @@ export function useCodeExecution({
           }
         });
       } catch (err: any) {
-        setError(err?.message ?? 'Network error — could not reach the execution server.');
+        setError(err?.message ?? 'Execution error occurred.');
       } finally {
         setIsRunning(false);
       }
     },
     [doc, activeFile, currentUser]
   );
+
+  // Cleanup registry on unmount
+  useEffect(() => {
+    return () => {
+      registryRef.current?.dispose();
+    };
+  }, []);
 
   const clearResult = useCallback(() => {
     setResult(null);
