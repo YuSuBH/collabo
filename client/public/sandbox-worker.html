@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sandbox Worker</title>
+</head>
+<body>
+  <script type="module">
+    // This page runs in a sandboxed iframe (sandbox="allow-scripts" WITHOUT allow-same-origin)
+    // It cannot access the parent's cookies, storage, or make requests to the parent origin.
+    
+    // Listen for execution requests from parent
+    window.addEventListener('message', async (event) => {
+      const { type, id, payload } = event.data;
+      
+      if (type === 'EXEC_REQUEST') {
+        try {
+          // Create a module worker to run the code
+          const workerCode = `
+            self.addEventListener('message', (e) => {
+              const { code } = e.data;
+              try {
+                const result = eval(code);
+                self.postMessage({ type: 'SUCCESS', result });
+              } catch (err) {
+                self.postMessage({ 
+                  type: 'ERROR', 
+                  error: err.message,
+                  stack: err.stack 
+                });
+              }
+            });
+          `;
+          
+          const blob = new Blob([workerCode], { type: 'application/javascript' });
+          const workerUrl = URL.createObjectURL(blob);
+          const worker = new Worker(workerUrl, { type: 'module' });
+          
+          const timeout = setTimeout(() => {
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+            window.parent.postMessage({
+              type: 'EXEC_RESULT',
+              id,
+              error: 'Execution timed out'
+            }, '*');
+          }, payload.timeoutMs || 10000);
+          
+          worker.onmessage = (e) => {
+            clearTimeout(timeout);
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+            
+            window.parent.postMessage({
+              type: 'EXEC_RESULT',
+              id,
+              payload: e.data
+            }, '*');
+          };
+          
+          worker.onerror = (err) => {
+            clearTimeout(timeout);
+            worker.terminate();
+            URL.revokeObjectURL(workerUrl);
+            
+            window.parent.postMessage({
+              type: 'EXEC_RESULT',
+              id,
+              error: err.message
+            }, '*');
+          };
+          
+          worker.postMessage({ code: payload.code });
+          
+        } catch (err) {
+          window.parent.postMessage({
+            type: 'EXEC_RESULT',
+            id,
+            error: err.message
+          }, '*');
+        }
+      }
+    });
+    
+    // Signal ready
+    window.parent.postMessage({ type: 'SANDBOX_READY' }, '*');
+  </script>
+</body>
+</html>
