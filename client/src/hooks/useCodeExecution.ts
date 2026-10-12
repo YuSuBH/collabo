@@ -26,6 +26,7 @@ export interface UseCodeExecutionOptions {
 
 export interface UseCodeExecutionReturn {
   run: (entryFile?: string, stdin?: string) => Promise<void>;
+  stop: () => void;
   isRunning: boolean;
   result: ExecutionResult | null;
   error: string | null;
@@ -44,6 +45,8 @@ export interface UseCodeExecutionReturn {
   latestPeerRun: SharedExecutionRun | null;
   /** Clear latest peer run notification banner */
   clearPeerNotification: () => void;
+  /** Python loading state (for UI) */
+  pyodideLoadingState: 'idle' | 'loading' | 'ready' | 'failed';
 }
 
 // ─── Helper: auto-detect the best entry file from a list ─────────────────────
@@ -91,6 +94,10 @@ export function useCodeExecution({
   const [sharedRuns, setSharedRuns] = useState<SharedExecutionRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [latestPeerRun, setLatestPeerRun] = useState<SharedExecutionRun | null>(null);
+  const [pyodideLoadingState, setPyodideLoadingState] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
+  
+  // AbortController for cancelling running executions
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Runner registry for execution backends
   const registryRef = useRef<RunnerRegistry | null>(null);
@@ -137,6 +144,17 @@ export function useCodeExecution({
     };
   }, [doc, currentUser?.name]);
 
+  // ── Setup Pyodide loading state listener ────────────────────────────────────
+  useEffect(() => {
+    const registry = registryRef.current;
+    if (!registry) return;
+
+    const pyodideRunner = registry.getPyodideRunner();
+    pyodideRunner.onLoadingStateChange((state) => {
+      setPyodideLoadingState(state);
+    });
+  }, []);
+
   const selectRun = useCallback((runId: string | null) => {
     setSelectedRunId(runId);
   }, []);
@@ -150,6 +168,11 @@ export function useCodeExecution({
     async (entryFileOverride?: string, stdin?: string) => {
       if (!doc) {
         setError('Editor not ready. Please wait for synchronization.');
+        return;
+      }
+
+      // Prevent running while already running
+      if (isRunning) {
         return;
       }
 
@@ -196,6 +219,10 @@ export function useCodeExecution({
 
       const startMs = Date.now();
 
+      // Create abort controller for this run
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
       try {
         const registry = registryRef.current!;
         const runner = registry.getRunner(entryFile);
@@ -208,8 +235,13 @@ export function useCodeExecution({
           timeoutMs: DEFAULT_TIMEOUT_MS,
         };
 
-        const execResult = await runner.run(execReq);
+        const execResult = await runner.run(execReq, undefined, abortController.signal);
         const durationMs = Date.now() - startMs;
+
+        // Check if execution was aborted
+        if (abortController.signal.aborted) {
+          return;
+        }
 
         // Check for execution error
         if (execResult.status !== '0' && execResult.program_error) {
@@ -248,13 +280,27 @@ export function useCodeExecution({
           }
         });
       } catch (err: any) {
+        // Don't show error if execution was aborted
+        if (abortControllerRef.current?.signal.aborted) {
+          return;
+        }
         setError(err?.message ?? 'Execution error occurred.');
       } finally {
+        abortControllerRef.current = null;
         setIsRunning(false);
       }
     },
-    [doc, activeFile, currentUser]
+    [doc, activeFile, currentUser, isRunning]
   );
+
+  // ── Stop Function ───────────────────────────────────────────────────────────
+  const stop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setError('Execution cancelled by user');
+      setIsRunning(false);
+    }
+  }, []);
 
   // Cleanup registry on unmount
   useEffect(() => {
@@ -275,6 +321,7 @@ export function useCodeExecution({
 
   return {
     run,
+    stop,
     isRunning,
     result,
     error,
@@ -286,5 +333,6 @@ export function useCodeExecution({
     displayedRun,
     latestPeerRun,
     clearPeerNotification,
+    pyodideLoadingState,
   };
 }

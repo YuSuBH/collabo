@@ -127,6 +127,7 @@ export function useIDEState(joinInfo: JoinInfo) {
 
   const {
     run,
+    stop,
     isRunning,
     result,
     error,
@@ -137,6 +138,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     displayedRun,
     latestPeerRun,
     clearPeerNotification,
+    pyodideLoadingState,
   } = useCodeExecution({
     doc,
     activeFile,
@@ -353,6 +355,8 @@ export function useIDEState(joinInfo: JoinInfo) {
     displayedRun,
     latestPeerRun,
     clearPeerNotification,
+    stopExecution: stop,
+    pyodideLoadingState,
 
     // Handlers
     handleFileSelect,
