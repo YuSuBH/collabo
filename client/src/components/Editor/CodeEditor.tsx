@@ -171,9 +171,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           !isSynced ? (
             isColdStarting ? (
               <div className="editor-loading-overlay editor-waking-overlay">
-                <div className="waking-spinner-wrap">
-                  <div className="spinner waking-spinner" />
-                </div>
+                <div className="spinner"></div>
                 <h3 className="waking-title">Waking up backend server from sleep...</h3>
                 <div className="waking-timer">
                   <span className="waking-timer-dot" />
