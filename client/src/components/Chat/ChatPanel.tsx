@@ -20,7 +20,7 @@ import { ChatMessageItem } from './ChatMessageItem';
 import { Button } from '../common';
 import { useChatResize } from '../../hooks/useChatResize';
 import { useAIStream } from '../../hooks/useAIStream';
-import { applyCodeSnippet } from '../../utils/applyCodeSnippet';
+import { useApplyCode } from '../../hooks/useApplyCode';
 
 // Re-export types for backward compatibility with App.tsx
 export type { ChatTab, YChatMessage };
@@ -55,8 +55,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   // ── AI input & context ──────────────────────────────────────────────────────
   const [aiInput, setAiInput] = useState('');
   const [includeProjectContext, setIncludeProjectContext] = useState(false);
-  const [aiNotification, setAiNotification] = useState<string | null>(null);
-  const notificationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { aiMessages, isStreaming, sendMessage, stopStreaming, clearHistory } = useAIStream({
     doc,
@@ -65,21 +63,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     includeProjectContext,
   });
 
-  // ── Notification toast ──────────────────────────────────────────────────────
-  const showNotification = (msg: string) => {
-    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-    setAiNotification(msg);
-    notificationTimerRef.current = setTimeout(() => {
-      setAiNotification(null);
-      notificationTimerRef.current = null;
-    }, 3000);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-    };
-  }, []);
+  const { applyCode: handleApplyCodeToEditor, notification: aiNotification, showNotification } = useApplyCode({
+    doc,
+    activeFile,
+  });
 
   // ── Yjs group chat subscription ─────────────────────────────────────────────
   useEffect(() => {
@@ -114,37 +101,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     setGroupInput('');
   };
 
-  /** Apply an AI code suggestion directly to the correct file via smart client-side merge. */
-  const handleApplyCodeToEditor = (newCode: string, targetFile: string) => {
-    const file = targetFile || activeFile;
-    if (!doc || !file) return;
-    try {
-      const filesMap = doc.getMap('files');
-      let yText = filesMap.get(file) as Y.Text | undefined;
-      const existingContent = yText ? yText.toString() : '';
 
-      // Deterministic client-side merge — no LLM call needed
-      const { newContent, action, startLine } = applyCodeSnippet(newCode, existingContent);
-
-      if (!yText) {
-        yText = new Y.Text();
-        filesMap.set(file, yText);
-      }
-      const finalYText = yText;
-      doc.transact(() => {
-        if (finalYText.length > 0) finalYText.delete(0, finalYText.length);
-        finalYText.insert(0, newContent);
-      });
-
-      const actionLabel = action === 'replaced' ? `updated at line ${startLine}` : action;
-      showNotification(`✓ Code ${actionLabel} in ${file}`);
-    } catch (err) {
-      console.error('Failed to apply code to editor:', err);
-      showNotification('⚠ Failed to apply code — check console for details');
-    }
-  };
-
-  /** Forward an AI response to the shared group chat. */
   const handleShareToGroup = (messageText: string) => {
     if (!doc) return;
     sendYChatMessage(doc, {
