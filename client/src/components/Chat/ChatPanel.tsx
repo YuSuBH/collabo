@@ -1,28 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import * as Y from 'yjs';
-import {
-  MessageSquare,
-  Sparkles,
-  Send,
-  X,
-  FileCode,
-  Layers,
-  Square,
-  Trash2,
-} from 'lucide-react';
 import type { Collaborator, UserPresence } from '../../utils/collaborators';
 import {
   type ChatTab,
   type YChatMessage,
   sendYChatMessage,
 } from '../../utils/chatUtils';
-import { ChatMessageItem } from './ChatMessageItem';
-import { Button } from '../common';
 import { useChatResize } from '../../hooks/useChatResize';
 import { useAIStream } from '../../hooks/useAIStream';
 import { useApplyCode } from '../../hooks/useApplyCode';
+import { ChatHeader } from './ChatHeader';
+import { GroupChatTab } from './GroupChatTab';
+import { AIChatTab } from './AIChatTab';
 
-// Re-export types for backward compatibility with App.tsx
+// Re-export types for backward compatibility
 export type { ChatTab, YChatMessage };
 
 interface ChatPanelProps {
@@ -45,17 +36,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   activeFile,
 }) => {
   const { panelWidth, isResizing, handleResizeStart, handleResetWidth } = useChatResize();
-
-  // ── Group chat ──────────────────────────────────────────────────────────────
-  const [groupInput, setGroupInput] = useState('');
-  const [groupMessages, setGroupMessages] = useState<YChatMessage[]>([]);
-  const groupEndRef = useRef<HTMLDivElement>(null);
-  const aiEndRef = useRef<HTMLDivElement>(null);
-  const groupTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const aiTextareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // ── AI input & context ──────────────────────────────────────────────────────
-  const [aiInput, setAiInput] = useState('');
   const [includeProjectContext, setIncludeProjectContext] = useState(false);
 
   const { aiMessages, isStreaming, sendMessage, stopStreaming, clearHistory } = useAIStream({
@@ -65,74 +45,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     includeProjectContext,
   });
 
-  const { applyCode: handleApplyCodeToEditor, notification: aiNotification, showNotification } = useApplyCode({
+  const {
+    applyCode: handleApplyCodeToEditor,
+    notification: aiNotification,
+    showNotification,
+  } = useApplyCode({
     doc,
     activeFile,
   });
-
-  // ── Auto-resize Textarea Helper ──────────────────────────────────────────────
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement | null) => {
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    const maxHeight = 130;
-    const nextHeight = Math.min(textarea.scrollHeight + 2, maxHeight);
-    textarea.style.height = `${nextHeight}px`;
-  };
-
-  useEffect(() => {
-    adjustTextareaHeight(groupTextareaRef.current);
-  }, [groupInput, activeTab, panelWidth]);
-
-  useEffect(() => {
-    adjustTextareaHeight(aiTextareaRef.current);
-  }, [aiInput, activeTab, panelWidth]);
-
-  // ── Yjs group chat subscription ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!doc) return;
-    const chatArray = doc.getArray<YChatMessage>('chat-messages');
-    const updateMessages = () => setGroupMessages(chatArray.toArray());
-    updateMessages();
-    chatArray.observe(updateMessages);
-    return () => chatArray.unobserve(updateMessages);
-  }, [doc]);
-
-  // ── Auto-scroll ─────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (activeTab === 'group') groupEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [groupMessages, activeTab]);
-
-  useEffect(() => {
-    if (activeTab === 'ai') aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [aiMessages, activeTab, isStreaming]);
-
-  // ── Handlers ────────────────────────────────────────────────────────────────
-  const sendGroupMessage = () => {
-    const text = groupInput.trim();
-    if (!text || !doc) return;
-    sendYChatMessage(doc, {
-      senderId: doc.clientID,
-      senderName: currentUser.name,
-      senderColor: currentUser.color,
-      text,
-    });
-    setGroupInput('');
-    if (groupTextareaRef.current) {
-      groupTextareaRef.current.style.height = 'auto';
-    }
-  };
-
-  const handleSendGroup = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendGroupMessage();
-  };
-
-  const handleGroupKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      sendGroupMessage();
-    }
-  };
 
   const handleShareToGroup = (messageText: string) => {
     if (!doc) return;
@@ -143,28 +63,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       text: messageText,
     });
     showNotification('✓ Shared to Group Chat');
-  };
-
-  const sendAIMessage = () => {
-    const text = aiInput.trim();
-    if (!text || isStreaming) return;
-    sendMessage(text);
-    setAiInput('');
-    if (aiTextareaRef.current) {
-      aiTextareaRef.current.style.height = 'auto';
-    }
-  };
-
-  const handleAIFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    sendAIMessage();
-  };
-
-  const handleAIKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-      e.preventDefault();
-      sendAIMessage();
-    }
   };
 
   return (
@@ -186,232 +84,41 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <div className="chat-resize-line" />
       </div>
 
-      {/* Tab Switcher Header */}
-      <div className="chat-panel-header">
-        <div className="chat-tabs">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="chat-tab-btn"
-            active={activeTab === 'group'}
-            onClick={() => onTabChange('group')}
-            title="Group Room Chat"
-            icon={<MessageSquare size={14} />}
-          >
-            <span>Group Chat</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="chat-tab-btn"
-            active={activeTab === 'ai'}
-            onClick={() => onTabChange('ai')}
-            title="AI Coding Assistant"
-            icon={<Sparkles size={14} className="sparkle-icon" />}
-          >
-            <span>AI Assistant</span>
-          </Button>
-        </div>
-
-        <div className="chat-header-actions">
-          {activeTab === 'ai' && (
-            <Button
-              variant="ghost"
-              size="xs"
-              iconOnly
-              className="chat-header-btn"
-              onClick={clearHistory}
-              title="Clear conversation history"
-              aria-label="Clear conversation history"
-              icon={<Trash2 size={13} />}
-            />
-          )}
-          <Button
-            variant="ghost"
-            size="xs"
-            iconOnly
-            className="chat-close-btn"
-            onClick={onClose}
-            title="Close panel"
-            aria-label="Close panel"
-            icon={<X size={15} />}
-          />
-        </div>
-      </div>
+      {/* Tab Switcher & Action Header */}
+      <ChatHeader
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onClose={onClose}
+        onClearHistory={clearHistory}
+      />
 
       {/* Group Chat Body */}
       {activeTab === 'group' && (
-        <div className="chat-body">
-          <div className="chat-messages-container">
-            {groupMessages.length === 0 ? (
-              <div className="chat-empty-state">
-                <div className="chat-empty-icon-wrap">
-                  <MessageSquare size={28} />
-                </div>
-                <span className="chat-empty-title">Room Chat</span>
-                <span className="chat-empty-subtitle">
-                  No messages yet. Send a message to chat with all peers in this session!
-                </span>
-              </div>
-            ) : (
-              groupMessages.map((msg) => {
-                const isSelf = msg.senderId
-                  ? msg.senderId === doc?.clientID
-                  : msg.senderName === currentUser.name;
-                const senderColor = msg.senderColor || (isSelf ? currentUser.color : undefined);
-                const isAI =
-                  msg.senderName === 'Collabo AI' ||
-                  msg.senderName === 'CodeSync AI' ||
-                  msg.senderName.includes('[Shared from AI]');
-
-                return (
-                  <ChatMessageItem
-                    key={msg.id}
-                    id={msg.id}
-                    senderName={msg.senderName}
-                    senderColor={senderColor}
-                    isSelf={isSelf}
-                    isAI={isAI}
-                    text={msg.text}
-                    timestamp={msg.timestamp}
-                    activeFile={activeFile}
-                    onApplyCode={handleApplyCodeToEditor}
-                  />
-                );
-              })
-            )}
-            <div ref={groupEndRef} />
-          </div>
-
-          <form onSubmit={handleSendGroup} className="chat-input-form">
-            <textarea
-              ref={groupTextareaRef}
-              className="chat-input"
-              rows={1}
-              placeholder="Send message to room..."
-              value={groupInput}
-              onChange={(e) => {
-                setGroupInput(e.target.value);
-                adjustTextareaHeight(e.target);
-              }}
-              onKeyDown={handleGroupKeyDown}
-              disabled={!doc}
-            />
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              iconOnly
-              className="chat-send-btn"
-              disabled={!groupInput.trim() || !doc}
-              title="Send message (Enter)"
-              aria-label="Send message"
-              icon={<Send size={14} />}
-            />
-          </form>
-        </div>
+        <GroupChatTab
+          doc={doc}
+          currentUser={currentUser}
+          activeFile={activeFile}
+          panelWidth={panelWidth}
+          onApplyCode={handleApplyCodeToEditor}
+        />
       )}
 
       {/* AI Chat Body */}
       {activeTab === 'ai' && (
-        <div className="chat-body">
-          {/* Active Context Banner */}
-          <div className="ai-context-bar">
-            <div className="ai-context-item">
-              <FileCode size={12} className="ai-context-icon" />
-              <span className="ai-context-text">
-                Context: <strong>{activeFile}</strong>
-              </span>
-            </div>
-            <label className="ai-context-toggle" title="Include all project files in context">
-              <input
-                type="checkbox"
-                checked={includeProjectContext}
-                onChange={(e) => setIncludeProjectContext(e.target.checked)}
-              />
-              <Layers size={11} />
-              <span>All Files</span>
-            </label>
-          </div>
-
-          {/* Toast Notification Banner */}
-          {aiNotification && (
-            <div className="ai-notification-banner">
-              <span>{aiNotification}</span>
-            </div>
-          )}
-
-          <div className="chat-messages-container">
-            {/* AI Messages List */}
-            {aiMessages.map((msg) => {
-              const isLastMessage = msg.id === aiMessages[aiMessages.length - 1]?.id;
-              const isStreamingThis = isStreaming && isLastMessage;
-
-              return (
-                <ChatMessageItem
-                  key={msg.id}
-                  id={msg.id}
-                  senderName={msg.senderName}
-                  senderColor={msg.isSelf ? currentUser.color : undefined}
-                  isSelf={msg.isSelf}
-                  isAI={msg.isAI}
-                  text={msg.text}
-                  timestamp={msg.timestamp}
-                  error={msg.error}
-                  isStreaming={isStreamingThis}
-                  activeFile={msg.contextFile || activeFile}
-                  onApplyCode={handleApplyCodeToEditor}
-                  onShareToRoom={msg.isAI && msg.id !== 'ai-init' ? handleShareToGroup : undefined}
-                />
-              );
-            })}
-            <div ref={aiEndRef} />
-          </div>
-
-          {/* AI Input Form */}
-          <form onSubmit={handleAIFormSubmit} className="chat-input-form">
-            <textarea
-              ref={aiTextareaRef}
-              className="chat-input"
-              rows={1}
-              placeholder={
-                isStreaming ? 'Collabo AI is generating...' : `Ask AI about ${activeFile}...`
-              }
-              value={aiInput}
-              onChange={(e) => {
-                setAiInput(e.target.value);
-                adjustTextareaHeight(e.target);
-              }}
-              onKeyDown={handleAIKeyDown}
-              disabled={isStreaming}
-            />
-            {isStreaming ? (
-              <Button
-                type="button"
-                variant="danger"
-                size="sm"
-                iconOnly
-                className="chat-send-btn ai-stop-btn"
-                onClick={stopStreaming}
-                title="Stop generation"
-                aria-label="Stop generation"
-                icon={<Square size={13} fill="currentColor" />}
-              />
-            ) : (
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                iconOnly
-                className="chat-send-btn ai-send-btn"
-                disabled={!aiInput.trim()}
-                title="Ask AI (Enter)"
-                aria-label="Ask AI"
-                icon={<Sparkles size={14} />}
-              />
-            )}
-          </form>
-        </div>
+        <AIChatTab
+          currentUser={currentUser}
+          activeFile={activeFile}
+          panelWidth={panelWidth}
+          includeProjectContext={includeProjectContext}
+          onToggleProjectContext={setIncludeProjectContext}
+          aiNotification={aiNotification}
+          aiMessages={aiMessages}
+          isStreaming={isStreaming}
+          onSendMessage={sendMessage}
+          onStopStreaming={stopStreaming}
+          onApplyCode={handleApplyCodeToEditor}
+          onShareToGroup={handleShareToGroup}
+        />
       )}
     </aside>
   );
