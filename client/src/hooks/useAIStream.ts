@@ -112,6 +112,7 @@ export function useAIStream({
       isSelf: true,
       text: promptText,
       timestamp: formatTimestamp(),
+      contextFile: activeFile,
     };
 
     const initialAiMsg: AIChatMessage = {
@@ -121,6 +122,7 @@ export function useAIStream({
       isAI: true,
       text: '',
       timestamp: formatTimestamp(),
+      contextFile: activeFile,
     };
 
     setAiMessages((prev) => [...prev, userMsg, initialAiMsg]);

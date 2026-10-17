@@ -20,6 +20,7 @@ import { ChatMessageItem } from './ChatMessageItem';
 import { Button } from '../common';
 import { useChatResize } from '../../hooks/useChatResize';
 import { useAIStream } from '../../hooks/useAIStream';
+import { applyCodeSnippet } from '../../utils/applyCodeSnippet';
 
 // Re-export types for backward compatibility with App.tsx
 export type { ChatTab, YChatMessage };
@@ -113,25 +114,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     setGroupInput('');
   };
 
-  /** Apply an AI code suggestion directly to the active file in the Yjs doc. */
-  const handleApplyCodeToEditor = (newCode: string) => {
-    if (!doc || !activeFile) return;
+  /** Apply an AI code suggestion directly to the correct file via smart client-side merge. */
+  const handleApplyCodeToEditor = (newCode: string, targetFile: string) => {
+    const file = targetFile || activeFile;
+    if (!doc || !file) return;
     try {
       const filesMap = doc.getMap('files');
-      let yText = filesMap.get(activeFile) as Y.Text | undefined;
+      let yText = filesMap.get(file) as Y.Text | undefined;
+      const existingContent = yText ? yText.toString() : '';
+
+      // Deterministic client-side merge — no LLM call needed
+      const { newContent, action, startLine } = applyCodeSnippet(newCode, existingContent);
+
       if (!yText) {
         yText = new Y.Text();
-        filesMap.set(activeFile, yText);
+        filesMap.set(file, yText);
       }
+      const finalYText = yText;
       doc.transact(() => {
-        if (yText) {
-          if (yText.length > 0) yText.delete(0, yText.length);
-          yText.insert(0, newCode);
-        }
+        if (finalYText.length > 0) finalYText.delete(0, finalYText.length);
+        finalYText.insert(0, newContent);
       });
-      showNotification(`✓ Code applied to ${activeFile}`);
+
+      const actionLabel = action === 'replaced' ? `updated at line ${startLine}` : action;
+      showNotification(`✓ Code ${actionLabel} in ${file}`);
     } catch (err) {
       console.error('Failed to apply code to editor:', err);
+      showNotification('⚠ Failed to apply code — check console for details');
     }
   };
 
@@ -342,7 +351,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                   timestamp={msg.timestamp}
                   error={msg.error}
                   isStreaming={isStreamingThis}
-                  activeFile={activeFile}
+                  activeFile={msg.contextFile || activeFile}
                   onApplyCode={handleApplyCodeToEditor}
                   onShareToRoom={msg.isAI && msg.id !== 'ai-init' ? handleShareToGroup : undefined}
                 />

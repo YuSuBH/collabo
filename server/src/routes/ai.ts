@@ -31,6 +31,7 @@ interface AIChatRequestBody {
   history?: ChatTurn[];
 }
 
+
 /**
  * Builds system instruction and context string based on available files and editor state
  */

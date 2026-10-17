@@ -6,7 +6,7 @@ export interface CodeBlockProps {
   language?: string;
   code: string;
   activeFile: string;
-  onApplyCode: (code: string) => void;
+  onApplyCode: (code: string, targetFile: string) => void;
 }
 
 export const CodeBlock: React.FC<CodeBlockProps> = ({
@@ -27,7 +27,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
 
   const handleApply = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onApplyCode(code);
+    onApplyCode(code, activeFile);
     setApplied(true);
     setTimeout(() => setApplied(false), 2500);
   };

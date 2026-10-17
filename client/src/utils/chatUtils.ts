@@ -19,6 +19,8 @@ export interface AIChatMessage {
   text: string;
   timestamp: string;
   error?: boolean;
+  /** The file that was active when this message/response was generated. Frozen at send-time. */
+  contextFile?: string;
 }
 
 /**

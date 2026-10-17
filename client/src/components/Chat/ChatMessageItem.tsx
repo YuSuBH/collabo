@@ -17,7 +17,7 @@ export interface ChatMessageItemProps {
   error?: boolean;
   isStreaming?: boolean;
   activeFile: string;
-  onApplyCode: (code: string) => void;
+  onApplyCode: (code: string, targetFile: string) => void;
   onShareToRoom?: (text: string) => void;
 }
 
