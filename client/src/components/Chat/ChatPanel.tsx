@@ -51,6 +51,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [groupMessages, setGroupMessages] = useState<YChatMessage[]>([]);
   const groupEndRef = useRef<HTMLDivElement>(null);
   const aiEndRef = useRef<HTMLDivElement>(null);
+  const groupTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const aiTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ── AI input & context ──────────────────────────────────────────────────────
   const [aiInput, setAiInput] = useState('');
@@ -67,6 +69,23 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     doc,
     activeFile,
   });
+
+  // ── Auto-resize Textarea Helper ──────────────────────────────────────────────
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement | null) => {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const maxHeight = 130;
+    const nextHeight = Math.min(textarea.scrollHeight + 2, maxHeight);
+    textarea.style.height = `${nextHeight}px`;
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight(groupTextareaRef.current);
+  }, [groupInput, activeTab, panelWidth]);
+
+  useEffect(() => {
+    adjustTextareaHeight(aiTextareaRef.current);
+  }, [aiInput, activeTab, panelWidth]);
 
   // ── Yjs group chat subscription ─────────────────────────────────────────────
   useEffect(() => {
@@ -88,8 +107,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   }, [aiMessages, activeTab, isStreaming]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
-  const handleSendGroup = (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendGroupMessage = () => {
     const text = groupInput.trim();
     if (!text || !doc) return;
     sendYChatMessage(doc, {
@@ -99,8 +117,22 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       text,
     });
     setGroupInput('');
+    if (groupTextareaRef.current) {
+      groupTextareaRef.current.style.height = 'auto';
+    }
   };
 
+  const handleSendGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendGroupMessage();
+  };
+
+  const handleGroupKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      sendGroupMessage();
+    }
+  };
 
   const handleShareToGroup = (messageText: string) => {
     if (!doc) return;
@@ -113,12 +145,26 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     showNotification('✓ Shared to Group Chat');
   };
 
-  const handleAIFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const sendAIMessage = () => {
     const text = aiInput.trim();
     if (!text || isStreaming) return;
     sendMessage(text);
     setAiInput('');
+    if (aiTextareaRef.current) {
+      aiTextareaRef.current.style.height = 'auto';
+    }
+  };
+
+  const handleAIFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    sendAIMessage();
+  };
+
+  const handleAIKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      sendAIMessage();
+    }
   };
 
   return (
@@ -238,12 +284,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           </div>
 
           <form onSubmit={handleSendGroup} className="chat-input-form">
-            <input
-              type="text"
+            <textarea
+              ref={groupTextareaRef}
               className="chat-input"
+              rows={1}
               placeholder="Send message to room..."
               value={groupInput}
-              onChange={(e) => setGroupInput(e.target.value)}
+              onChange={(e) => {
+                setGroupInput(e.target.value);
+                adjustTextareaHeight(e.target);
+              }}
+              onKeyDown={handleGroupKeyDown}
               disabled={!doc}
             />
             <Button
@@ -253,7 +304,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               iconOnly
               className="chat-send-btn"
               disabled={!groupInput.trim() || !doc}
-              title="Send message"
+              title="Send message (Enter)"
               aria-label="Send message"
               icon={<Send size={14} />}
             />
@@ -319,14 +370,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
           {/* AI Input Form */}
           <form onSubmit={handleAIFormSubmit} className="chat-input-form">
-            <input
-              type="text"
+            <textarea
+              ref={aiTextareaRef}
               className="chat-input"
+              rows={1}
               placeholder={
                 isStreaming ? 'Collabo AI is generating...' : `Ask AI about ${activeFile}...`
               }
               value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
+              onChange={(e) => {
+                setAiInput(e.target.value);
+                adjustTextareaHeight(e.target);
+              }}
+              onKeyDown={handleAIKeyDown}
               disabled={isStreaming}
             />
             {isStreaming ? (
@@ -349,7 +405,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 iconOnly
                 className="chat-send-btn ai-send-btn"
                 disabled={!aiInput.trim()}
-                title="Ask AI"
+                title="Ask AI (Enter)"
                 aria-label="Ask AI"
                 icon={<Sparkles size={14} />}
               />

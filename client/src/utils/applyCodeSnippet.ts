@@ -91,7 +91,7 @@ export interface ApplyResult {
  * @param snippet          The code snippet returned by the AI.
  * @param fileContent      The current full content of the target file.
  * @param matchThreshold   Minimum similarity score (0-1) to accept a match.
- *                         Default 0.55 — loose enough for minor whitespace
+ *                         Default 0.55 - loose enough for minor whitespace
  *                         differences, strict enough to avoid false positives.
  */
 export function applyCodeSnippet(
@@ -113,7 +113,7 @@ export function applyCodeSnippet(
     return { newContent: fileContent, action: 'appended', startLine: 1, endLine: 1 };
   }
 
-  // Empty file — just write the snippet
+  // Empty file - just write the snippet
   if (!fileContent.trim()) {
     return { newContent: snippet, action: 'appended', startLine: 1, endLine: snippetLines.length };
   }
@@ -140,7 +140,7 @@ export function applyCodeSnippet(
     }
   }
 
-  // -- 2a. Good match — replace the existing block ---------------------------
+  // -- 2a. Good match - replace the existing block ---------------------------
   if (bestScore >= matchThreshold && bestFileLine >= 0) {
     const blockEnd = findBlockEnd(fileLines, bestFileLine);
     const before = fileLines.slice(0, bestFileLine);
@@ -153,7 +153,7 @@ export function applyCodeSnippet(
     };
   }
 
-  // -- 2b. No match — insert just before the last top-level export -----------
+  // -- 2b. No match - insert just before the last top-level export -----------
   let insertAt = fileLines.length;
   for (let i = fileLines.length - 1; i >= 0; i--) {
     const t = fileLines[i].trim();
