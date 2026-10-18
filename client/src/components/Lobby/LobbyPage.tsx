@@ -1,21 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Code2, Users, Shuffle, ArrowRight, Radio } from 'lucide-react';
-import { Button } from '../common';
-import { CURSOR_COLORS, getAvailableColor } from '../../utils/collaborators';
-import { pingServerWarmup, getServerHttpUrl } from '../../utils/serverHealth';
+import React, { useState, useEffect } from "react";
+import { Code2, Users, Shuffle, ArrowRight, Radio } from "lucide-react";
+import { Button } from "../common";
+import { CURSOR_COLORS, getAvailableColor } from "../../utils/collaborators";
+import { pingServerWarmup, getServerHttpUrl } from "../../utils/serverHealth";
 
 const getRandomColor = (): string =>
   CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)]!;
 
 interface LobbyPageProps {
-  onJoin: (roomId: string, username: string, color: string, isCreator?: boolean) => void;
+  onJoin: (
+    roomId: string,
+    username: string,
+    color: string,
+    isCreator?: boolean,
+  ) => void;
 }
 
 const generateRoomId = (): string => {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from({ length: 6 }, () =>
-    chars.charAt(Math.floor(Math.random() * chars.length))
-  ).join('');
+    chars.charAt(Math.floor(Math.random() * chars.length)),
+  ).join("");
 };
 
 export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
@@ -23,24 +28,19 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     // Proactively warm up free-tier backend as soon as user reaches lobby
     pingServerWarmup();
   }, []);
-  const [hasSharedRoom] = useState<boolean>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return Boolean(params.get('room'));
-  });
+
   const [roomId, setRoomId] = useState<string>(() => {
     // Pre-fill room ID only when arriving via a shared ?room= link
     const params = new URLSearchParams(window.location.search);
-    return params.get('room') || '';
+    return params.get("room") || "";
   });
-  const [isCreatedLocally, setIsCreatedLocally] = useState<boolean>(!hasSharedRoom);
-  const [username, setUsername] = useState('');
-  const [roomError, setRoomError] = useState('');
-  const [nameError, setNameError] = useState('');
+  const [username, setUsername] = useState("");
+  const [roomError, setRoomError] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const handleGenerateRoom = () => {
     setRoomId(generateRoomId());
-    setIsCreatedLocally(true);
-    setRoomError('');
+    setRoomError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,21 +49,28 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     const cleanName = username.trim();
 
     let valid = true;
-    if (!cleanRoom) { setRoomError('Room ID cannot be empty.'); valid = false; }
-    else setRoomError('');
-    if (!cleanName) { setNameError('Username cannot be empty.'); valid = false; }
-    else setNameError('');
+    if (!cleanRoom) {
+      setRoomError("Room ID cannot be empty.");
+      valid = false;
+    } else setRoomError("");
+    if (!cleanName) {
+      setNameError("Username cannot be empty.");
+      valid = false;
+    } else setNameError("");
 
     if (!valid) return;
 
     // Determine an unused color in this room and determine creator role
     let assignedColor = getRandomColor();
-    let isCreator = isCreatedLocally;
+    let isCreator = false;
     try {
       const serverUrl = getServerHttpUrl();
-      const res = await fetch(`${serverUrl}/api/rooms/${encodeURIComponent(cleanRoom)}/colors`, {
-        signal: AbortSignal.timeout(1200),
-      });
+      const res = await fetch(
+        `${serverUrl}/api/rooms/${encodeURIComponent(cleanRoom)}/colors`,
+        {
+          signal: AbortSignal.timeout(1200),
+        },
+      );
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.colors)) {
@@ -95,7 +102,9 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
           </div>
           <div>
             <h1 className="lobby-brand-title">Collabo</h1>
-            <p className="lobby-brand-sub">Real-time collaborative code editor</p>
+            <p className="lobby-brand-sub">
+              Real-time collaborative code editor
+            </p>
           </div>
         </div>
 
@@ -111,9 +120,12 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
               <input
                 id="room-id-input"
                 type="text"
-                className={`lobby-input ${roomError ? 'lobby-input-error' : ''}`}
+                className={`lobby-input ${roomError ? "lobby-input-error" : ""}`}
                 value={roomId}
-                onChange={(e) => { setRoomId(e.target.value); if (roomError) setRoomError(''); }}
+                onChange={(e) => {
+                  setRoomId(e.target.value);
+                  if (roomError) setRoomError("");
+                }}
                 placeholder="Enter or generate a room ID"
                 autoComplete="off"
                 spellCheck={false}
@@ -130,7 +142,10 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
               </Button>
             </div>
             {roomError && <span className="lobby-error">{roomError}</span>}
-            <p className="lobby-hint">Enter an existing room ID to join, or use a new one to create a room.</p>
+            <p className="lobby-hint">
+              Enter an existing room ID to join, or use a new one to create a
+              room.
+            </p>
           </div>
 
           <div className="lobby-field">
@@ -141,9 +156,12 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             <input
               id="username-input"
               type="text"
-              className={`lobby-input ${nameError ? 'lobby-input-error' : ''}`}
+              className={`lobby-input ${nameError ? "lobby-input-error" : ""}`}
               value={username}
-              onChange={(e) => { setUsername(e.target.value); if (nameError) setNameError(''); }}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (nameError) setNameError("");
+              }}
               placeholder="Enter your display name"
               maxLength={32}
               autoComplete="off"
@@ -159,7 +177,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             fullWidth
             iconRight={<ArrowRight size={17} />}
           >
-            {isCreatedLocally ? 'Create & Enter Room' : 'Join Room'}
+            Join Room
           </Button>
         </form>
       </div>
