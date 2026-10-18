@@ -86,6 +86,7 @@ export const GroupChatTab: React.FC<GroupChatTabProps> = ({
                 timestamp={msg.timestamp}
                 activeFile={activeFile}
                 onApplyCode={onApplyCode}
+                showApply={false}
               />
             );
           })

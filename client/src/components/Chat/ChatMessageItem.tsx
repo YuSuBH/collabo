@@ -17,8 +17,9 @@ export interface ChatMessageItemProps {
   error?: boolean;
   isStreaming?: boolean;
   activeFile: string;
-  onApplyCode: (code: string, targetFile: string) => void;
+  onApplyCode?: (code: string, targetFile: string) => void;
   onShareToRoom?: (text: string) => void;
+  showApply?: boolean;
 }
 
 export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
@@ -33,9 +34,11 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
   activeFile,
   onApplyCode,
   onShareToRoom,
+  showApply,
 }) => {
   const avatarTextColor = getContrastTextColor(senderColor);
   const isSharedAI = senderName.includes('[Shared from AI]');
+  const canApplyCode = (showApply !== undefined ? showApply : !isSharedAI);
   let cleanSenderName = isSelf
     ? 'You'
     : senderName.replace(' 🤖 [Shared from AI]', '').replace(' [Shared from AI]', '');
@@ -116,6 +119,7 @@ export const ChatMessageItem: React.FC<ChatMessageItemProps> = ({
                         code={codeString}
                         activeFile={activeFile}
                         onApplyCode={onApplyCode}
+                        showApply={canApplyCode}
                       />
                     );
                   }
