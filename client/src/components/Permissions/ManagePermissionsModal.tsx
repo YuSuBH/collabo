@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Shield,
@@ -128,7 +129,7 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal-container perm-manage-modal"
@@ -368,5 +369,5 @@ export const ManagePermissionsModal: React.FC<ManagePermissionsModalProps> = ({
         />
       )}
     </div>
-  );
+  , document.body);
 };

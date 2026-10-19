@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { UserX, AlertTriangle, X } from 'lucide-react';
 import { RoleBadge } from './PermissionBadges';
 import { Button } from '../common';
@@ -51,7 +52,7 @@ export const KickConfirmModal: React.FC<KickConfirmModalProps> = ({
     onClose();
   };
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       <div
         className="modal-container kick-confirm-modal"
@@ -150,5 +151,5 @@ export const KickConfirmModal: React.FC<KickConfirmModalProps> = ({
         </form>
       </div>
     </div>
-  );
+  , document.body);
 };

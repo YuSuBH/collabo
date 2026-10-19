@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Archive,
   FileCode,
@@ -34,7 +35,7 @@ export const ImportZipModal: React.FC<ImportZipModalProps> = ({
     return `${(bytes / 1024).toFixed(1)} KB`;
   };
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" onClick={onCancel}>
       <div
         className="modal-container zip-import-modal"
@@ -195,5 +196,5 @@ export const ImportZipModal: React.FC<ImportZipModalProps> = ({
         </div>
       </div>
     </div>
-  );
+  , document.body);
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { LogOut, ShieldAlert } from 'lucide-react';
 import { Button } from '../common';
 import type { KickedUserInfo } from '../../types/permissions';
@@ -14,7 +15,7 @@ export const KickedNotificationModal: React.FC<KickedNotificationModalProps> = (
   roomId,
   onLeave,
 }) => {
-  return (
+  return createPortal(
     <div className="modal-backdrop">
       <div className="modal-container kicked-modal-container" role="dialog" aria-modal="true">
         {/* Header */}
@@ -80,5 +81,5 @@ export const KickedNotificationModal: React.FC<KickedNotificationModalProps> = (
         </div>
       </div>
     </div>
-  );
+  , document.body);
 };
