@@ -9,6 +9,7 @@ import { getLanguageFromFileName } from '../../utils/languageDetection';
 import { PermissionBanner } from '../Permissions/PermissionBanner';
 import type { PermissionRequest, UserPermissions } from '../../types/permissions';
 import { subscribeServerHealth } from '../../utils/serverHealth';
+import type { IDEViewMode } from '../../hooks/useIDEState';
 
 interface CodeEditorProps {
   doc: Y.Doc | null;
@@ -22,6 +23,7 @@ interface CodeEditorProps {
   onRequestPermissions?: (permissions: Partial<UserPermissions>, note?: string) => void;
   onCancelRequest?: () => void;
   onCursorChange?: (line: number, col: number) => void;
+  viewMode?: IDEViewMode;
 }
 
 export const CodeEditor: React.FC<CodeEditorProps> = ({
@@ -36,6 +38,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   onRequestPermissions,
   onCancelRequest,
   onCursorChange,
+  viewMode = 'code',
 }) => {
   const [editor, setEditor] = useState<any>(null);
   const [currentYText, setCurrentYText] = useState<Y.Text | null>(null);
@@ -153,6 +156,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       });
     }
   }, [editor, canEdit]);
+
+  useEffect(() => {
+    editor?.layout();
+  }, [editor, viewMode]);
 
   return (
     <div className="editor-container">
