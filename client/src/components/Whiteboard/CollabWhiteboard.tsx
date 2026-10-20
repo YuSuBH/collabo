@@ -27,6 +27,8 @@ export function CollabWhiteboard({
   currentUser,
   isReadOnly = false,
 }: CollabWhiteboardProps) {
+  // The store must be replaced when the room's root document changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const store = useMemo(() => createTLStore({ shapeUtils: defaultShapeUtils }), [doc]);
   const isRemoteUpdateRef = useRef(false);
   const editorRef = useRef<Editor | null>(null);
