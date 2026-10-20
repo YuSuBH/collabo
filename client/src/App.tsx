@@ -27,6 +27,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     cursorPos,
     setCursorPos,
     languageLabel,
+    viewMode,
+    setViewMode,
     isLeftSidebarOpen,
     leftSidebarTab,
     setLeftSidebarTab,
@@ -133,6 +135,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         entryFile={resolvedEntry}
         onEntryFileChange={setEntryFileOverride}
         onLeaveRoom={onLeave}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       <TabBar activeFile={activeFile} userCount={users.length} />

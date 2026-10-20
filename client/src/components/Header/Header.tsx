@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import {
   Code2,
+  Columns2,
+  PenTool,
   FolderTree,
   Users,
   Play,
@@ -14,6 +16,7 @@ import {
   Lock,
 } from 'lucide-react';
 import type { ConnectionStatus } from '../../hooks/useYjs';
+import type { IDEViewMode } from '../../hooks/useIDEState';
 import type { Collaborator } from '../../utils/collaborators';
 import type { UserRole } from '../../types/permissions';
 import { RoleBadge } from '../Permissions/PermissionBadges';
@@ -46,6 +49,8 @@ interface HeaderProps {
   onEntryFileChange?: (file: string) => void;
   // Leave
   onLeaveRoom?: () => void;
+  viewMode: IDEViewMode;
+  onViewModeChange: (mode: IDEViewMode) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -69,6 +74,8 @@ export const Header: React.FC<HeaderProps> = ({
   entryFile = '',
   onEntryFileChange,
   onLeaveRoom,
+  viewMode,
+  onViewModeChange,
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
@@ -209,6 +216,42 @@ export const Header: React.FC<HeaderProps> = ({
               />
             )}
           </div>
+        </div>
+
+        <div className="header-view-switcher" role="group" aria-label="Editor view mode">
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === 'code'}
+            onClick={() => onViewModeChange('code')}
+            title="Code view"
+            aria-label="Code view"
+            icon={<Code2 size={14} />}
+          >
+            Code
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === 'split'}
+            onClick={() => onViewModeChange('split')}
+            title="Split code and whiteboard view"
+            aria-label="Split code and whiteboard view"
+            icon={<Columns2 size={14} />}
+          >
+            Split
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === 'canvas'}
+            onClick={() => onViewModeChange('canvas')}
+            title="Whiteboard view"
+            aria-label="Whiteboard view"
+            icon={<PenTool size={14} />}
+          >
+            Whiteboard
+          </Button>
         </div>
 
         {/* Info / Guide button (?) with dropdown popover */}

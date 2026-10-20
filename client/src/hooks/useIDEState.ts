@@ -18,6 +18,7 @@ console.log(greetCollaborator({ id: '1', name: 'Collaborator', role: 'editor' })
 `;
 
 export type LeftSidebarTab = 'files' | 'room';
+export type IDEViewMode = 'code' | 'split' | 'canvas';
 
 interface JoinInfo {
   roomId: string;
@@ -29,6 +30,7 @@ interface JoinInfo {
 export function useIDEState(joinInfo: JoinInfo) {
   const [activeFile, setActiveFile] = useState<string>('main.js');
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+  const [viewMode, setViewMode] = useState<IDEViewMode>('code');
 
   // Sidebar visibility and active tabs
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
@@ -286,6 +288,8 @@ export function useIDEState(joinInfo: JoinInfo) {
     cursorPos,
     setCursorPos,
     languageLabel,
+    viewMode,
+    setViewMode,
 
     // Sidebar state
     isLeftSidebarOpen,
