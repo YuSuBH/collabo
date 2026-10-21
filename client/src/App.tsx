@@ -170,7 +170,12 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         )}
 
         {viewMode === 'canvas' ? (
-          <CollabWhiteboard doc={doc} currentUser={currentUser} isReadOnly={!canEdit} />
+          <CollabWhiteboard
+            doc={doc}
+            awareness={awareness}
+            currentUser={currentUser}
+            isReadOnly={!canEdit}
+          />
         ) : viewMode === 'split' ? (
           <div className="whiteboard-split-layout">
             <div className="editor-panel">
@@ -189,7 +194,12 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
                 onCursorChange={(line, col) => setCursorPos({ line, col })}
               />
             </div>
-            <CollabWhiteboard doc={doc} currentUser={currentUser} isReadOnly={!canEdit} />
+            <CollabWhiteboard
+              doc={doc}
+              awareness={awareness}
+              currentUser={currentUser}
+              isReadOnly={!canEdit}
+            />
           </div>
         ) : (
           <div className="editor-panel">
