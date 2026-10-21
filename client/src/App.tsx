@@ -143,7 +143,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
       <TabBar activeFile={activeFile} userCount={users.length} />
 
       <div className="editor-main">
-        {isLeftSidebarOpen && viewMode !== 'canvas' && (
+        {isLeftSidebarOpen && (
           <LeftSidebar
             leftSidebarTab={leftSidebarTab}
             onTabChange={setLeftSidebarTab}
@@ -210,7 +210,7 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           </div>
         )}
 
-        {isRightSidebarOpen && viewMode !== 'canvas' && (
+        {isRightSidebarOpen && (
           <ChatPanel
             doc={doc}
             activeTab={rightSidebarTab}
