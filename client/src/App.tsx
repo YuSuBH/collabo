@@ -178,7 +178,11 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           />
         ) : viewMode === 'split' ? (
           <div className="whiteboard-split-layout">
-            <div className="editor-panel">
+            <div
+              className="editor-panel"
+              onKeyDownCapture={(event) => event.stopPropagation()}
+              onKeyUpCapture={(event) => event.stopPropagation()}
+            >
               <CodeEditor
                 doc={doc}
                 awareness={awareness}
