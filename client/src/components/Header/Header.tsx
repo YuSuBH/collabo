@@ -158,6 +158,39 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </Button>
         </div>
+
+        <div className="header-view-switcher" role="group" aria-label="Editor view mode">
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={viewMode === 'code'}
+            onClick={() => onViewModeChange('code')}
+            title="Code view"
+            aria-label="Code view"
+            icon={<Code2 size={14} />}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={viewMode === 'split'}
+            onClick={() => onViewModeChange('split')}
+            title="Split code and whiteboard view"
+            aria-label="Split code and whiteboard view"
+            icon={<Columns2 size={14} />}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            iconOnly
+            active={viewMode === 'canvas'}
+            onClick={() => onViewModeChange('canvas')}
+            title="Whiteboard view"
+            aria-label="Whiteboard view"
+            icon={<PenTool size={14} />}
+          />
+        </div>
       </div>
 
       {/* Center: Execute / Run Button Group */}
@@ -216,42 +249,6 @@ export const Header: React.FC<HeaderProps> = ({
               />
             )}
           </div>
-        </div>
-
-        <div className="header-view-switcher" role="group" aria-label="Editor view mode">
-          <Button
-            variant="ghost"
-            size="sm"
-            active={viewMode === 'code'}
-            onClick={() => onViewModeChange('code')}
-            title="Code view"
-            aria-label="Code view"
-            icon={<Code2 size={14} />}
-          >
-            Code
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            active={viewMode === 'split'}
-            onClick={() => onViewModeChange('split')}
-            title="Split code and whiteboard view"
-            aria-label="Split code and whiteboard view"
-            icon={<Columns2 size={14} />}
-          >
-            Split
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            active={viewMode === 'canvas'}
-            onClick={() => onViewModeChange('canvas')}
-            title="Whiteboard view"
-            aria-label="Whiteboard view"
-            icon={<PenTool size={14} />}
-          >
-            Whiteboard
-          </Button>
         </div>
 
         {/* Info / Guide button (?) with dropdown popover */}
