@@ -7,7 +7,6 @@ import {
   getSvgAsImage,
   type Editor,
   type TLRecord,
-  type TLShape,
 } from 'tldraw';
 import type { UserPresence } from '../../utils/collaborators';
 import { Button } from '../common';
@@ -20,7 +19,12 @@ interface CollabWhiteboardProps {
   isReadOnly?: boolean;
 }
 
-const isShapeRecord = (record: TLRecord): record is TLShape => record.typeName === 'shape';
+const isDocumentRecord = (record: TLRecord): boolean =>
+  record.typeName === 'document' ||
+  record.typeName === 'page' ||
+  record.typeName === 'shape' ||
+  record.typeName === 'binding' ||
+  record.typeName === 'asset';
 
 export function CollabWhiteboard({
   doc,
@@ -37,12 +41,15 @@ export function CollabWhiteboard({
     if (!doc) return;
 
     const yShapes = doc.getMap<TLRecord>('whiteboard-shapes');
+    let hasInitialized = false;
 
     const applyRecords = () => {
-      const records = Array.from(yShapes.values()).filter(isShapeRecord);
+      const records = Array.from(yShapes.values()).filter(isDocumentRecord);
       isRemoteUpdateRef.current = true;
       store.mergeRemoteChanges(() => {
-        const currentIds = new Set(store.query.records('shape').get().map((record) => record.id));
+        const currentIds = new Set(
+          store.allRecords().filter(isDocumentRecord).map((record) => record.id)
+        );
         const incomingIds = new Set(records.map((record) => record.id));
         const removedIds = [...currentIds].filter((id) => !incomingIds.has(id));
 
@@ -56,7 +63,16 @@ export function CollabWhiteboard({
       isRemoteUpdateRef.current = false;
     };
 
-    applyRecords();
+    if (yShapes.size === 0) {
+      doc.transact(() => {
+        store.allRecords().filter(isDocumentRecord).forEach((record) => {
+          yShapes.set(record.id, record);
+        });
+      });
+    } else {
+      applyRecords();
+    }
+    hasInitialized = true;
 
     const handleYjsChange = (event: Y.YMapEvent<TLRecord>) => {
       if (event.transaction.local) return;
@@ -68,12 +84,15 @@ export function CollabWhiteboard({
     const removeStoreListener = store.listen(
       (entry) => {
         if (isRemoteUpdateRef.current) return;
+        if (!hasInitialized) return;
 
         const records = [
           ...Object.values(entry.changes.added),
           ...Object.values(entry.changes.updated).map(([, to]) => to),
-        ].filter(isShapeRecord);
-        const removedIds = Object.keys(entry.changes.removed);
+        ].filter(isDocumentRecord);
+        const removedIds = Object.values(entry.changes.removed)
+          .filter(isDocumentRecord)
+          .map((record) => record.id);
 
         doc.transact(() => {
           records.forEach((record) => yShapes.set(record.id, record));
