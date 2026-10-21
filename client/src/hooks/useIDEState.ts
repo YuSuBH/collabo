@@ -18,6 +18,7 @@ console.log(greetCollaborator({ id: '1', name: 'Collaborator', role: 'editor' })
 `;
 
 export type LeftSidebarTab = 'files' | 'room';
+export type IDEViewMode = 'code' | 'split' | 'canvas';
 
 interface JoinInfo {
   roomId: string;
@@ -29,6 +30,7 @@ interface JoinInfo {
 export function useIDEState(joinInfo: JoinInfo) {
   const [activeFile, setActiveFile] = useState<string>('main.js');
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+  const [viewMode, setViewMode] = useState<IDEViewMode>('code');
 
   // Sidebar visibility and active tabs
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState<boolean>(true);
@@ -53,9 +55,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     isSynced,
     users,
     currentUser,
-    updateUser: _updateUser,
     roomId,
-    setRoomId: _setRoomId,
   } = useYjs({
     initialRoomId: joinInfo.roomId,
     initialName: joinInfo.username,
@@ -66,8 +66,10 @@ export function useIDEState(joinInfo: JoinInfo) {
 
   useEffect(() => {
     if (isSynced) {
-      setIsServerWakingUp(false);
-      return;
+      const timer = setTimeout(() => {
+        setIsServerWakingUp(false);
+      }, 0);
+      return () => clearTimeout(timer);
     }
 
     // Proactively warm up backend in case room was reached directly
@@ -151,13 +153,6 @@ export function useIDEState(joinInfo: JoinInfo) {
 
   // ─── Effects ────────────────────────────────────────────────────────────────
 
-  // Clear unread count when group chat drawer is opened
-  useEffect(() => {
-    if (isRightSidebarOpen && rightSidebarTab === 'group') {
-      setUnreadChatCount(0);
-    }
-  }, [isRightSidebarOpen, rightSidebarTab]);
-
   // Track unread messages from Y.Array 'chat-messages'
   useEffect(() => {
     if (!doc) return;
@@ -203,12 +198,6 @@ export function useIDEState(joinInfo: JoinInfo) {
         filesMap.set('main.js', mainFile);
       });
     }
-
-    // Set activeFile to the first file in the map
-    const fileNames = Array.from(filesMap.keys()).sort();
-    if (fileNames.length > 0 && !filesMap.has(activeFile)) {
-      setActiveFile(fileNames[0]);
-    }
   }, [doc, isSynced]);
 
   // Keep projectFiles in sync with Yjs filesMap
@@ -220,6 +209,9 @@ export function useIDEState(joinInfo: JoinInfo) {
         a.localeCompare(b, undefined, { sensitivity: 'base' })
       );
       setProjectFiles(names);
+      if (names.length > 0) {
+        setActiveFile((currentFile) => (filesMap.has(currentFile) ? currentFile : names[0]));
+      }
     };
     sync();
     filesMap.observe(sync);
@@ -261,8 +253,18 @@ export function useIDEState(joinInfo: JoinInfo) {
     } else {
       setIsRightSidebarOpen(true);
       setRightSidebarTab(tab);
+      if (tab === 'group') {
+        setUnreadChatCount(0);
+      }
     }
   }, [isRightSidebarOpen, rightSidebarTab]);
+
+  const handleRightSidebarTabChange = useCallback((tab: ChatTab) => {
+    setRightSidebarTab(tab);
+    if (tab === 'group') {
+      setUnreadChatCount(0);
+    }
+  }, []);
 
   const handleExecuteCode = useCallback(() => {
     if (!canExecute) return;
@@ -286,6 +288,8 @@ export function useIDEState(joinInfo: JoinInfo) {
     cursorPos,
     setCursorPos,
     languageLabel,
+    viewMode,
+    setViewMode,
 
     // Sidebar state
     isLeftSidebarOpen,
@@ -293,7 +297,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     setLeftSidebarTab,
     isRightSidebarOpen,
     rightSidebarTab,
-    setRightSidebarTab,
+    setRightSidebarTab: handleRightSidebarTabChange,
     unreadChatCount,
 
     // Output state
@@ -337,7 +341,7 @@ export function useIDEState(joinInfo: JoinInfo) {
     awareness,
     status,
     isSynced,
-    isServerWakingUp,
+    isServerWakingUp: isServerWakingUp && !isSynced,
     users,
     currentUser,
     roomId,

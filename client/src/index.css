@@ -285,6 +285,20 @@ body,
   gap: 4px;
 }
 
+.header-view-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 6px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+.header-view-switcher .collabo-btn {
+  gap: 0;
+}
+
 .header-icon-btn {
   position: relative;
   width: 32px;
@@ -659,6 +673,85 @@ body,
   min-width: 0;
   position: relative;
   overflow: hidden;
+}
+.whiteboard-container {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-editor);
+}
+.whiteboard-container .tl-container {
+  position: absolute;
+  inset: 0;
+}
+.whiteboard-remote-cursors {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  pointer-events: none;
+  overflow: hidden;
+}
+.whiteboard-remote-cursor {
+  position: absolute;
+  transform: translate(-2px, -2px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+.whiteboard-remote-cursor-pointer {
+  width: 0;
+  height: 0;
+  border-top: 10px solid currentColor;
+  border-right: 7px solid transparent;
+  transform: rotate(-18deg);
+}
+.whiteboard-remote-cursor-label {
+  margin: 2px 0 0 8px;
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.whiteboard-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  display: flex;
+  padding: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--bg-dark) 88%, transparent);
+}
+.whiteboard-loading {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+}
+.whiteboard-split-layout {
+  display: flex;
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+.whiteboard-split-layout > .editor-panel,
+.whiteboard-split-layout > .whiteboard-container {
+  flex: 0 0 50%;
+  width: 50%;
+}
+.whiteboard-split-layout > .editor-panel {
+  z-index: 1;
+  pointer-events: auto;
+}
+.whiteboard-split-layout > .whiteboard-container {
+  border-left: 1px solid var(--border-color);
 }
 .editor-container {
   height: 100%;

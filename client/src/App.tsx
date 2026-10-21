@@ -9,6 +9,7 @@ import { TabBar } from './components/IDE/TabBar';
 import { LeftSidebar } from './components/IDE/LeftSidebar';
 import { StatusBar } from './components/IDE/StatusBar';
 import { KickedNotificationModal } from './components/Permissions/KickedNotificationModal';
+import { CollabWhiteboard } from './components/Whiteboard/CollabWhiteboard';
 import { Button } from './components/common';
 import { Info, X } from 'lucide-react';
 import './index.css';
@@ -27,6 +28,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
     cursorPos,
     setCursorPos,
     languageLabel,
+    viewMode,
+    setViewMode,
     isLeftSidebarOpen,
     leftSidebarTab,
     setLeftSidebarTab,
@@ -133,6 +136,8 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
         entryFile={resolvedEntry}
         onEntryFileChange={setEntryFileOverride}
         onLeaveRoom={onLeave}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
       <TabBar activeFile={activeFile} userCount={users.length} />
@@ -164,21 +169,60 @@ function IDEView({ joinInfo, onLeave }: { joinInfo: JoinInfo; onLeave: () => voi
           />
         )}
 
-        <div className="editor-panel">
-          <CodeEditor
+        {viewMode === 'canvas' ? (
+          <CollabWhiteboard
             doc={doc}
             awareness={awareness}
-            activeFile={activeFile}
-            isSynced={isSynced}
-            isServerWakingUp={isServerWakingUp}
-            roomId={roomId}
-            canEdit={canEdit}
-            userPendingRequest={userPendingRequest}
-            onRequestPermissions={requestPermissions}
-            onCancelRequest={cancelRequest}
-            onCursorChange={(line, col) => setCursorPos({ line, col })}
+            currentUser={currentUser}
+            isReadOnly={!canEdit}
           />
-        </div>
+        ) : viewMode === 'split' ? (
+          <div className="whiteboard-split-layout">
+            <div
+              className="editor-panel"
+              onKeyDownCapture={(event) => event.stopPropagation()}
+              onKeyUpCapture={(event) => event.stopPropagation()}
+            >
+              <CodeEditor
+                doc={doc}
+                awareness={awareness}
+                activeFile={activeFile}
+                isSynced={isSynced}
+                isServerWakingUp={isServerWakingUp}
+                roomId={roomId}
+                canEdit={canEdit}
+                viewMode={viewMode}
+                userPendingRequest={userPendingRequest}
+                onRequestPermissions={requestPermissions}
+                onCancelRequest={cancelRequest}
+                onCursorChange={(line, col) => setCursorPos({ line, col })}
+              />
+            </div>
+            <CollabWhiteboard
+              doc={doc}
+              awareness={awareness}
+              currentUser={currentUser}
+              isReadOnly={!canEdit}
+            />
+          </div>
+        ) : (
+          <div className="editor-panel">
+            <CodeEditor
+              doc={doc}
+              awareness={awareness}
+              activeFile={activeFile}
+              isSynced={isSynced}
+              isServerWakingUp={isServerWakingUp}
+              roomId={roomId}
+              canEdit={canEdit}
+              viewMode={viewMode}
+              userPendingRequest={userPendingRequest}
+              onRequestPermissions={requestPermissions}
+              onCancelRequest={cancelRequest}
+              onCursorChange={(line, col) => setCursorPos({ line, col })}
+            />
+          </div>
+        )}
 
         {isRightSidebarOpen && (
           <ChatPanel
