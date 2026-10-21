@@ -8,7 +8,7 @@ A real-time collaborative web IDE with multi-file support, live multi-cursor syn
 
 - **Real-Time Collaboration**: Multi-user editing powered by **Yjs** CRDTs and WebSockets with live cursor & selection tracking.
 - **Monaco Code Editor**: VS Code-like editing experience with syntax highlighting, auto-completion, and customizable themes.
-- **Code Execution**: Run code in multiple languages directly in the browser via Wandbox API.
+- **Code Execution**: Run code in multiple languages (typescript, javascript, python) directly in the browser via Wandbox API.
 - **AI Coding Assistant**: In-editor AI assistant powered by Google Gemini for code explanations, debugging, and suggestions.
 - **Multi-File Workspace**: Create, switch, and manage files in real-time, with ZIP import/export support.
 - **In-Room Chat & Presence**: Live text chat with unread indicators and active participant management.
