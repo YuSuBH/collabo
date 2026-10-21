@@ -158,7 +158,10 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
   }, [editor, canEdit]);
 
   useEffect(() => {
-    editor?.layout();
+    if (!editor) return;
+    editor.layout();
+    const frame = requestAnimationFrame(() => editor.layout());
+    return () => cancelAnimationFrame(frame);
   }, [editor, viewMode]);
 
   return (
