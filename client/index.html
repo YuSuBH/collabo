@@ -2,14 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary SEO Meta Tags -->
+    <title>Collabo | Real-Time Collaborative Web IDE &amp; Whiteboard</title>
+    <meta name="title" content="Collabo | Real-Time Collaborative Web IDE &amp; Whiteboard" />
+    <meta name="description" content="Collabo is a high-performance real-time collaborative code editor and whiteboard. Pair program with live multi-cursor synchronization, Monaco editor, in-browser code execution, multi-file workspaces, and integrated AI assistant." />
+    <meta name="keywords" content="Collabo, collaborative code editor, real-time code editor, online web ide, pair programming, live code execution, collaborative whiteboard, Yjs CRDT, Monaco editor, Yusuf Suhail" />
+    <meta name="author" content="Yusuf Suhail" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://collabo.yusufsuhail.tech/" />
+    <meta name="theme-color" content="#09090b" />
+
+    <!-- Open Graph / Facebook / LinkedIn / Discord -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://collabo.yusufsuhail.tech/" />
+    <meta property="og:title" content="Collabo | Real-Time Collaborative Web IDE &amp; Whiteboard" />
+    <meta property="og:description" content="Pair program in real-time with Monaco code editor, live multi-cursor sync, multi-file workspaces, instant code execution, and collaborative whiteboard." />
+    <meta property="og:image" content="https://collabo.yusufsuhail.tech/favicon.png" />
+    <meta property="og:site_name" content="Collabo" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:url" content="https://collabo.yusufsuhail.tech/" />
+    <meta name="twitter:title" content="Collabo | Real-Time Collaborative Web IDE &amp; Whiteboard" />
+    <meta name="twitter:description" content="Real-time collaborative code editor and whiteboard with live execution, CRDT sync, and AI assistant." />
+    <meta name="twitter:image" content="https://collabo.yusufsuhail.tech/favicon.png" />
+
+    <!-- Favicons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
     <link rel="alternate icon" type="image/x-icon" href="/favicon.ico?v=2" />
     <link rel="apple-touch-icon" href="/favicon.png?v=2" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Collabo</title>
+
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Collabo",
+        "url": "https://collabo.yusufsuhail.tech/",
+        "description": "A real-time collaborative web IDE with multi-file support, live multi-cursor synchronization, code execution, and integrated AI assistant.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "All",
+        "author": {
+          "@type": "Person",
+          "name": "Yusuf Suhail",
+          "url": "https://yusufsuhail.tech"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <div style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; color: #e4e4e7; background: #09090b; border-radius: 8px; margin-top: 50px;">
+        <h1>Collabo – Real-Time Collaborative Code Editor &amp; Whiteboard</h1>
+        <p>Collabo is a modern in-browser collaborative development environment built with Monaco Editor, Yjs CRDTs, and real-time WebSockets.</p>
+        <p>Please enable JavaScript in your browser to launch the collaborative workspace.</p>
+      </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+

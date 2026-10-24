@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://collabo.yusufsuhail.tech/sitemap.xml
