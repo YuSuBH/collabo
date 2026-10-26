@@ -58,14 +58,44 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>
-      <div style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; color: #e4e4e7; background: #09090b; border-radius: 8px; margin-top: 50px;">
-        <h1>Collabo – Real-Time Collaborative Code Editor &amp; Whiteboard</h1>
-        <p>Collabo is a modern in-browser collaborative development environment built with Monaco Editor, Yjs CRDTs, and real-time WebSockets.</p>
-        <p>Please enable JavaScript in your browser to launch the collaborative workspace.</p>
-      </div>
-    </noscript>
+    <div id="root">
+      <main style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background: #09090b; color: #f4f4f5; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; box-sizing: border-box; text-align: center;">
+        <header style="max-width: 760px; margin-bottom: 2rem;">
+          <h1 style="font-size: 2.25rem; font-weight: 700; margin-bottom: 0.75rem; letter-spacing: -0.025em; color: #ffffff;">
+            Collabo – Real-Time Collaborative Web IDE &amp; Whiteboard
+          </h1>
+          <p style="font-size: 1.1rem; line-height: 1.6; color: #a1a1aa; margin: 0 auto 1.5rem auto;">
+            A high-performance online collaborative coding environment designed for seamless pair programming, live multi-cursor editing, in-browser code execution, interactive whiteboarding, and integrated AI assistance.
+          </p>
+        </header>
+
+        <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; max-width: 860px; width: 100%; text-align: left; margin-bottom: 2.5rem;">
+          <article style="background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 1.25rem;">
+            <h2 style="font-size: 1.05rem; font-weight: 600; color: #ffffff; margin-top: 0; margin-bottom: 0.5rem;">Real-Time Code Collaboration</h2>
+            <p style="font-size: 0.875rem; color: #a1a1aa; line-height: 1.5; margin: 0;">Multi-user editing powered by Yjs CRDTs and WebSockets with live cursor tracking, user presence, and conflict-free text synchronization.</p>
+          </article>
+
+          <article style="background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 1.25rem;">
+            <h2 style="font-size: 1.05rem; font-weight: 600; color: #ffffff; margin-top: 0; margin-bottom: 0.5rem;">Monaco Code Editor</h2>
+            <p style="font-size: 0.875rem; color: #a1a1aa; line-height: 1.5; margin: 0;">Full-featured VS Code editing experience with syntax highlighting, auto-completion, multi-file workspaces, and ZIP import/export.</p>
+          </article>
+
+          <article style="background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 1.25rem;">
+            <h2 style="font-size: 1.05rem; font-weight: 600; color: #ffffff; margin-top: 0; margin-bottom: 0.5rem;">In-Browser Code Execution</h2>
+            <p style="font-size: 0.875rem; color: #a1a1aa; line-height: 1.5; margin: 0;">Run code in TypeScript, JavaScript, Python, C++, and more with shared execution outputs and live results streaming.</p>
+          </article>
+
+          <article style="background: #18181b; border: 1px solid #27272a; border-radius: 8px; padding: 1.25rem;">
+            <h2 style="font-size: 1.05rem; font-weight: 600; color: #ffffff; margin-top: 0; margin-bottom: 0.5rem;">Collaborative Whiteboard &amp; AI</h2>
+            <p style="font-size: 0.875rem; color: #a1a1aa; line-height: 1.5; margin: 0;">Ideate and architecture system diagrams with the canvas view alongside Gemini AI coding assistant and integrated chat.</p>
+          </article>
+        </section>
+
+        <footer style="font-size: 0.875rem; color: #71717a;">
+          <p>Created by <a href="https://yusufsuhail.tech" style="color: #a1a1aa; text-decoration: underline;">Yusuf Suhail</a> · Built with React, TypeScript, Monaco Editor, and Yjs</p>
+        </footer>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
