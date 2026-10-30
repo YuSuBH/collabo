@@ -42,6 +42,13 @@ export const getRoomActiveColors = (roomName: string): string[] => {
   return colors;
 };
 
+export const checkRoomExists = (roomName: string): boolean => {
+  const room = rooms.get(roomName);
+  if (!room) return false;
+  const metaMap = room.doc.getMap('room-meta');
+  return metaMap.has('creatorId') || room.clients.size > 0;
+};
+
 const send = (ws: WebSocket, message: Uint8Array) => {
   if (ws.readyState === WebSocket.OPEN) {
     ws.send(message, (err) => {
@@ -259,14 +266,18 @@ export const setupYjsWebSocketServer = (server: Server) => {
     });
   });
 
-  // Keep-alive heartbeat
+  // Keep-alive heartbeat: send native ping AND application-level query awareness
+  // so browser y-websocket never closes due to inactivity
   const pingInterval = setInterval(() => {
     wss.clients.forEach((ws) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
+        const encoder = encoding.createEncoder();
+        encoding.writeVarUint(encoder, MESSAGE_QUERY_AWARENESS);
+        send(ws, encoding.toUint8Array(encoder));
       }
     });
-  }, 25000);
+  }, 15000);
 
   wss.on('close', () => {
     clearInterval(pingInterval);

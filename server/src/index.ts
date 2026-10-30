@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import dotenv from 'dotenv';
-import { setupYjsWebSocketServer, getRoomActiveColors } from './websocket/yjsServer.js';
+import { setupYjsWebSocketServer, getRoomActiveColors, checkRoomExists } from './websocket/yjsServer.js';
 import { aiRouter } from './routes/ai.js';
 import { executeRouter } from './routes/execute.js';
 
@@ -30,7 +30,8 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/rooms/:roomId/colors', (req, res) => {
   const { roomId } = req.params;
   const colors = getRoomActiveColors(roomId);
-  res.json({ roomId, colors });
+  const exists = checkRoomExists(roomId);
+  res.json({ roomId, colors, exists });
 });
 
 // Mount AI Proxy Routes

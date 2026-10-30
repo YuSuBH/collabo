@@ -74,7 +74,8 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.colors)) {
-          if (data.colors.length === 0) {
+          // A user is only the creator if the room does not exist yet
+          if (data.exists === false || (data.exists === undefined && data.colors.length === 0)) {
             isCreator = true;
           } else {
             isCreator = false;

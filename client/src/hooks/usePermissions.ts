@@ -57,8 +57,8 @@ export function usePermissions({
           creatorColor: creatorColor || '#FF4B4B',
           createdAt: createdAt || Date.now(),
         });
-      } else {
-        // First user creates the room as the initial Admin
+      } else if (isCreatorHint) {
+        // First user creates the room as the initial Admin only if hint indicates creator
         doc.transact(() => {
           metaMap.set('creatorId', currentUser.id);
           metaMap.set('creatorName', currentUser.name);
@@ -73,7 +73,7 @@ export function usePermissions({
     syncMeta();
     metaMap.observe(syncMeta);
     return () => metaMap.unobserve(syncMeta);
-  }, [doc, isSynced, currentUser.id, currentUser.name, currentUser.color]);
+  }, [doc, isSynced, currentUser.id, currentUser.name, currentUser.color, isCreatorHint]);
 
   // ─── 2. Synchronize User Permissions ──────────────────────────────────────────
   useEffect(() => {
@@ -91,7 +91,7 @@ export function usePermissions({
       });
 
       const creatorId = metaMap.get('creatorId') as string | undefined;
-      const isCreator = creatorId === currentUser.id;
+      const isCreator = creatorId ? creatorId === currentUser.id : (isCreatorHint === true);
 
       // If current user is not in permissions map yet, initialize them
       if (!permsMap.has(currentUser.id)) {
@@ -111,7 +111,7 @@ export function usePermissions({
     syncPermissions();
     permsMap.observe(syncPermissions);
     return () => permsMap.unobserve(syncPermissions);
-  }, [doc, isSynced, currentUser.id]);
+  }, [doc, isSynced, currentUser.id, isCreatorHint]);
 
   // ─── 3. Synchronize Permission Requests ──────────────────────────────────────
   useEffect(() => {
@@ -156,8 +156,11 @@ export function usePermissions({
     if (roomMeta?.creatorId) {
       return roomMeta.creatorId === currentUser.id;
     }
-    return isCreatorHint === true;
-  }, [roomMeta, currentUser.id, isCreatorHint]);
+    if (!isSynced) {
+      return isCreatorHint === true;
+    }
+    return false;
+  }, [roomMeta, currentUser.id, isCreatorHint, isSynced]);
 
   const permissions: UserPermissions = useMemo(() => {
     const userPerms = allUserPermissions.get(currentUser.id);
@@ -193,30 +196,50 @@ export function usePermissions({
     );
   }, [requests, currentUser.id]);
 
-  // ─── 5. Admin Failover (If all Admins leave the room) ────────────────────────
+  // ─── 5. Admin Failover (Only if room is truly devoid of registered admins) ───
   useEffect(() => {
     if (!doc || !isSynced || users.length === 0 || allUserPermissions.size === 0) return;
 
-    // Check if any currently connected user has managePermissions === true (Admin)
-    const activeAdmins = users.filter((u) => {
-      const p = allUserPermissions.get(u.id);
-      return p?.managePermissions === true;
-    });
+    // Check if any registered user in the room has managePermissions === true (Admin)
+    const hasRegisteredAdmin = Array.from(allUserPermissions.values()).some(
+      (p) => p.managePermissions === true
+    );
 
-    // If no connected user is an Admin, auto-promote the senior connected user to Admin
-    if (activeAdmins.length === 0) {
+    // If the room already has registered admin(s) (such as the creator or appointed admins),
+    // they retain their authority even if temporarily in another tab, window, backgrounded,
+    // or reconnecting. NEVER auto-promote anyone over existing administrators.
+    if (hasRegisteredAdmin) {
+      return;
+    }
+
+    // A viewer (read-only user without edit permissions) must NEVER be auto-promoted to Admin!
+    // Auto-promoting a viewer violates least-privilege and room access control.
+    const myCurrentPerms = allUserPermissions.get(currentUser.id);
+    if (!myCurrentPerms?.edit) {
+      return;
+    }
+
+    // If all registered admins were truly removed AND current user is an editor:
+    // Apply a 60-second grace period with re-verification before executing.
+    const failoverTimer = setTimeout(() => {
+      const currentPermsMap = doc.getMap<UserPermissions>('user-permissions');
+      let stillNoAdmin = true;
+      currentPermsMap.forEach((p) => {
+        if (p?.managePermissions) stillNoAdmin = false;
+      });
+
+      if (!stillNoAdmin) return;
+
       const sortedUsers = [...users].sort((a, b) => a.clientId - b.clientId);
       const seniorUser = sortedUsers[0];
 
       if (seniorUser && seniorUser.id === currentUser.id) {
         console.log(
-          `[Admin Failover] No active Admin present. Promoting senior user ${seniorUser.name} (${seniorUser.id}) to Admin.`
+          `[Admin Failover] No registered Admin present. Promoting senior editor ${seniorUser.name} (${seniorUser.id}) to Admin.`
         );
 
-        const permsMap = doc.getMap<UserPermissions>('user-permissions');
-
         doc.transact(() => {
-          permsMap.set(seniorUser.id, {
+          currentPermsMap.set(seniorUser.id, {
             ...DEFAULT_CREATOR_PERMISSIONS,
           });
 
@@ -238,7 +261,9 @@ export function usePermissions({
         setStatusMessage('You have been promoted to Room Admin as all previous admins left.');
         setTimeout(() => setStatusMessage(null), 6000);
       }
-    }
+    }, 60000);
+
+    return () => clearTimeout(failoverTimer);
   }, [doc, isSynced, users, allUserPermissions, currentUser.id]);
 
   // ─── 6. Action Handlers ──────────────────────────────────────────────────────

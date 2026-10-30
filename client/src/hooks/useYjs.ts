@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import type { Awareness } from 'y-protocols/awareness';
@@ -74,6 +74,9 @@ export const useYjs = ({
     return getInitialUser();
   });
 
+  const currentUserRef = useRef<UserPresence>(currentUser);
+  currentUserRef.current = currentUser;
+
   // Synchronize URL search params with roomId
   const setRoomId = useCallback((newRoomId: string) => {
     const trimmed = newRoomId.trim();
@@ -103,7 +106,7 @@ export const useYjs = ({
     [awareness]
   );
 
-  // Alert user before closing tab / reloading and immediately remove awareness state if leaving
+  // Alert user before closing tab / reloading
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -111,24 +114,12 @@ export const useYjs = ({
       return '';
     };
 
-    const handlePageHide = () => {
-      if (awareness) {
-        awareness.setLocalState(null);
-      }
-      if (provider) {
-        provider.disconnect();
-        provider.destroy();
-      }
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('pagehide', handlePageHide);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('pagehide', handlePageHide);
     };
-  }, [awareness, provider]);
+  }, []);
 
   useEffect(() => {
     const ydoc = new Y.Doc();
@@ -144,6 +135,65 @@ export const useYjs = ({
 
     // Register initial user awareness state
     wsAwareness.setLocalStateField('user', currentUser);
+
+    // Start background keep-alive worker to prevent awareness timeout when tab is throttled
+    let keepAliveWorker: Worker | null = null;
+    try {
+      if (typeof window !== 'undefined' && typeof Worker !== 'undefined') {
+        const workerBlob = new Blob(
+          [
+            `var interval = null;
+             self.onmessage = function(e) {
+               if (e.data === 'start') {
+                 if (interval) clearInterval(interval);
+                 interval = setInterval(function() {
+                   self.postMessage('tick');
+                 }, 10000);
+               } else if (e.data === 'stop') {
+                 if (interval) {
+                   clearInterval(interval);
+                   interval = null;
+                 }
+               }
+             };`
+          ],
+          { type: 'application/javascript' }
+        );
+        const workerUrl = URL.createObjectURL(workerBlob);
+        keepAliveWorker = new Worker(workerUrl);
+        URL.revokeObjectURL(workerUrl);
+
+        keepAliveWorker.onmessage = (e) => {
+          if (e.data === 'tick' && wsAwareness) {
+            const localState = wsAwareness.getLocalState();
+            if (localState) {
+              wsAwareness.setLocalState(localState);
+            }
+          }
+        };
+        keepAliveWorker.postMessage('start');
+      }
+    } catch (err) {
+      console.warn('[useYjs] Background keep-alive worker not initialized:', err);
+    }
+
+    // Refresh awareness state immediately whenever window or tab regains focus/visibility
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        const localState = wsAwareness.getLocalState();
+        if (localState) {
+          wsAwareness.setLocalState(localState);
+        } else {
+          wsAwareness.setLocalStateField('user', currentUserRef.current);
+        }
+        if (!wsProvider.wsconnected) {
+          wsProvider.connect();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+    window.addEventListener('focus', handleVisibilityOrFocus);
 
     const handleStatus = (event: { status: ConnectionStatus }) => {
       setStatus(event.status);
@@ -209,6 +259,12 @@ export const useYjs = ({
     handleAwarenessChange();
 
     return () => {
+      if (keepAliveWorker) {
+        keepAliveWorker.postMessage('stop');
+        keepAliveWorker.terminate();
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
       wsProvider.off('status', handleStatus);
       wsProvider.off('sync', handleSync);
       wsAwareness.off('change', handleAwarenessChange);
