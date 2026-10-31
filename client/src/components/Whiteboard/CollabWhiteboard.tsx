@@ -22,8 +22,6 @@ interface CollabWhiteboardProps {
 }
 
 const isDocumentRecord = (record: TLRecord): boolean =>
-  record.typeName === 'document' ||
-  record.typeName === 'page' ||
   record.typeName === 'shape' ||
   record.typeName === 'binding' ||
   record.typeName === 'asset';
@@ -91,63 +89,69 @@ export function CollabWhiteboard({
     if (!doc) return;
 
     const yShapes = doc.getMap<TLRecord>('whiteboard-shapes');
-    let hasInitialized = false;
 
-    const applyRecords = () => {
-      const records = Array.from(yShapes.values()).filter(isDocumentRecord);
+    // 1. Initial hydration: apply existing shapes from Yjs into the local store
+    const existingRecords = Array.from(yShapes.values()).filter(isDocumentRecord);
+    if (existingRecords.length > 0) {
       isRemoteUpdateRef.current = true;
       store.mergeRemoteChanges(() => {
-        const currentIds = new Set(
-          store.allRecords().filter(isDocumentRecord).map((record) => record.id)
-        );
-        const incomingIds = new Set(records.map((record) => record.id));
-        const removedIds = [...currentIds].filter((id) => !incomingIds.has(id));
+        store.put(existingRecords);
+      });
+      isRemoteUpdateRef.current = false;
+    }
 
-        if (removedIds.length > 0) {
-          store.remove(removedIds);
+    // 2. Ingress: Listen to remote Yjs changes and update the store incrementally
+    const handleYjsChange = (event: Y.YMapEvent<TLRecord>) => {
+      if (event.transaction.local) return;
+
+      isRemoteUpdateRef.current = true;
+      store.mergeRemoteChanges(() => {
+        const toPut: TLRecord[] = [];
+        const toRemove: TLRecord['id'][] = [];
+
+        event.changes.keys.forEach((change, key) => {
+          if (change.action === 'add' || change.action === 'update') {
+            const record = yShapes.get(key);
+            if (record && isDocumentRecord(record)) {
+              toPut.push(record);
+            }
+          } else if (change.action === 'delete') {
+            toRemove.push(key as TLRecord['id']);
+          }
+        });
+
+        if (toPut.length > 0) {
+          store.put(toPut);
         }
-        if (records.length > 0) {
-          store.put(records);
+        if (toRemove.length > 0) {
+          store.remove(toRemove);
         }
       });
       isRemoteUpdateRef.current = false;
     };
 
-    if (yShapes.size === 0) {
-      doc.transact(() => {
-        store.allRecords().filter(isDocumentRecord).forEach((record) => {
-          yShapes.set(record.id, record);
-        });
-      });
-    } else {
-      applyRecords();
-    }
-    hasInitialized = true;
-
-    const handleYjsChange = (event: Y.YMapEvent<TLRecord>) => {
-      if (event.transaction.local) return;
-      applyRecords();
-    };
-
     yShapes.observe(handleYjsChange);
 
+    // 3. Egress: Listen to local store mutations and commit them to Yjs
     const removeStoreListener = store.listen(
       (entry) => {
         if (isRemoteUpdateRef.current) return;
-        if (!hasInitialized) return;
 
         const records = [
           ...Object.values(entry.changes.added),
           ...Object.values(entry.changes.updated).map(([, to]) => to),
         ].filter(isDocumentRecord);
+
         const removedIds = Object.values(entry.changes.removed)
           .filter(isDocumentRecord)
           .map((record) => record.id);
 
-        doc.transact(() => {
-          records.forEach((record) => yShapes.set(record.id, record));
-          removedIds.forEach((id) => yShapes.delete(id));
-        });
+        if (records.length > 0 || removedIds.length > 0) {
+          doc.transact(() => {
+            records.forEach((record) => yShapes.set(record.id, record));
+            removedIds.forEach((id) => yShapes.delete(id));
+          });
+        }
       },
       { source: 'user', scope: 'document' }
     );
