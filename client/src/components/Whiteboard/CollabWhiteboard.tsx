@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+  type ErrorInfo,
+} from 'react';
 import * as Y from 'yjs';
 import type { Awareness } from 'y-protocols/awareness';
 import {
@@ -11,8 +21,64 @@ import {
 } from 'tldraw';
 import type { UserPresence } from '../../utils/collaborators';
 import { Button } from '../common';
-import { Download } from 'lucide-react';
+import { Download, KeyRound, ExternalLink, AlertTriangle } from 'lucide-react';
 import 'tldraw/tldraw.css';
+
+interface WhiteboardErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface WhiteboardErrorBoundaryState {
+  error: Error | null;
+}
+
+class WhiteboardErrorBoundary extends Component<
+  WhiteboardErrorBoundaryProps,
+  WhiteboardErrorBoundaryState
+> {
+  state: WhiteboardErrorBoundaryState = { error: null };
+
+  static getDerivedStateFromError(error: Error): WhiteboardErrorBoundaryState {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[Whiteboard Error Boundary caught]:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="whiteboard-error-overlay">
+          <div className="whiteboard-license-card">
+            <div className="whiteboard-license-header">
+              <div
+                className="whiteboard-license-icon"
+                style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}
+              >
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 className="whiteboard-license-title">Whiteboard Error</h3>
+                <p className="whiteboard-license-desc">{this.state.error.message}</p>
+              </div>
+            </div>
+            <div className="whiteboard-license-actions">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => this.setState({ error: null })}
+              >
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface CollabWhiteboardProps {
   doc: Y.Doc | null;
@@ -38,9 +104,26 @@ export function CollabWhiteboard({
   const isRemoteUpdateRef = useRef(false);
   const editorRef = useRef<Editor | null>(null);
   const whiteboardRef = useRef<HTMLDivElement | null>(null);
+  const [isLicenseGated, setIsLicenseGated] = useState(false);
   const [remoteCursors, setRemoteCursors] = useState<
     Array<{ clientId: number; name: string; color: string; x: number; y: number }>
   >([]);
+
+  useEffect(() => {
+    const container = whiteboardRef.current;
+    if (!container) return;
+
+    const checkGated = () => {
+      if (container.querySelector('[data-testid="tl-license-expired"]')) {
+        setIsLicenseGated(true);
+      }
+    };
+
+    checkGated();
+    const observer = new MutationObserver(checkGated);
+    observer.observe(container, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   const syncRemoteCursors = useCallback(() => {
     const editor = editorRef.current;
@@ -235,19 +318,96 @@ export function CollabWhiteboard({
       onPointerMove={handlePointerMove}
       onPointerLeave={() => awareness?.setLocalStateField('whiteboardCursor', null)}
     >
-      <div className="whiteboard-controls">
-        <Button
-          variant="ghost"
-          size="sm"
-          icon={<Download size={14} />}
-          onClick={() => void handleExport()}
-          title="Export whiteboard as PNG and SVG"
-          aria-label="Export whiteboard as PNG and SVG"
-        >
-          Export PNG/SVG
-        </Button>
-      </div>
-      <Tldraw key={doc.clientID} store={store} onMount={handleMount} />
+      {!isLicenseGated && (
+        <div className="whiteboard-controls">
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Download size={14} />}
+            onClick={() => void handleExport()}
+            title="Export whiteboard as PNG and SVG"
+            aria-label="Export whiteboard as PNG and SVG"
+          >
+            Export PNG/SVG
+          </Button>
+        </div>
+      )}
+
+      {isLicenseGated ? (
+        <div className="whiteboard-license-overlay">
+          <div className="whiteboard-license-card">
+            <div className="whiteboard-license-header">
+              <div className="whiteboard-license-icon">
+                <KeyRound size={22} />
+              </div>
+              <div>
+                <h3 className="whiteboard-license-title">Tldraw License Key Required</h3>
+                <p className="whiteboard-license-desc">
+                  Tldraw requires a free license key for deployed environments.
+                </p>
+              </div>
+            </div>
+
+            <div className="whiteboard-license-steps">
+              <strong>How to enable the collaborative whiteboard:</strong>
+              <ol>
+                <li>
+                  Apply for a free <strong>Hobby / Non-Commercial license</strong> at{' '}
+                  <a
+                    href="https://tldraw.dev/community/license"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#38bdf8', textDecoration: 'underline' }}
+                  >
+                    tldraw.dev/community/license
+                  </a>{' '}
+                  or check{' '}
+                  <a
+                    href="https://tldraw.dev/pricing"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: '#38bdf8', textDecoration: 'underline' }}
+                  >
+                    tldraw.dev/pricing
+                  </a>.
+                </li>
+                <li>
+                  Add <code>VITE_TLDRAW_LICENSE_KEY=&lt;your_key&gt;</code> to your Vercel project Environment Variables and redeploy.
+                </li>
+              </ol>
+            </div>
+
+            <div className="whiteboard-license-actions">
+              <Button
+                variant="primary"
+                size="sm"
+                iconRight={<ExternalLink size={14} />}
+                onClick={() => window.open('https://tldraw.dev/community/license', '_blank')}
+              >
+                View License Details
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                iconRight={<ExternalLink size={14} />}
+                onClick={() => window.open('https://tldraw.dev/pricing', '_blank')}
+              >
+                Pricing & Trial Form
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <WhiteboardErrorBoundary>
+          <Tldraw
+            key={doc.clientID}
+            store={store}
+            onMount={handleMount}
+            licenseKey={import.meta.env.VITE_TLDRAW_LICENSE_KEY || undefined}
+          />
+        </WhiteboardErrorBoundary>
+      )}
+
       <div className="whiteboard-remote-cursors" aria-hidden="true">
         {remoteCursors.map((cursor) => (
           <div
