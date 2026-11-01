@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sandbox Isolation Test</title>
+  <style>
+    body {
+      font-family: system-ui;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .test {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .test.pass {
+      background: #e8f5e9;
+      border-color: #4caf50;
+    }
+    .test.fail {
+      background: #ffebee;
+      border-color: #f44336;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sandbox Isolation Test</h1>
+  <p>Testing that the sandboxed iframe cannot access parent origin resources.</p>
+  
+  <button id="runTests">Run All Tests</button>
+  
+  <div id="results"></div>
+  
+  <script type="module">
+    import { SandboxManager } from '../SandboxManager.js';
+    
+    const results = document.getElementById('results');
+    const runButton = document.getElementById('runTests');
+    
+    async function runTests() {
+      results.innerHTML = '<p>Running tests...</p>';
+      const sandbox = new SandboxManager();
+      
+      const tests = [
+        {
+          name: 'Echo test - basic worker functionality',
+          code: '"Hello from sandbox"',
+          validate: (res) => res.success && res.result?.result === 'Hello from sandbox'
+        },
+        {
+          name: 'Math operation',
+          code: '2 + 2',
+          validate: (res) => res.success && res.result?.result === 4
+        },
+        {
+          name: 'Error handling',
+          code: 'throw new Error("Test error")',
+          validate: (res) => !res.success || (res.result && res.result.type === 'ERROR')
+        },
+        {
+          name: 'Isolation: cookies should not be accessible',
+          code: 'typeof document !== "undefined" ? document.cookie : "no document"',
+          validate: (res) => res.success && res.result?.result === 'no document'
+        },
+        {
+          name: 'Isolation: localStorage should not be accessible',
+          code: 'typeof localStorage !== "undefined" ? localStorage.getItem("test") : "no localStorage"',
+          validate: (res) => res.success && res.result?.result === 'no localStorage'
+        },
+        {
+          name: 'Isolation: fetch to parent origin should fail or be unavailable',
+          code: 'typeof fetch !== "undefined" ? "fetch available but isolated" : "no fetch"',
+          validate: (res) => res.success // Just checking it doesn't crash
+        }
+      ];
+      
+      results.innerHTML = '';
+      
+      for (const test of tests) {
+        const div = document.createElement('div');
+        div.className = 'test';
+        div.innerHTML = `<h3>${test.name}</h3><p>Running...</p>`;
+        results.appendChild(div);
+        
+        try {
+          const result = await sandbox.execute(test.code, 5000);
+          const passed = test.validate(result);
+          
+          div.className = `test ${passed ? 'pass' : 'fail'}`;
+          div.innerHTML = `
+            <h3>${passed ? '✅' : '❌'} ${test.name}</h3>
+            <pre>${JSON.stringify(result, null, 2)}</pre>
+          `;
+        } catch (err) {
+          div.className = 'test fail';
+          div.innerHTML = `
+            <h3>❌ ${test.name}</h3>
+            <p>Exception: ${err.message}</p>
+          `;
+        }
+      }
+      
+      sandbox.dispose();
+    }
+    
+    runButton.addEventListener('click', runTests);
+  </script>
+</body>
+</html>

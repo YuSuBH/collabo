@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 import {
   getWandboxCompiler,
@@ -8,13 +8,22 @@ import {
 } from '../utils/languageDetection';
 import type { UserPresence } from '../utils/collaborators';
 import type { ExecutionResult, SharedExecutionRun } from '../types/execution';
+import { RunnerRegistry } from '../utils/execution';
+import type { ExecRequest } from '../utils/execution';
 
 export type { ExecutionResult, SharedExecutionRun };
 
-const EXECUTE_API_URL =
-  (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/execute';
-
 const MAX_SHARED_RUNS = 25;
+const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
+
+// ─── Output Cap (last line of defense before Yjs) ─────────────────────────────
+const MAX_OUTPUT_SIZE = 100 * 1024; // 100 KB
+const TRUNCATION_MARKER = '\n[output truncated - exceeded 100KB limit]\n';
+
+function truncateOutput(text: string): string {
+  if (!text || text.length <= MAX_OUTPUT_SIZE) return text;
+  return text.slice(0, MAX_OUTPUT_SIZE) + TRUNCATION_MARKER;
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +35,7 @@ export interface UseCodeExecutionOptions {
 
 export interface UseCodeExecutionReturn {
   run: (entryFile?: string, stdin?: string) => Promise<void>;
+  stop: () => void;
   isRunning: boolean;
   result: ExecutionResult | null;
   error: string | null;
@@ -44,6 +54,8 @@ export interface UseCodeExecutionReturn {
   latestPeerRun: SharedExecutionRun | null;
   /** Clear latest peer run notification banner */
   clearPeerNotification: () => void;
+  /** Python loading state (for UI) */
+  pyodideLoadingState: 'idle' | 'loading' | 'ready' | 'failed';
 }
 
 // ─── Helper: auto-detect the best entry file from a list ─────────────────────
@@ -91,6 +103,16 @@ export function useCodeExecution({
   const [sharedRuns, setSharedRuns] = useState<SharedExecutionRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [latestPeerRun, setLatestPeerRun] = useState<SharedExecutionRun | null>(null);
+  const [pyodideLoadingState, setPyodideLoadingState] = useState<'idle' | 'loading' | 'ready' | 'failed'>('idle');
+  
+  // AbortController for cancelling running executions
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Runner registry for execution backends
+  const registryRef = useRef<RunnerRegistry | null>(null);
+  if (!registryRef.current) {
+    registryRef.current = new RunnerRegistry();
+  }
 
   // ── Sync shared-executions Y.Array ──────────────────────────────────────────
   useEffect(() => {
@@ -131,6 +153,17 @@ export function useCodeExecution({
     };
   }, [doc, currentUser?.name]);
 
+  // ── Setup Pyodide loading state listener ────────────────────────────────────
+  useEffect(() => {
+    const registry = registryRef.current;
+    if (!registry) return;
+
+    const pyodideRunner = registry.getPyodideRunner();
+    pyodideRunner.onLoadingStateChange((state) => {
+      setPyodideLoadingState(state);
+    });
+  }, []);
+
   const selectRun = useCallback((runId: string | null) => {
     setSelectedRunId(runId);
   }, []);
@@ -144,6 +177,11 @@ export function useCodeExecution({
     async (entryFileOverride?: string, stdin?: string) => {
       if (!doc) {
         setError('Editor not ready. Please wait for synchronization.');
+        return;
+      }
+
+      // Prevent running while already running
+      if (isRunning) {
         return;
       }
 
@@ -190,31 +228,41 @@ export function useCodeExecution({
 
       const startMs = Date.now();
 
+      // Create abort controller for this run
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
       try {
-        const res = await fetch(EXECUTE_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            compiler,
-            code,
-            codes: codes.length > 0 ? codes : undefined,
-            stdin: stdin ?? '',
-          }),
-        });
+        const registry = registryRef.current!;
+        const runner = registry.getRunner(entryFile);
 
+        // Build execution request
+        const execReq: ExecRequest = {
+          entry: entryFile,
+          files: [{ file: entryFile, code }, ...codes],
+          stdin: stdin ?? '',
+          timeoutMs: DEFAULT_TIMEOUT_MS,
+        };
+
+        const execResult = await runner.run(execReq, undefined, abortController.signal);
         const durationMs = Date.now() - startMs;
-        const data = await res.json();
 
-        if (!res.ok) {
-          setError(data.error ?? `Execution failed (HTTP ${res.status})`);
+        // Check if execution was aborted
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        // Check for execution error
+        if (execResult.status !== '0' && execResult.program_error) {
+          setError(execResult.program_error);
           return;
         }
 
         const runResult: ExecutionResult = {
-          stdout: data.program_output ?? '',
-          stderr: data.program_error ?? '',
-          compilerError: data.compiler_error ?? '',
-          exitCode: data.status ?? '-1',
+          stdout: truncateOutput(execResult.program_output),
+          stderr: truncateOutput(execResult.program_error),
+          compilerError: truncateOutput(execResult.compiler_error),
+          exitCode: execResult.status,
           durationMs,
           entryFile,
           compiler,
@@ -240,14 +288,35 @@ export function useCodeExecution({
             sharedArray.delete(0, 1);
           }
         });
-      } catch (err: any) {
-        setError(err?.message ?? 'Network error — could not reach the execution server.');
+      } catch (err: unknown) {
+        // Don't show error if execution was aborted
+        if (abortControllerRef.current?.signal.aborted) {
+          return;
+        }
+        setError(err instanceof Error ? err.message : 'Execution error occurred.');
       } finally {
+        abortControllerRef.current = null;
         setIsRunning(false);
       }
     },
-    [doc, activeFile, currentUser]
+    [doc, activeFile, currentUser, isRunning]
   );
+
+  // ── Stop Function ───────────────────────────────────────────────────────────
+  const stop = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setError('Execution cancelled by user');
+      setIsRunning(false);
+    }
+  }, []);
+
+  // Cleanup registry on unmount
+  useEffect(() => {
+    return () => {
+      registryRef.current?.dispose();
+    };
+  }, []);
 
   const clearResult = useCallback(() => {
     setResult(null);
@@ -261,6 +330,7 @@ export function useCodeExecution({
 
   return {
     run,
+    stop,
     isRunning,
     result,
     error,
@@ -272,5 +342,6 @@ export function useCodeExecution({
     displayedRun,
     latestPeerRun,
     clearPeerNotification,
+    pyodideLoadingState,
   };
 }
