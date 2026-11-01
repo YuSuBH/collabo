@@ -2,6 +2,8 @@
  * JavaScript/TypeScript runner using esbuild-wasm for bundling.
  * Runs code in a sandboxed worker with console/process shims.
  * Falls back to server if code uses unsupported Node.js features.
+ * 
+ * esbuild-wasm is loaded lazily on first JS/TS run.
  */
 
 import * as esbuild from 'esbuild-wasm';
@@ -10,6 +12,13 @@ import type { Runner, ExecRequest, ExecResult, StreamChunk } from './types';
 // Track esbuild initialization
 let esbuildInitialized = false;
 let esbuildInitPromise: Promise<void> | null = null;
+
+export type EsbuildLoadingState = 'idle' | 'loading' | 'ready' | 'failed';
+
+/**
+ * Callback for loading state changes.
+ */
+export type EsbuildLoadingCallback = (state: EsbuildLoadingState, message?: string) => void;
 
 interface WorkerMessage {
   type: 'output' | 'exit' | 'error' | 'ready';
@@ -42,25 +51,46 @@ function truncateOutput(text: string): string {
 
 export class JsRunner implements Runner {
   private worker: Worker | null = null;
+  private loadingState: EsbuildLoadingState = 'idle';
+  private loadingCallbacks: EsbuildLoadingCallback[] = [];
 
-  constructor() {
-    // Initialize esbuild on first use
-    if (!esbuildInitialized && !esbuildInitPromise) {
-      esbuildInitPromise = this.initEsbuild();
-    }
+  /**
+   * Register a callback for loading state changes.
+   */
+  onLoadingStateChange(callback: EsbuildLoadingCallback): void {
+    this.loadingCallbacks.push(callback);
+  }
+
+  /**
+   * Get current loading state.
+   */
+  getLoadingState(): EsbuildLoadingState {
+    return this.loadingState;
+  }
+
+  private setLoadingState(state: EsbuildLoadingState, message?: string): void {
+    this.loadingState = state;
+    this.loadingCallbacks.forEach((cb) => cb(state, message));
   }
 
   private async initEsbuild(): Promise<void> {
-    if (esbuildInitialized) return;
+    if (esbuildInitialized) {
+      this.setLoadingState('ready');
+      return;
+    }
     
     try {
+      this.setLoadingState('loading', 'Loading JavaScript bundler...');
+      
       // Initialize esbuild-wasm with the WASM binary
       // Use ?url import to get the path to the WASM file
       const wasmURL = new URL('esbuild-wasm/esbuild.wasm', import.meta.url).href;
       await esbuild.initialize({ wasmURL });
       esbuildInitialized = true;
+      this.setLoadingState('ready', 'JavaScript bundler ready');
     } catch (err) {
       console.error('[JsRunner] Failed to initialize esbuild:', err);
+      this.setLoadingState('failed', 'Failed to load bundler');
       throw new UnsupportedLocallyError('Failed to initialize esbuild-wasm');
     }
   }
@@ -70,14 +100,17 @@ export class JsRunner implements Runner {
     onOutput?: (chunk: StreamChunk) => void,
     signal?: AbortSignal
   ): Promise<ExecResult> {
-    // Ensure esbuild is initialized
-    if (esbuildInitPromise) {
-      await esbuildInitPromise;
-    }
-
     const { entry, files, stdin = '', timeoutMs } = req;
 
     try {
+      // Lazy load: Initialize esbuild only on first JS/TS run
+      if (!esbuildInitialized) {
+        if (!esbuildInitPromise) {
+          esbuildInitPromise = this.initEsbuild();
+        }
+        await esbuildInitPromise;
+      }
+
       // Bundle the code with esbuild
       const bundleResult = await this.bundle(entry, files);
       
@@ -124,7 +157,8 @@ export class JsRunner implements Runner {
       // Create a virtual file system plugin for esbuild
       const virtualFsPlugin: esbuild.Plugin = {
         name: 'virtual-fs',
-        setup(build) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setup(build: any) {
           // Map file paths to code content
           const fileMap = new Map<string, string>();
           for (const f of files) {
@@ -136,7 +170,8 @@ export class JsRunner implements Runner {
           }
 
           // Resolve imports from our virtual file system
-          build.onResolve({ filter: /.*/ }, (args) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          build.onResolve({ filter: /.*/ }, (args: any) => {
             // Handle relative imports
             if (args.path.startsWith('./') || args.path.startsWith('../')) {
               const resolved = new URL(args.path, 'file://' + args.importer).pathname;
@@ -173,7 +208,8 @@ export class JsRunner implements Runner {
             return undefined;
           });
 
-          build.onLoad({ filter: /.*/, namespace: 'virtual-fs' }, (args) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          build.onLoad({ filter: /.*/, namespace: 'virtual-fs' }, (args: any) => {
             const contents = fileMap.get(args.path);
             if (contents === undefined) {
               return {
@@ -216,7 +252,8 @@ export class JsRunner implements Runner {
 
       if (result.errors.length > 0) {
         const errorMsg = result.errors
-          .map((e) => e.text)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .map((e: any) => e.text)
           .join('\n');
         return {
           success: false,
@@ -441,5 +478,6 @@ const console = {
       this.worker.terminate();
       this.worker = null;
     }
+    this.loadingCallbacks = [];
   }
 }

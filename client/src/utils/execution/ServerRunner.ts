@@ -8,6 +8,15 @@ import type { Runner, ExecRequest, ExecResult } from './types';
 const EXECUTE_API_URL =
   (import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/execute';
 
+// Output cap utilities
+const MAX_OUTPUT_SIZE = 100 * 1024; // 100 KB
+const TRUNCATION_MARKER = '\n[output truncated - exceeded 100KB limit]\n';
+
+function truncateOutput(text: string): string {
+  if (text.length <= MAX_OUTPUT_SIZE) return text;
+  return text.slice(0, MAX_OUTPUT_SIZE) + TRUNCATION_MARKER;
+}
+
 export class ServerRunner implements Runner {
   async run(req: ExecRequest): Promise<ExecResult> {
     const { entry, files, stdin = '', timeoutMs } = req;
@@ -61,19 +70,20 @@ export class ServerRunner implements Runner {
         return {
           status: '1',
           program_output: '',
-          program_error: data.error ?? `Server error (HTTP ${res.status})`,
+          program_error: truncateOutput(data.error ?? `Server error (HTTP ${res.status})`),
           compiler_error: '',
         };
       }
 
+      // Apply output cap to server results
       return {
         status: data.status ?? '-1',
-        program_output: data.program_output ?? '',
-        program_error: data.program_error ?? '',
-        compiler_error: data.compiler_error ?? '',
+        program_output: truncateOutput(data.program_output ?? ''),
+        program_error: truncateOutput(data.program_error ?? ''),
+        compiler_error: truncateOutput(data.compiler_error ?? ''),
       };
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
         return {
           status: '124',
           program_output: '',
@@ -84,7 +94,7 @@ export class ServerRunner implements Runner {
       return {
         status: '1',
         program_output: '',
-        program_error: err?.message ?? 'Network error',
+        program_error: err instanceof Error ? err.message : 'Network error',
         compiler_error: '',
       };
     }

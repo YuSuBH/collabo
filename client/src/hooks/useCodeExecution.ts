@@ -16,6 +16,15 @@ export type { ExecutionResult, SharedExecutionRun };
 const MAX_SHARED_RUNS = 25;
 const DEFAULT_TIMEOUT_MS = 10000; // 10 seconds
 
+// ─── Output Cap (last line of defense before Yjs) ─────────────────────────────
+const MAX_OUTPUT_SIZE = 100 * 1024; // 100 KB
+const TRUNCATION_MARKER = '\n[output truncated - exceeded 100KB limit]\n';
+
+function truncateOutput(text: string): string {
+  if (!text || text.length <= MAX_OUTPUT_SIZE) return text;
+  return text.slice(0, MAX_OUTPUT_SIZE) + TRUNCATION_MARKER;
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface UseCodeExecutionOptions {
@@ -250,9 +259,9 @@ export function useCodeExecution({
         }
 
         const runResult: ExecutionResult = {
-          stdout: execResult.program_output,
-          stderr: execResult.program_error,
-          compilerError: execResult.compiler_error,
+          stdout: truncateOutput(execResult.program_output),
+          stderr: truncateOutput(execResult.program_error),
+          compilerError: truncateOutput(execResult.compiler_error),
           exitCode: execResult.status,
           durationMs,
           entryFile,
@@ -279,12 +288,12 @@ export function useCodeExecution({
             sharedArray.delete(0, 1);
           }
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Don't show error if execution was aborted
         if (abortControllerRef.current?.signal.aborted) {
           return;
         }
-        setError(err?.message ?? 'Execution error occurred.');
+        setError(err instanceof Error ? err.message : 'Execution error occurred.');
       } finally {
         abortControllerRef.current = null;
         setIsRunning(false);

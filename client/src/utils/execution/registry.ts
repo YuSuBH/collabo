@@ -112,6 +112,13 @@ export class RunnerRegistry {
   }
 
   /**
+   * Get the JsRunner for loading state management.
+   */
+  getJsRunner(): JsRunner {
+    return this.jsRunner;
+  }
+
+  /**
    * Get the PyodideRunner for loading state management.
    */
   getPyodideRunner(): PyodideRunner {
