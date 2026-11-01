@@ -9,7 +9,7 @@ import {
 import type { UserPresence } from '../utils/collaborators';
 import type { ExecutionResult, SharedExecutionRun } from '../types/execution';
 import { RunnerRegistry } from '../utils/execution';
-import type { ExecRequest } from '../utils/execution';
+import type { ExecRequest, Runner } from '../utils/execution';
 
 export type { ExecutionResult, SharedExecutionRun };
 
@@ -110,7 +110,7 @@ export function useCodeExecution({
 
   // Runner registry for execution backends
   const registryRef = useRef<RunnerRegistry | null>(null);
-  if (!registryRef.current) {
+  if (registryRef.current == null) {
     registryRef.current = new RunnerRegistry();
   }
 
@@ -161,9 +161,11 @@ export function useCodeExecution({
     // Only set up listeners if local exec might be enabled
     // This avoids trying to load runners when flag is OFF
     if (import.meta.env.VITE_LOCAL_EXEC === 'true') {
-      registry.getPyodideRunner().then((pyodideRunner: any) => {
-        if (pyodideRunner && typeof pyodideRunner.onLoadingStateChange === 'function') {
-          pyodideRunner.onLoadingStateChange((state: typeof pyodideLoadingState) => {
+      registry.getPyodideRunner().then((pyodideRunner: Runner) => {
+        // Type assertion since we know PyodideRunner has onLoadingStateChange
+        const pyRunner = pyodideRunner as { onLoadingStateChange?: (cb: (state: typeof pyodideLoadingState) => void) => void };
+        if (pyRunner && typeof pyRunner.onLoadingStateChange === 'function') {
+          pyRunner.onLoadingStateChange((state: typeof pyodideLoadingState) => {
             setPyodideLoadingState(state);
           });
         }
