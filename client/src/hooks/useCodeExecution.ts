@@ -158,10 +158,19 @@ export function useCodeExecution({
     const registry = registryRef.current;
     if (!registry) return;
 
-    const pyodideRunner = registry.getPyodideRunner();
-    pyodideRunner.onLoadingStateChange((state) => {
-      setPyodideLoadingState(state);
-    });
+    // Only set up listeners if local exec might be enabled
+    // This avoids trying to load runners when flag is OFF
+    if (import.meta.env.VITE_LOCAL_EXEC === 'true') {
+      registry.getPyodideRunner().then((pyodideRunner: any) => {
+        if (pyodideRunner && typeof pyodideRunner.onLoadingStateChange === 'function') {
+          pyodideRunner.onLoadingStateChange((state: typeof pyodideLoadingState) => {
+            setPyodideLoadingState(state);
+          });
+        }
+      }).catch(() => {
+        // Ignore errors loading pyodide runner when flag is OFF
+      });
+    }
   }, []);
 
   const selectRun = useCallback((runId: string | null) => {
@@ -234,7 +243,7 @@ export function useCodeExecution({
 
       try {
         const registry = registryRef.current!;
-        const runner = registry.getRunner(entryFile);
+        const runner = await registry.getRunner(entryFile); // Now async!
 
         // Build execution request
         const execReq: ExecRequest = {

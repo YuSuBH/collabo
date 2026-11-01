@@ -1,12 +1,13 @@
 /**
  * Runner registry that selects the appropriate execution backend
  * based on file type and capabilities.
+ * 
+ * IMPORTANT: JsRunner and PyodideRunner are lazy-loaded via dynamic imports
+ * to avoid including them in the bundle when LOCAL_EXEC_ENABLED is false.
  */
 
 import type { Runner, ExecRequest } from './types';
 import { ServerRunner } from './ServerRunner';
-import { JsRunner, UnsupportedLocallyError } from './JsRunner';
-import { PyodideRunner } from './PyodideRunner';
 
 type Language = 'javascript' | 'typescript' | 'python' | 'other';
 
@@ -41,7 +42,8 @@ class FallbackRunner implements Runner {
     try {
       return await this.localRunner.run(req, onOutput, signal);
     } catch (err) {
-      if (err instanceof UnsupportedLocallyError) {
+      // Check if error is UnsupportedLocallyError by name since we can't import the class
+      if (err instanceof Error && err.name === 'UnsupportedLocallyError') {
         console.log('[RunnerRegistry] Falling back to server:', err.message);
         return await this.serverRunner.run(req, onOutput, signal);
       }
@@ -65,31 +67,52 @@ const LOCAL_EXEC_ENABLED = import.meta.env.VITE_LOCAL_EXEC === 'true';
 
 /**
  * Runner registry that manages execution backends.
- * Phase 4: JS/TS run locally with JsRunner, Python with PyodideRunner.
- * All have server fallback for unsupported features.
+ * 
+ * OPTIMIZATION: JsRunner and PyodideRunner are lazy-loaded on demand to avoid
+ * bundling 1.8MB of unused code when LOCAL_EXEC_ENABLED is false (default).
  * 
  * SECURITY: Local execution is gated by VITE_LOCAL_EXEC flag (default off).
  */
 export class RunnerRegistry {
   private serverRunner: ServerRunner;
-  private jsRunner: JsRunner;
-  private pyodideRunner: PyodideRunner;
-  private jsFallbackRunner: FallbackRunner;
-  private pyFallbackRunner: FallbackRunner;
+  private jsRunner: Runner | null = null;
+  private pyodideRunner: Runner | null = null;
+  private jsFallbackRunner: Runner | null = null;
+  private pyFallbackRunner: Runner | null = null;
 
   constructor() {
     this.serverRunner = new ServerRunner();
-    this.jsRunner = new JsRunner();
-    this.pyodideRunner = new PyodideRunner();
-    this.jsFallbackRunner = new FallbackRunner(this.jsRunner, this.serverRunner);
-    this.pyFallbackRunner = new FallbackRunner(this.pyodideRunner, this.serverRunner);
+    // Local runners are NOT instantiated here - they're lazy-loaded on demand
+  }
+
+  /**
+   * Lazy-load JsRunner only when needed (flag ON + JS/TS file).
+   */
+  private async ensureJsRunner(): Promise<Runner> {
+    if (!this.jsRunner) {
+      const { JsRunner } = await import('./JsRunner');
+      this.jsRunner = new JsRunner();
+    }
+    return this.jsRunner;
+  }
+
+  /**
+   * Lazy-load PyodideRunner only when needed (flag ON + Python file).
+   */
+  private async ensurePyodideRunner(): Promise<Runner> {
+    if (!this.pyodideRunner) {
+      const { PyodideRunner } = await import('./PyodideRunner');
+      this.pyodideRunner = new PyodideRunner();
+    }
+    return this.pyodideRunner;
   }
 
   /**
    * Get the appropriate runner for a given entry file.
    * When LOCAL_EXEC_ENABLED is false, all execution routes to ServerRunner.
+   * When true, lazily loads local runners on first use.
    */
-  getRunner(entry: string): Runner {
+  async getRunner(entry: string): Promise<Runner> {
     // Security gate: local execution disabled by default
     if (!LOCAL_EXEC_ENABLED) {
       return this.serverRunner;
@@ -97,13 +120,21 @@ export class RunnerRegistry {
 
     const lang = getLanguageFromEntry(entry);
     
-    // JavaScript and TypeScript: try local first, fall back to server
+    // JavaScript and TypeScript: lazy-load JsRunner, use fallback pattern
     if (lang === 'javascript' || lang === 'typescript') {
+      if (!this.jsFallbackRunner) {
+        const jsRunner = await this.ensureJsRunner();
+        this.jsFallbackRunner = new FallbackRunner(jsRunner, this.serverRunner);
+      }
       return this.jsFallbackRunner;
     }
     
-    // Python: try Pyodide first, fall back to server
+    // Python: lazy-load PyodideRunner, use fallback pattern
     if (lang === 'python') {
+      if (!this.pyFallbackRunner) {
+        const pyRunner = await this.ensurePyodideRunner();
+        this.pyFallbackRunner = new FallbackRunner(pyRunner, this.serverRunner);
+      }
       return this.pyFallbackRunner;
     }
     
@@ -113,16 +144,18 @@ export class RunnerRegistry {
 
   /**
    * Get the JsRunner for loading state management.
+   * Lazy-loads if not already loaded.
    */
-  getJsRunner(): JsRunner {
-    return this.jsRunner;
+  async getJsRunner(): Promise<Runner> {
+    return this.ensureJsRunner();
   }
 
   /**
    * Get the PyodideRunner for loading state management.
+   * Lazy-loads if not already loaded.
    */
-  getPyodideRunner(): PyodideRunner {
-    return this.pyodideRunner;
+  async getPyodideRunner(): Promise<Runner> {
+    return this.ensurePyodideRunner();
   }
 
   /**
@@ -130,7 +163,7 @@ export class RunnerRegistry {
    */
   dispose(): void {
     this.serverRunner.dispose();
-    this.jsRunner.dispose();
-    this.pyodideRunner.dispose();
+    this.jsRunner?.dispose();
+    this.pyodideRunner?.dispose();
   }
 }

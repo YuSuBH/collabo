@@ -50,3 +50,5 @@ ehthumbs.db
 .vite/
 .temp/
 .tmp/
+
+/docs
