@@ -49,29 +49,18 @@ class WhiteboardErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div className="whiteboard-error-overlay">
-          <div className="whiteboard-license-card">
-            <div className="whiteboard-license-header">
-              <div
-                className="whiteboard-license-icon"
-                style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }}
-              >
-                <AlertTriangle size={22} />
-              </div>
-              <div>
-                <h3 className="whiteboard-license-title">Whiteboard Error</h3>
-                <p className="whiteboard-license-desc">{this.state.error.message}</p>
-              </div>
-            </div>
-            <div className="whiteboard-license-actions">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => this.setState({ error: null })}
-              >
-                Retry
-              </Button>
-            </div>
+        <div className="whiteboard-notice-overlay">
+          <div className="whiteboard-notice-card">
+            <AlertTriangle size={24} style={{ color: 'var(--color-error)' }} />
+            <h3 className="whiteboard-notice-title">Whiteboard Error</h3>
+            <p className="whiteboard-notice-desc">{this.state.error.message}</p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => this.setState({ error: null })}
+            >
+              Retry
+            </Button>
           </div>
         </div>
       );
@@ -334,67 +323,21 @@ export function CollabWhiteboard({
       )}
 
       {isLicenseGated ? (
-        <div className="whiteboard-license-overlay">
-          <div className="whiteboard-license-card">
-            <div className="whiteboard-license-header">
-              <div className="whiteboard-license-icon">
-                <KeyRound size={22} />
-              </div>
-              <div>
-                <h3 className="whiteboard-license-title">Tldraw License Key Required</h3>
-                <p className="whiteboard-license-desc">
-                  Tldraw requires a free license key for deployed environments.
-                </p>
-              </div>
-            </div>
-
-            <div className="whiteboard-license-steps">
-              <strong>How to enable the collaborative whiteboard:</strong>
-              <ol>
-                <li>
-                  Apply for a free <strong>Hobby / Non-Commercial license</strong> at{' '}
-                  <a
-                    href="https://tldraw.dev/community/license"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#38bdf8', textDecoration: 'underline' }}
-                  >
-                    tldraw.dev/community/license
-                  </a>{' '}
-                  or check{' '}
-                  <a
-                    href="https://tldraw.dev/pricing"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: '#38bdf8', textDecoration: 'underline' }}
-                  >
-                    tldraw.dev/pricing
-                  </a>.
-                </li>
-                <li>
-                  Add <code>VITE_TLDRAW_LICENSE_KEY=&lt;your_key&gt;</code> to your Vercel project Environment Variables and redeploy.
-                </li>
-              </ol>
-            </div>
-
-            <div className="whiteboard-license-actions">
-              <Button
-                variant="primary"
-                size="sm"
-                iconRight={<ExternalLink size={14} />}
-                onClick={() => window.open('https://tldraw.dev/community/license', '_blank')}
-              >
-                View License Details
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                iconRight={<ExternalLink size={14} />}
-                onClick={() => window.open('https://tldraw.dev/pricing', '_blank')}
-              >
-                Pricing & Trial Form
-              </Button>
-            </div>
+        <div className="whiteboard-notice-overlay">
+          <div className="whiteboard-notice-card">
+            <KeyRound size={24} className="whiteboard-notice-icon" />
+            <h3 className="whiteboard-notice-title">License Key Required</h3>
+            <p className="whiteboard-notice-desc">
+              To use the collaborative whiteboard in production, set <code>VITE_TLDRAW_LICENSE_KEY</code> in your environment variables.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconRight={<ExternalLink size={13} />}
+              onClick={() => window.open('https://tldraw.dev/community/license', '_blank')}
+            >
+              Get License Key
+            </Button>
           </div>
         </div>
       ) : (
