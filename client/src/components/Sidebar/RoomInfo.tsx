@@ -362,7 +362,7 @@ export const RoomInfo: React.FC<RoomInfoProps> = ({
           </div>
 
           {/* Request Button or Pending Indicator */}
-          {!canManagePermissions && (
+          {role === 'viewer' && (
             <div className="current-user-actions">
               {userPendingRequest ? (
                 <div className="perm-pending-box">
