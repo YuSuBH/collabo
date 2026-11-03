@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import * as Y from 'yjs';
 import type { Collaborator, UserPresence } from '../utils/collaborators';
 import {
@@ -37,6 +37,11 @@ export function usePermissions({
   const [isKicked, setIsKicked] = useState<boolean>(false);
   const [kickedInfo, setKickedInfo] = useState<KickedUserInfo | null>(null);
 
+  const usersRef = useRef(users);
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
   // ─── 1. Synchronize Room Meta & Initial Creator ──────────────────────────────
   useEffect(() => {
     if (!doc || !isSynced) return;
@@ -59,14 +64,45 @@ export function usePermissions({
         });
       } else if (isCreatorHint) {
         // First user creates the room as the initial Admin only if hint indicates creator
+        const now = Date.now();
         doc.transact(() => {
           metaMap.set('creatorId', currentUser.id);
           metaMap.set('creatorName', currentUser.name);
           metaMap.set('creatorColor', currentUser.color);
-          metaMap.set('createdAt', Date.now());
+          metaMap.set('createdAt', now);
 
           permsMap.set(currentUser.id, { ...DEFAULT_CREATOR_PERMISSIONS });
         });
+        setRoomMeta({
+          creatorId: currentUser.id,
+          creatorName: currentUser.name,
+          creatorColor: currentUser.color,
+          createdAt: now,
+        });
+      } else if (!creatorId && permsMap.size === 0) {
+        // Fallback for cold start / uninitialized room where no creator or registered permissions exist yet.
+        // If currentUser is the only user present or is the senior connected user, initialize room as Admin
+        const currentUsers = usersRef.current;
+        const sortedUsers = [...currentUsers].sort((a, b) => a.clientId - b.clientId);
+        const isSeniorOrAlone = sortedUsers.length <= 1 || sortedUsers[0]?.id === currentUser.id;
+
+        if (isSeniorOrAlone) {
+          const now = Date.now();
+          doc.transact(() => {
+            metaMap.set('creatorId', currentUser.id);
+            metaMap.set('creatorName', currentUser.name);
+            metaMap.set('creatorColor', currentUser.color);
+            metaMap.set('createdAt', now);
+
+            permsMap.set(currentUser.id, { ...DEFAULT_CREATOR_PERMISSIONS });
+          });
+          setRoomMeta({
+            creatorId: currentUser.id,
+            creatorName: currentUser.name,
+            creatorColor: currentUser.color,
+            createdAt: now,
+          });
+        }
       }
     };
 
@@ -156,11 +192,11 @@ export function usePermissions({
     if (roomMeta?.creatorId) {
       return roomMeta.creatorId === currentUser.id;
     }
-    if (!isSynced) {
-      return isCreatorHint === true;
+    if (isCreatorHint) {
+      return true;
     }
     return false;
-  }, [roomMeta, currentUser.id, isCreatorHint, isSynced]);
+  }, [roomMeta, currentUser.id, isCreatorHint]);
 
   const permissions: UserPermissions = useMemo(() => {
     const userPerms = allUserPermissions.get(currentUser.id);

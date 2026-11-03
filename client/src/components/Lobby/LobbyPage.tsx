@@ -29,17 +29,22 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
     pingServerWarmup();
   }, []);
 
-  const [roomId, setRoomId] = useState<string>(() => {
+  const [initialSharedRoom] = useState<string>(() => {
     // Pre-fill room ID only when arriving via a shared ?room= link
     const params = new URLSearchParams(window.location.search);
-    return params.get("room") || "";
+    return params.get("room")?.trim() || "";
   });
+  const hasSharedRoom = Boolean(initialSharedRoom);
+
+  const [roomId, setRoomId] = useState<string>(initialSharedRoom);
+  const [isCreatedLocally, setIsCreatedLocally] = useState<boolean>(!hasSharedRoom);
   const [username, setUsername] = useState("");
   const [roomError, setRoomError] = useState("");
   const [nameError, setNameError] = useState("");
 
   const handleGenerateRoom = () => {
     setRoomId(generateRoomId());
+    setIsCreatedLocally(true);
     setRoomError("");
   };
 
@@ -62,7 +67,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
 
     // Determine an unused color in this room and determine creator role
     let assignedColor = getRandomColor();
-    let isCreator = false;
+    let isCreator = isCreatedLocally;
     try {
       const serverUrl = getServerHttpUrl();
       const res = await fetch(
@@ -84,7 +89,8 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
         }
       }
     } catch {
-      // Fall back to local hint
+      // Fall back to local hint if server query fails or times out (e.g. backend sleeping / cold start)
+      isCreator = isCreatedLocally;
     }
 
     onJoin(cleanRoom, cleanName, assignedColor, isCreator);
@@ -124,7 +130,9 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
                 className={`lobby-input ${roomError ? "lobby-input-error" : ""}`}
                 value={roomId}
                 onChange={(e) => {
-                  setRoomId(e.target.value);
+                  const val = e.target.value;
+                  setRoomId(val);
+                  setIsCreatedLocally(!hasSharedRoom || val.trim() !== initialSharedRoom);
                   if (roomError) setRoomError("");
                 }}
                 placeholder="Enter or generate a room ID"
@@ -178,7 +186,7 @@ export const LobbyPage: React.FC<LobbyPageProps> = ({ onJoin }) => {
             fullWidth
             iconRight={<ArrowRight size={17} />}
           >
-            Join Room
+            {isCreatedLocally ? "Create & Enter Room" : "Join Room"}
           </Button>
         </form>
       </div>
